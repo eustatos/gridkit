@@ -1,12 +1,10 @@
 <script>
-  import { atom } from '@nexus-state/core';
-  import { useAtom } from '@nexus-state/svelte';
+  import { writable } from 'svelte/store';
 
-  const countAtom = atom(0);
-  let count = useAtom(countAtom);
+  const count = writable(0);
   
   function increment() {
-    countAtom.set($count + 1);
+    count.update(n => n + 1);
   }
 </script>
 
