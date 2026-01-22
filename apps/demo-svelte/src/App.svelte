@@ -3,10 +3,10 @@
   import { useAtom } from '@nexus-state/svelte';
 
   const countAtom = atom(0);
-  const count = useAtom(countAtom);
+  let count = useAtom(countAtom);
   
   function increment() {
-    count.set($count + 1);
+    countAtom.set($count + 1);
   }
 </script>
 
