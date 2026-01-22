@@ -5,12 +5,13 @@ import type { Atom, Store, Subscriber, Getter, Setter } from './types';
 type AtomState<Value> = {
   value: Value;
   subscribers: Set<Subscriber<Value>>;
-  dependents: Set<Atom<any>>;
+  dependents: Set<Atom<any>>; // eslint-disable-line @typescript-eslint/no-explicit-any
 };
 
 type Plugin = (store: Store) => void;
 
 export function createStore(plugins: Plugin[] = []): Store {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const atomStates = new Map<Atom<any>, AtomState<any>>();
 
   const get: Getter = <Value>(atom: Atom<Value>): Value => {
@@ -18,11 +19,11 @@ export function createStore(plugins: Plugin[] = []): Store {
     let atomState = atomStates.get(atom) as AtomState<Value> | undefined;
     if (!atomState) {
       atomState = {
-        value: atom.read(get as any),
+        value: atom.read(get as any), // eslint-disable-line @typescript-eslint/no-explicit-any
         subscribers: new Set(),
         dependents: new Set(),
       };
-      atomStates.set(atom, atomState as any);
+      atomStates.set(atom, atomState as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     }
 
     return atomState.value as Value;
@@ -54,8 +55,10 @@ export function createStore(plugins: Plugin[] = []): Store {
     // Notify dependents
     atomState.dependents.forEach((dependent) => {
       // For computed atoms, we need to recompute their values
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const dependentState = atomStates.get(dependent) as AtomState<any> | undefined;
       if (dependentState) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newValue = dependent.read(get as any);
         if (dependentState.value !== newValue) {
           dependentState.value = newValue;
@@ -75,11 +78,11 @@ export function createStore(plugins: Plugin[] = []): Store {
     let atomState = atomStates.get(atom) as AtomState<Value> | undefined;
     if (!atomState) {
       atomState = {
-        value: atom.read(get as any),
+        value: atom.read(get as any), // eslint-disable-line @typescript-eslint/no-explicit-any
         subscribers: new Set(),
         dependents: new Set(),
       };
-      atomStates.set(atom, atomState as any);
+      atomStates.set(atom, atomState as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     }
 
     // Add subscriber
@@ -92,7 +95,9 @@ export function createStore(plugins: Plugin[] = []): Store {
   };
 
   // Add method to get state of all atoms (for devtools)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getState = (): Record<string, any> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state: Record<string, any> = {};
     atomStates.forEach((atomState, atom) => {
       // Here we use the atom's internal ID or other identification

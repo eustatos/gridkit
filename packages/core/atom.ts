@@ -11,6 +11,7 @@ export function atom<Value>(
 ): Atom<Value>;
 
 // Implementation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function atom<Value>(...args: any[]): Atom<Value> {
   if (args.length === 1) {
     const [initialValue] = args;
@@ -25,12 +26,19 @@ export function atom<Value>(...args: any[]): Atom<Value> {
       return {
         id: Symbol('atom'),
         read: () => initialValue,
-        write: (_get: Getter, _set: Setter, _value: Value) => {
+        write: (
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          _get: Getter,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          _set: Setter,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          _value: Value
+        ) => {
           // For primitive atoms, we'll handle the write operation in the store
           // These parameters are required to match the write function signature
           // but are not used in this implementation
         },
-      };
+      } as Atom<Value>; // Type assertion to ensure correct return type
     }
   } else if (args.length === 2) {
     const [read, write] = args;
