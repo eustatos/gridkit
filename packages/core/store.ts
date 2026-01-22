@@ -5,24 +5,24 @@ import type { Atom, Store, Subscriber, Getter, Setter } from './types';
 type AtomState<Value> = {
   value: Value;
   subscribers: Set<Subscriber<Value>>;
-  dependents: Set<Atom<unknown>>;
+  dependents: Set<Atom<any>>;
 };
 
 type Plugin = (store: Store) => void;
 
 export function createStore(plugins: Plugin[] = []): Store {
-  const atomStates = new Map<Atom<unknown>, AtomState<unknown>>();
+  const atomStates = new Map<Atom<any>, AtomState<any>>();
 
   const get: Getter = <Value>(atom: Atom<Value>): Value => {
     // Get or create atom state
     let atomState = atomStates.get(atom) as AtomState<Value> | undefined;
     if (!atomState) {
       atomState = {
-        value: atom.read(get as unknown as Getter),
+        value: atom.read(get as any),
         subscribers: new Set(),
         dependents: new Set(),
       };
-      atomStates.set(atom, atomState as unknown as AtomState<unknown>);
+      atomStates.set(atom, atomState as any);
     }
 
     return atomState.value as Value;
@@ -54,9 +54,9 @@ export function createStore(plugins: Plugin[] = []): Store {
     // Notify dependents
     atomState.dependents.forEach((dependent) => {
       // For computed atoms, we need to recompute their values
-      const dependentState = atomStates.get(dependent) as AtomState<unknown> | undefined;
+      const dependentState = atomStates.get(dependent) as AtomState<any> | undefined;
       if (dependentState) {
-        const newValue = dependent.read(get as unknown as Getter);
+        const newValue = dependent.read(get as any);
         if (dependentState.value !== newValue) {
           dependentState.value = newValue;
           dependentState.subscribers.forEach((subscriber) => {
@@ -75,11 +75,11 @@ export function createStore(plugins: Plugin[] = []): Store {
     let atomState = atomStates.get(atom) as AtomState<Value> | undefined;
     if (!atomState) {
       atomState = {
-        value: atom.read(get as unknown as Getter),
+        value: atom.read(get as any),
         subscribers: new Set(),
         dependents: new Set(),
       };
-      atomStates.set(atom, atomState as unknown as AtomState<unknown>);
+      atomStates.set(atom, atomState as any);
     }
 
     // Add subscriber
@@ -92,8 +92,8 @@ export function createStore(plugins: Plugin[] = []): Store {
   };
 
   // Add method to get state of all atoms (for devtools)
-  const getState = (): Record<string, unknown> => {
-    const state: Record<string, unknown> = {};
+  const getState = (): Record<string, any> => {
+    const state: Record<string, any> = {};
     atomStates.forEach((atomState, atom) => {
       // Here we use the atom's internal ID or other identification
       // Since we don't have direct access to the atom's name, we use its index or hash

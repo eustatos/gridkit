@@ -11,7 +11,7 @@ export function atom<Value>(
 ): Atom<Value>;
 
 // Implementation
-export function atom<Value>(...args: [Value] | [(get: Getter) => Value] | [Value, (get: Getter, set: Setter, value: Value) => void]): Atom<Value> {
+export function atom<Value>(...args: any[]): Atom<Value> {
   if (args.length === 1) {
     const [initialValue] = args;
     if (typeof initialValue === 'function') {
@@ -25,14 +25,7 @@ export function atom<Value>(...args: [Value] | [(get: Getter) => Value] | [Value
       return {
         id: Symbol('atom'),
         read: () => initialValue,
-        write: (
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          _get: Getter,
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          _set: Setter,
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          _value: Value
-        ) => {
+        write: (_get: Getter, _set: Setter, _value: Value) => {
           // For primitive atoms, we'll handle the write operation in the store
           // These parameters are required to match the write function signature
           // but are not used in this implementation
