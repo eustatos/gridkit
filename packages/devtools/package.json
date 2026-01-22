@@ -1,19 +1,19 @@
-{\r
-  "name": "@nexus-state/devtools",\r
-  "version": "0.0.0",\r
-  "main": "index.ts",\r
-  "scripts": {\r
-    "build": "tsc",\r
-    "dev": "tsc -w",\r
-    "test": "vitest",\r
-    "lint": "eslint . --ext .ts"\r
-  },\r
-  "dependencies": {\r
-    "@nexus-state/core": "*"\r
-  },\r
-  "devDependencies": {\r
-    "typescript": "^5.0.0",\r
-    "vitest": "^0.34.0",\r
-    "eslint": "^8.40.0"\r
-  }\r
-}\r
+{
+  "name": "@nexus-state/devtools",
+  "version": "0.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@nexus-state/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^0.34.0",
+    "eslint": "^8.40.0"
+  }
+}
