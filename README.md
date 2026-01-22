@@ -64,6 +64,10 @@ const unsubscribe = store.subscribe(countAtom, (value) => {
 
 Visit our [documentation](docs/) for detailed guides and API references.
 
+## Linting
+
+For information on setting up and using linting in this project, see [Linting Setup](docs/linting-setup.md).
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
