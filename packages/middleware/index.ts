@@ -39,7 +39,7 @@ export function middleware<T>(atom: Atom<T>, config: MiddlewareConfig<T>): (stor
     const originalSet = store.set.bind(store);
     
     store.set = <Value>(a: Atom<Value>, update: Value | ((prev: Value) => Value)) => {
-      if (a === atom) {
+      if (a.id === atom.id) {
         // Get the current value
         let processedValue: Value;
         if (typeof update === 'function') {
