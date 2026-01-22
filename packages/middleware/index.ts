@@ -38,10 +38,10 @@ export function middleware<T>(atom: Atom<T>, config: MiddlewareConfig<T>): (stor
     // Extend store functionality to support middleware
     const originalSet = store.set.bind(store);
     
-    store.set = <Value>(a: Atom<Value>, value: Value | ((prev: Value) => Value)) => {
+    store.set = (a: Atom<unknown>, value: unknown) => {
       if (a === atom) {
         // Apply beforeSet middleware
-        let processedValue = typeof value === 'function' ? (value as (prev: T) => T)(store.get(atom)) : value as T;
+        let processedValue = value as T;
         if (beforeSet) {
           const result = beforeSet(a as Atom<T>, processedValue);
           if (result !== undefined) {
@@ -50,7 +50,7 @@ export function middleware<T>(atom: Atom<T>, config: MiddlewareConfig<T>): (stor
         }
         
         // Set the value
-        originalSet(atom, processedValue);
+        originalSet(a, processedValue);
         
         // Apply afterSet middleware
         if (afterSet) {
