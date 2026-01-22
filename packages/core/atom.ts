@@ -11,7 +11,7 @@ export function atom<Value>(
 ): Atom<Value>;
 
 // Implementation
-export function atom<Value>(...args: any[]): Atom<Value> {
+export function atom<Value>(...args: [Value] | [(get: Getter) => Value] | [Value, (get: Getter, set: Setter, value: Value) => void]): Atom<Value> {
   if (args.length === 1) {
     const [initialValue] = args;
     if (typeof initialValue === 'function') {
@@ -25,7 +25,7 @@ export function atom<Value>(...args: any[]): Atom<Value> {
       return {
         id: Symbol('atom'),
         read: () => initialValue,
-        write: (_get, _set, value) => {
+        write: (_get: Getter, _set: Setter, _value: Value) => {
           // For primitive atoms, we'll handle the write operation in the store
         },
       };

@@ -21,7 +21,7 @@ export interface Store {
     atom: Atom<Value>,
     subscriber: Subscriber<Value>
   ) => () => void;
-  getState: () => Record<string, any>;
+  getState: () => Record<string, unknown>;
 }
 
 export interface Atom<Value> {
