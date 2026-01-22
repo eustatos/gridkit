@@ -1,0 +1,24 @@
+{
+  "name": "@nexus-state/vue",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@nexus-state/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^0.34.0",
+    "eslint": "^8.40.0",
+    "@vue/reactivity": "^3.3.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  }
+}
