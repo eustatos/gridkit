@@ -15,13 +15,17 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:serve": "vitepress serve docs",
-    "test:e2e": "npm run test --workspace=e2e"
+    "test:e2e": "npm run test --workspace=e2e",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build && changeset publish"
   },
   "devDependencies": {
     "turbo": "^1.10.0",
     "typescript": "^5.0.0",
     "vitest": "^0.34.0",
     "eslint": "^8.40.0",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "@changesets/cli": "^2.26.0"
   }
 }
