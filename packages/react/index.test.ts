@@ -8,7 +8,7 @@ import * as React from "react";
 // Types for mocks
 type Dispatch<A> = (value: A) => void;
 type SetStateAction<S> = S | ((prevState: S) => S);
-type DependencyList = readonly any[] | undefined;
+type DependencyList = readonly unknown[] | undefined;
 
 // Mock react for testing the hook
 jest.mock("react", () => {
