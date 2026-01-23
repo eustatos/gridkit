@@ -80,6 +80,95 @@ import { useAtom } from '@nexus-state/svelte';
 let count = useAtom(countAtom);
 ```
 
+## Packages
+
+Nexus State provides additional packages that extend functionality for specific use cases.
+
+### @nexus-state/async
+
+Handle asynchronous operations with built-in loading and error states.
+
+```javascript
+import { createAsyncOperation } from '@nexus-state/async';
+
+const fetchData = createAsyncOperation(async () => {
+  const response = await fetch('/api/data');
+  return await response.json();
+});
+
+// Execute async operation
+const data = await fetchData.execute();
+```
+
+### @nexus-state/family
+
+Manage related state as a group with derived and computed values.
+
+```javascript
+import { createFamily } from '@nexus-state/family';
+
+const userFamily = createFamily({
+  profile: { name: '', email: '' },
+  preferences: { theme: 'light' }
+});
+
+// Access nested state
+const name = userFamily.get('profile.name');
+
+// Update nested state
+userFamily.set('profile.name', 'John Doe');
+
+// Add derived state
+userFamily.addDerived('displayName', (state) => {
+  return state.profile.name || 'Anonymous';
+});
+```
+
+### @nexus-state/immer
+
+Use Immer for immutable state updates with a mutable API.
+
+```javascript
+import { createImmerStore } from '@nexus-state/immer';
+
+const store = createImmerStore({ users: [] });
+
+// Update state with mutable API
+store.setState((draft) => {
+  draft.users.push({ id: 1, name: 'John' });
+});
+```
+
+### @nexus-state/middleware
+
+Add cross-cutting concerns like logging, validation, and analytics.
+
+```javascript
+import { createMiddleware } from '@nexus-state/middleware';
+
+const logger = createMiddleware((action, next, store) => {
+  console.log('Action:', action);
+  return next(action);
+});
+
+store.use(logger);
+```
+
+### @nexus-state/persist
+
+Persist state to localStorage, sessionStorage, or custom storage.
+
+```javascript
+import { createPersist } from '@nexus-state/persist';
+
+const persist = createPersist({
+  key: 'app-state',
+  storage: localStorage
+});
+
+store.use(persist);
+```
+
 ## Plugins
 
 Plugins extend the functionality of stores.

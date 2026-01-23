@@ -28,6 +28,56 @@ For Svelte integration:
 npm install @nexus-state/svelte
 ```
 
+### Additional Packages
+
+For async operations:
+
+```bash
+npm install @nexus-state/async
+```
+
+For state families:
+
+```bash
+npm install @nexus-state/family
+```
+
+For Immer integration:
+
+```bash
+npm install @nexus-state/immer
+```
+
+For middleware:
+
+```bash
+npm install @nexus-state/middleware
+```
+
+For persistence:
+
+```bash
+npm install @nexus-state/persist
+```
+
+For CLI tools:
+
+```bash
+npm install -g @nexus-state/cli
+```
+
+For developer tools:
+
+```bash
+npm install @nexus-state/devtools
+```
+
+For Web Worker integration:
+
+```bash
+npm install @nexus-state/web-worker
+```
+
 ## Basic Usage
 
 Here's a simple example of how to use Nexus State:
@@ -53,9 +103,79 @@ const unsubscribe = store.subscribe(countAtom, (value) => {
 });
 ```
 
+## Package-Specific Usage
+
+### Async Operations
+
+```javascript
+import { createAsyncOperation } from '@nexus-state/async';
+
+const fetchData = createAsyncOperation(async () => {
+  const response = await fetch('/api/data');
+  return await response.json();
+});
+
+// Execute async operation
+const data = await fetchData.execute();
+```
+
+### State Families
+
+```javascript
+import { createFamily } from '@nexus-state/family';
+
+const userFamily = createFamily({
+  profile: { name: '', email: '' },
+  preferences: { theme: 'light' }
+});
+
+// Access nested state
+const name = userFamily.get('profile.name');
+```
+
+### Immer Integration
+
+```javascript
+import { createImmerStore } from '@nexus-state/immer';
+
+const store = createImmerStore({ users: [] });
+
+// Update state with mutable API
+store.setState((draft) => {
+  draft.users.push({ id: 1, name: 'John' });
+});
+```
+
+### Middleware
+
+```javascript
+import { createMiddleware } from '@nexus-state/middleware';
+
+const logger = createMiddleware((action, next, store) => {
+  console.log('Action:', action);
+  return next(action);
+});
+
+store.use(logger);
+```
+
+### Persistence
+
+```javascript
+import { createPersist } from '@nexus-state/persist';
+
+const persist = createPersist({
+  key: 'app-state',
+  storage: localStorage
+});
+
+store.use(persist);
+```
+
 ## Next Steps
 
 - Learn about [core concepts](/guide/core-concepts)
 - Explore the [API reference](/api/)
 - Check out [examples](/examples/)
 - Try [recipes](/recipes/)
+- See [package-specific examples](/recipes/package-examples)
