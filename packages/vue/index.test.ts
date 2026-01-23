@@ -3,6 +3,13 @@ import { atom, createStore } from '@nexus-state/core';
 import { useAtom } from './index';
 import * as vue from 'vue';
 
+// Типы для моков
+interface MockRef<T> {
+  value: T;
+}
+
+type OnCleanup = (cleanupFn: () => void) => void;
+
 // Мокаем vue для тестирования хука
 jest.mock('vue', () => ({
   ...jest.requireActual('vue'),
@@ -22,10 +29,13 @@ describe('useAtom', () => {
     
     // Мокаем ref для контроля возвращаемого значения
     const refMock = jest.spyOn(vue, 'ref');
-    refMock.mockImplementation((val) => ({ value: val }));
+    refMock.mockImplementation(<T>(val: T): MockRef<T> => ({ value: val }));
     
     const watchEffectMock = jest.spyOn(vue, 'watchEffect');
-    watchEffectMock.mockImplementation((fn) => fn());
+    watchEffectMock.mockImplementation((fn) => {
+      fn(jest.fn()); // onCleanup function
+      return jest.fn(); // stop handler
+    });
     
     const result = useAtom(testAtom, store);
     
@@ -37,11 +47,18 @@ describe('useAtom', () => {
     const testAtom = atom(0);
     
     // Мокаем ref для контроля возвращаемого значения
+    let refValue: { value: number } = { value: 0 };
     const refMock = jest.spyOn(vue, 'ref');
-    refMock.mockImplementation((val) => ({ value: val }));
+    refMock.mockImplementation(<T>(val: T): MockRef<T> => {
+      refValue = { value: val as unknown as number };
+      return refValue as unknown as MockRef<T>;
+    });
     
     const watchEffectMock = jest.spyOn(vue, 'watchEffect');
-    watchEffectMock.mockImplementation((fn) => fn());
+    watchEffectMock.mockImplementation((fn) => {
+      fn(jest.fn()); // onCleanup function
+      return jest.fn(); // stop handler
+    });
     
     const result = useAtom(testAtom, store);
     
@@ -51,10 +68,10 @@ describe('useAtom', () => {
     store.set(testAtom, 1);
     
     // Вызываем watchEffect вручную, так как мы замокали его
-    watchEffectMock.mock.calls[0][0]();
+    const onCleanup = jest.fn();
+    (watchEffectMock.mock.calls[0][0] as (onCleanup: OnCleanup) => void)(onCleanup);
     
     // Проверяем, что значение обновилось
-    // Поскольку мы мокаем ref, нам нужно вручную обновить refValue
     expect(result.value).toBe(1);
   });
 });

@@ -5,6 +5,10 @@ import { renderHook, act } from "@testing-library/react";
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
 import * as React from "react";
 
+// Типы для моков
+type Dispatch<A> = (value: A) => void;
+type SetStateAction<S> = S | ((prevState: S) => S);
+
 // Мокаем react для тестирования хука
 jest.mock("react", () => {
   const actualReact = jest.requireActual("react") as typeof React;
@@ -28,13 +32,18 @@ describe("useAtom", () => {
 
     // Мокаем useState и useMemo для контроля возвращаемых значений
     const useStateMock = jest.spyOn(React, "useState");
-    useStateMock.mockImplementation((initialState: unknown) => [initialState, jest.fn()]);
+    useStateMock.mockImplementation(<T>(initialState: T | (() => T)) => {
+      const state = typeof initialState === 'function' ? (initialState as () => T)() : initialState;
+      return [state, jest.fn() as Dispatch<SetStateAction<T>>];
+    });
 
     const useMemoMock = jest.spyOn(React, "useMemo");
-    useMemoMock.mockImplementation(() => store);
+    useMemoMock.mockImplementation((factory) => factory());
 
     const useEffectMock = jest.spyOn(React, "useEffect");
-    useEffectMock.mockImplementation((fn) => fn());
+    useEffectMock.mockImplementation((fn) => {
+      fn(() => {}); // cleanup function
+    });
 
     const { result } = renderHook(() => useAtom(testAtom, store));
 
@@ -48,13 +57,18 @@ describe("useAtom", () => {
     // Мокаем useState и useMemo для контроля возвращаемых значений
     const setState = jest.fn();
     const useStateMock = jest.spyOn(React, "useState");
-    useStateMock.mockImplementation((initialState: unknown) => [initialState, setState]);
+    useStateMock.mockImplementation(<T>(initialState: T | (() => T)) => {
+      const state = typeof initialState === 'function' ? (initialState as () => T)() : initialState;
+      return [state, setState as Dispatch<SetStateAction<T>>];
+    });
 
     const useMemoMock = jest.spyOn(React, "useMemo");
-    useMemoMock.mockImplementation(() => store);
+    useMemoMock.mockImplementation((factory) => factory());
 
     const useEffectMock = jest.spyOn(React, "useEffect");
-    useEffectMock.mockImplementation(<T>(fn: () => T) => fn());
+    useEffectMock.mockImplementation((fn) => {
+      fn(() => {}); // cleanup function
+    });
 
     const { result } = renderHook(() => useAtom(testAtom, store));
 
