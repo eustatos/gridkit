@@ -9,7 +9,7 @@ jest.mock('vue', () => {
   return {
     ...actualVue,
     ref: jest.fn((val: unknown) => ({ value: val })),
-    watchEffect: jest.fn((fn: (onCleanup: (fn: () => void) => void) => void, _options?: unknown) => {
+    watchEffect: jest.fn((fn: (onCleanup: (fn: () => void) => void) => void) => {
       // Call the effect function with a mock cleanup function
       fn(() => {});
       // Return a mock WatchHandle
@@ -34,7 +34,7 @@ describe('useAtom', () => {
     
     // Setup the mocks
     (vue.ref as jest.Mock).mockImplementation((val: unknown) => ({ value: val }));
-    (vue.watchEffect as jest.Mock).mockImplementation((fn: (onCleanup: (fn: () => void) => void) => void, _options?: unknown) => {
+    (vue.watchEffect as jest.Mock).mockImplementation((fn: (onCleanup: (fn: () => void) => void) => void) => {
       // Call the effect function with a mock cleanup function
       fn(() => {});
       // Return a mock WatchHandle
@@ -61,7 +61,7 @@ describe('useAtom', () => {
       return refValue;
     });
     
-    (vue.watchEffect as jest.Mock).mockImplementation((fn: (onCleanup: (fn: () => void) => void) => void, _options?: unknown) => {
+    (vue.watchEffect as jest.Mock).mockImplementation((fn: (onCleanup: (fn: () => void) => void) => void) => {
       // Call the effect function with a mock cleanup function
       fn(() => {});
       // Return a mock WatchHandle
