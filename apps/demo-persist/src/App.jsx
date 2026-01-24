@@ -13,36 +13,47 @@ const todoListAtom = atom([]);
 const counterAtom = atom(0);
 
 // Create store with persistence plugins
-const store = createStore([
-  persist(userNameAtom, {
-    key: 'userName',
-    storage: localStorageStorage
-  }),
-  persist(userPreferencesAtom, {
-    key: 'userPreferences',
-    storage: localStorageStorage
-  }),
-  persist(todoListAtom, {
-    key: 'todoList',
-    storage: localStorageStorage
-  }),
-  persist(counterAtom, {
-    key: 'counter',
-    storage: localStorageStorage
-  })
-]);
+// Initialize store with persistence plugins
+const store = createStore();
+
+// Add persistence plugins to the store
+store.use(persist(userNameAtom, {
+  key: 'userName',
+  storage: localStorageStorage
+}));
+
+store.use(persist(userPreferencesAtom, {
+  key: 'userPreferences',
+  storage: localStorageStorage
+}));
+
+store.use(persist(todoListAtom, {
+  key: 'todoList',
+  storage: localStorageStorage
+}));
+
+store.use(persist(counterAtom, {
+  key: 'counter',
+  storage: localStorageStorage
+}));
 
 export const App = () => {
-  const [userName, setUserName] = React.useState(store.get(userNameAtom));
-  const [preferences, setPreferences] = React.useState(store.get(userPreferencesAtom));
-  const [todos, setTodos] = React.useState(store.get(todoListAtom));
-  const [counter, setCounter] = React.useState(store.get(counterAtom));
+  const [userName, setUserName] = React.useState(() => store.get(userNameAtom));
+  const [preferences, setPreferences] = React.useState(() => store.get(userPreferencesAtom));
+  const [todos, setTodos] = React.useState(() => store.get(todoListAtom));
+  const [counter, setCounter] = React.useState(() => store.get(counterAtom));
   const [newTodo, setNewTodo] = React.useState('');
   const [showSavedMessage, setShowSavedMessage] = React.useState(false);
   const [showClearedMessage, setShowClearedMessage] = React.useState(false);
 
   // Synchronize state with atoms
   React.useEffect(() => {
+    // Get initial values from store after plugins are initialized
+    setUserName(store.get(userNameAtom));
+    setPreferences(store.get(userPreferencesAtom));
+    setTodos(store.get(todoListAtom));
+    setCounter(store.get(counterAtom));
+    
     const unsubscribeName = store.subscribe(userNameAtom, (newValue) => {
       setUserName(newValue);
     });
