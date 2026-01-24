@@ -1,5 +1,13 @@
 # @nexus-state/svelte
 
+## 0.1.2
+
+### Patch Changes
+
+- add repository and documentation link
+- Updated dependencies
+  - @nexus-state/core@0.1.3
+
 ## 0.1.1
 
 ### Patch Changes

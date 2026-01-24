@@ -1,5 +1,11 @@
 # @nexus-state/core
 
+## 0.1.3
+
+### Patch Changes
+
+- add repository and documentation link
+
 ## 0.1.2
 
 ### Patch Changes
