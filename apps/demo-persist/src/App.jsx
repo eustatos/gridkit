@@ -1,19 +1,36 @@
 import React from 'react';
 import { atom, createStore } from '@nexus-state/core';
-import { persistAtom } from '@nexus-state/persist';
+import { persist, localStorageStorage } from '@nexus-state/persist';
 
-// Создаем хранилище
-const store = createStore();
-
-// Создаем атомы с персистентностью
-const userNameAtom = persistAtom('userName', 'Гость');
-const userPreferencesAtom = persistAtom('userPreferences', {
+// Создаем атомы
+const userNameAtom = atom('Гость');
+const userPreferencesAtom = atom({
   theme: 'light',
   language: 'ru',
   notifications: true
 });
-const todoListAtom = persistAtom('todoList', []);
-const counterAtom = persistAtom('counter', 0);
+const todoListAtom = atom([]);
+const counterAtom = atom(0);
+
+// Создаем хранилище с плагинами персистентности
+const store = createStore([
+  persist(userNameAtom, {
+    key: 'userName',
+    storage: localStorageStorage
+  }),
+  persist(userPreferencesAtom, {
+    key: 'userPreferences',
+    storage: localStorageStorage
+  }),
+  persist(todoListAtom, {
+    key: 'todoList',
+    storage: localStorageStorage
+  }),
+  persist(counterAtom, {
+    key: 'counter',
+    storage: localStorageStorage
+  })
+]);
 
 export const App = () => {
   const [userName, setUserName] = React.useState(store.get(userNameAtom));
@@ -104,10 +121,10 @@ export const App = () => {
   };
 
   const clearAllData = () => {
-    localStorage.removeItem('persist:userName');
-    localStorage.removeItem('persist:userPreferences');
-    localStorage.removeItem('persist:todoList');
-    localStorage.removeItem('persist:counter');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userPreferences');
+    localStorage.removeItem('todoList');
+    localStorage.removeItem('counter');
     window.location.reload();
   };
 
@@ -234,9 +251,9 @@ export const App = () => {
       <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#e8f4fd', borderRadius: '4px' }}>
         <h3>Как это работает:</h3>
         <ul>
-          <li><strong>persistAtom</strong> автоматически сохраняет состояние в localStorage</li>
+          <li><strong>persist</strong> - плагин, который автоматически сохраняет состояние атомов в localStorage</li>
           <li>При перезагрузке страницы данные автоматически восстанавливаются</li>
-          <li>Каждый атом сохраняется с префиксом "persist:"</li>
+          <li>Каждый атом сохраняется с указанным ключом</li>
           <li>Поддерживаются любые типы данных, которые могут быть сериализованы в JSON</li>
         </ul>
       </div>
