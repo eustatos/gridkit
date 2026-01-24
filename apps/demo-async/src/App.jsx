@@ -1,12 +1,12 @@
 import React from 'react';
-import { createStore } from '@nexus-state/core';
-import { atomWithAsync } from '@nexus-state/async';
+import { createStore, atom } from '@nexus-state/core';
+import '@nexus-state/async';
 
 // Create store
 const store = createStore();
 
 // Create async atom for user data
-const [userAtom, fetchUser] = atomWithAsync({
+const [userAtom, fetchUser] = atom.async({
   fetchFn: async () => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -26,7 +26,7 @@ const [userAtom, fetchUser] = atomWithAsync({
 });
 
 // Create async atom for items list
-const [itemsAtom, fetchItems] = atomWithAsync({
+const [itemsAtom, fetchItems] = atom.async({
   initialValue: [],
   fetchFn: async () => {
     // Simulate API call delay
