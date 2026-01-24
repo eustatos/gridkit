@@ -1,6 +1,6 @@
 {
   "name": "@nexus-state/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "index.ts",
   "homepage": "https://nexus-state.website.yandexcloud.net/",
   "repository": {
