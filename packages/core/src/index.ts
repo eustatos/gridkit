@@ -26,6 +26,10 @@ export type {
   Predicate,
 } from './types/base';
 
+// Export state store
+export { createStore } from './state';
+export type { Store } from './state';
+
 // Also export the types module for convenience
 export type * as Types from './types';
 
