@@ -1,9 +1,9 @@
 /**
  * Re-exports of all core types from GridKit.
- * 
+ *
  * This file provides a single entry point for importing all core types.
  * Use this for convenience when you need multiple types.
- * 
+ *
  * @example
  * ```typescript
  * import type {
@@ -13,7 +13,7 @@
  *   AccessorValue,
  * } from '@gridkit/core/types';
  * ```
- * 
+ *
  * @module @gridkit/core/types
  */
 
@@ -30,3 +30,5 @@ export type {
   Comparator,
   Predicate,
 } from './base';
+
+export type { Table, TableOptions, TableState, TableMeta } from './table';
