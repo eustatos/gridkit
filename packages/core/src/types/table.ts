@@ -16,12 +16,12 @@ import type {
   Listener,
   Unsubscribe,
 } from './base';
+import type { Column, ColumnDef } from './column';
 
-// Temporary types for Column and Row - will be properly defined in CORE-003 and CORE-004
-type Column = any;
-type Row = any;
-type RowModel = any;
-type ColumnDef = any;
+// Temporary types for Row and RowModel - will be properly defined in CORE-004
+// TODO: Replace with actual Row and RowModel types from CORE-004
+type Row<_TData extends RowData> = any;
+type RowModel<_TData extends RowData> = any;
 
 /**
  * Main table instance interface.
@@ -92,14 +92,14 @@ export interface Table<TData extends RowData> {
    *
    * @returns Array of all column instances
    */
-  getAllColumns(): Column[];
+  getAllColumns(): Column<TData>[];
 
   /**
    * Get only visible columns.
    *
    * @returns Array of visible column instances
    */
-  getVisibleColumns(): Column[];
+  getVisibleColumns(): Column<TData>[];
 
   /**
    * Get column by ID.
@@ -107,7 +107,7 @@ export interface Table<TData extends RowData> {
    * @param id - Column identifier
    * @returns Column instance or undefined if not found
    */
-  getColumn(id: ColumnId): Column | undefined;
+  getColumn(id: ColumnId): Column<TData> | undefined;
 
   /**
    * Get current row model.
@@ -115,7 +115,7 @@ export interface Table<TData extends RowData> {
    *
    * @returns Current row model
    */
-  getRowModel(): RowModel;
+  getRowModel(): RowModel<TData>;
 
   /**
    * Get row by ID.
@@ -123,7 +123,7 @@ export interface Table<TData extends RowData> {
    * @param id - Row identifier
    * @returns Row instance or undefined if not found
    */
-  getRow(id: RowId): Row | undefined;
+  getRow(id: RowId): Row<TData> | undefined;
 
   /**
    * Reset table to initial state.
@@ -169,7 +169,7 @@ export interface TableOptions<TData extends RowData> {
    * Column definitions.
    * At least one column is required.
    */
-  columns: ColumnDef[];
+  columns: ColumnDef<TData>[];
 
   /**
    * Initial data for the table.
@@ -244,7 +244,7 @@ export interface TableOptions<TData extends RowData> {
    * defaultColumn: Partial<ColumnDef>;
    * ```
    */
-  defaultColumn?: Partial<ColumnDef>;
+  defaultColumn?: Partial<ColumnDef<TData>>;
 
   /**
    * Custom metadata for application use.
@@ -323,7 +323,7 @@ export interface TableState<TData extends RowData> {
    * rowSelection: {
    *   'user-1': true,
    *   'user-3': true,
-   * }
+  }
    * ```
    */
   rowSelection: Record<RowId, boolean>;

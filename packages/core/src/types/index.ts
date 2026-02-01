@@ -32,3 +32,17 @@ export type {
 } from './base';
 
 export type { Table, TableOptions, TableState, TableMeta } from './table';
+
+export type {
+  ColumnDef,
+  Column,
+  AccessorFn,
+  AccessorKey,
+  HeaderContext,
+  CellContext,
+  FooterContext,
+  HeaderRenderer,
+  CellRenderer,
+  FooterRenderer,
+  ColumnMeta,
+} from './column';
