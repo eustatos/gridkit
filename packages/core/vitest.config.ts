@@ -13,7 +13,7 @@ export default defineConfig({
         'dist/**',
         '**/*.test.ts',
         '**/__tests__/**',
-        '**/types/**',
+        '**/types/**', // Type-only files don't have runtime code to cover
       ],
       thresholds: {
         lines: 90,
