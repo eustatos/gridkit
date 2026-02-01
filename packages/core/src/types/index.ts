@@ -46,3 +46,5 @@ export type {
   FooterRenderer,
   ColumnMeta,
 } from './column';
+
+export type { Row, RowModel, Cell } from './row';

@@ -12,11 +12,8 @@
  */
 
 import type { RowData, ColumnId } from './base';
+import type { Row } from './row';
 import type { Table } from './table';
-
-// Temporary type for Row - will be properly defined in CORE-004
-// TODO: Replace with actual Row type from CORE-004
-type Row<_TData extends RowData> = any;
 
 /**
  * Function that extracts cell value from row data.

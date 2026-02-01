@@ -17,11 +17,7 @@ import type {
   Unsubscribe,
 } from './base';
 import type { Column, ColumnDef } from './column';
-
-// Temporary types for Row and RowModel - will be properly defined in CORE-004
-// TODO: Replace with actual Row and RowModel types from CORE-004
-type Row<_TData extends RowData> = any;
-type RowModel<_TData extends RowData> = any;
+import type { Row, RowModel } from './row';
 
 /**
  * Main table instance interface.
