@@ -42,6 +42,10 @@
     ],
     "author": "GridKit Team",
     "license": "MIT",
+    "dependencies": {
+        "zod": "^3.22.4",
+        "yaml": "^2.3.4"
+    },
     "devDependencies": {
         "@types/node": "^20.11.5",
         "tsup": "^8.0.1",
@@ -50,9 +54,5 @@
     },
     "publishConfig": {
         "access": "public"
-    },
-    "dependencies": {
-        "yaml": "^2.3.4",
-        "zod": "^3.22.4"
     }
 }
