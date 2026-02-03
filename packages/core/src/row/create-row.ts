@@ -1,172 +1,17 @@
 /**
- * Creates a row instance from row data.
+ * Creates row instances from data and column definitions.
+ * This function is internal to the table creation process.
+ *
+ * @module @gridkit/core/row/create-row
  */
-export function createRow<TData extends RowData>(
-  config: RowConfig<TData>
-): Row<TData> {
-  const {
-    data,
-    index,
-    table,
-    columns,
-    getRowId,
-    parentRow,
-    depth = 0,
-  } = config;
 
-  // Basic validation
-  if (!data) {
-    throw new GridKitError('ROW_INVALID_DATA', 'Row data is required');
-  }
+import { GridKitError } from '../errors';
+import type { RowData, RowId } from '../types/base';
+import type { Column } from '../types/column';
+import type { Row, RowModel, Cell } from '../types/row';
+import type { Table } from '../types/table';
 
-  if (typeof config.getRowId !== 'function') {
-    throw new GridKitError('ROW_INVALID_DATA', 'getRowId must be a function');
-  }
-
-  // Get row ID
-  const id = config.getRowId(data, index);
-
-  if (id == null) {
-    throw new GridKitError(
-      'ROW_INVALID_ID',
-      `getRowId returned null or undefined for row at index ${index}`
-    );
-  }
-
-  // Create cells
-  const cells = columns.map((column) => {
-    const cellId = `${id}_${column.id}`;
-
-    const cell: Cell<TData> = {
-      id: cellId,
-      row: null as any, // Set later
-      column,
-
-      getValue() {
-        const columnDef = column.columnDef;
-        if (columnDef.accessorFn) {
-          return columnDef.accessorFn(data);
-        }
-        if (columnDef.accessorKey) {
-          const parts = columnDef.accessorKey.split('.');
-          let value: any = data;
-          for (const part of parts) {
-            if (value == null) return undefined as any;
-            value = value[part];
-          }
-          return value;
-        }
-        return undefined as any;
-      },
-
-      renderValue() {
-        return this.getValue();
-      },
-    };
-
-    return cell;
-  });
-
-  // Create row
-  const row: Row<TData> = {
-    id,
-    table,
-    original: data,
-    index,
-    depth,
-    parentRow,
-    subRows: [],
-
-    getAllCells() {
-      return cells;
-    },
-
-    getVisibleCells() {
-      return cells.filter((cell) => cell.column.getIsVisible());
-    },
-
-    getCell(columnId) {
-      return cells.find((cell) => cell.column.id === columnId);
-    },
-
-    getValue(columnId) {
-      const cell = this.getCell(columnId);
-      return cell?.getValue() as any;
-    },
-
-    getIsSelected() {
-      const state = table.getState();
-      return state.rowSelection[id] === true;
-    },
-
-    toggleSelected(value) {
-      table.setState((prev) => ({
-        ...prev,
-        rowSelection: {
-          ...prev.rowSelection,
-          [id]: value !== undefined ? value : !this.getIsSelected(),
-        },
-      }));
-    },
-
-    getIsExpanded() {
-      const state = table.getState();
-      return state.expanded[id] === true;
-    },
-
-    toggleExpanded(value) {
-      table.setState((prev) => ({
-        ...prev,
-        expanded: {
-          ...prev.expanded,
-          [id]: value !== undefined ? value : !this.getIsExpanded(),
-        },
-      }));
-    },
-
-    getParentRows() {
-      const parents: Row<TData>[] = [];
-      let current = this.parentRow;
-      while (current) {
-        parents.unshift(current);
-        current = current.parentRow;
-      }
-      return parents;
-    },
-
-    getLeafRows() {
-      const leaves: Row<TData>[] = [];
-      function collectLeaves(row: Row<TData>) {
-        if (row.subRows.length === 0) {
-          leaves.push(row);
-        } else {
-          row.subRows.forEach(collectLeaves);
-        }
-      }
-      collectLeaves(this);
-      return leaves;
-    },
-  };
-
-  // Set row reference on cells
-  cells.forEach((cell) => {
-    (cell as any).row = row;
-  });
-
-  return row;
-}
-
-export interface RowConfig<TData extends RowData> {
-  data: TData;
-  index: number;
-  table: Table<TData>;
-  columns: Column<TData>[];
-  getRowId: (row: TData, index: number) => RowId;
-  parentRow?: Row<TData>;
-  depth?: number;
-}
-
-export interface RowModelConfig<TData extends RowData> {
+interface BuildRowModelOptions<TData extends RowData> {
   data: TData[];
   columns: Column<TData>[];
   getRowId: (row: TData, index: number) => RowId;
@@ -175,38 +20,284 @@ export interface RowModelConfig<TData extends RowData> {
   depth?: number;
 }
 
+interface BuildRowOptions<TData extends RowData> {
+  rowData: TData;
+  index: number;
+  columns: Column<TData>[];
+  table: Table<TData>;
+  getRowId: (row: TData, index: number) => RowId;
+  parentRow?: Row<TData>;
+  depth?: number;
+}
+/**
+ * Extract value from row data using column accessor.
+ */
+function extractValue<TData extends RowData, TValue>(
+  rowData: TData,
+  column: Column<TData, TValue>
+): TValue {
+  const { columnDef } = column;
+
+  if (columnDef.accessorFn) {
+    return columnDef.accessorFn(rowData);
+  }
+
+  if (columnDef.accessorKey) {
+    // Simple property access
+    const key = columnDef.accessorKey;
+    if (key in rowData) {
+      return (rowData as any)[key];
+    }
+
+    // Handle dot notation for nested properties
+    const parts = key.split('.');
+    let value: any = rowData;
+    for (const part of parts) {
+      if (value && typeof value === 'object' && part in value) {
+        value = value[part];
+      } else {
+        return undefined as TValue;
+      }
+    }
+    return value;
+  }
+
+  // Fallback to undefined
+  return undefined as TValue;
+}
+/**
+ * Create a single row instance.
+ * Internal function used by buildRowModel.
+ */
+export function createRow<TData extends RowData>(
+  options: BuildRowOptions<TData>
+): Row<TData> {
+  const {
+    rowData,
+    index,
+    columns,
+    table,
+    getRowId,
+    parentRow,
+    depth = parentRow ? parentRow.depth + 1 : 0,
+  } = options;
+
+  // Validate inputs
+  if (!rowData || typeof rowData !== 'object') {
+    throw new GridKitError('Row data must be an object', {
+      code: 'INVALID_ROW_DATA',
+      context: { rowData, index },
+    });
+  }
+
+  if (typeof getRowId !== 'function') {
+    throw new GridKitError('getRowId must be a function', {
+      code: 'INVALID_GET_ROW_ID',
+      context: { getRowId },
+    });
+  }
+
+  const rowId = getRowId(rowData, index);
+
+  const row: Row<TData> = {
+    id: rowId,
+    table,
+    original: rowData,
+    index,
+    depth,
+    parentRow,
+    subRows: [],
+
+    getAllCells(): Cell<TData>[] {
+      return columns.map((column) => {
+        const cell: Cell<TData> = {
+          id: `${rowId}_${column.id}`,
+          row,
+          column,
+          getValue: () => extractValue(rowData, column),
+          renderValue: () => {
+            const value = extractValue(rowData, column);
+            // For now, just return the value
+            // Later, we can apply formatting, etc.
+            return value;
+          },
+        };
+        return cell;
+      });
+    },
+
+    getVisibleCells(): Cell<TData>[] {
+      const visibleColumns = columns.filter(
+        (col) => table.getState().columnVisibility[col.id] !== false
+      );
+      return visibleColumns.map((column) => {
+        const cell: Cell<TData> = {
+          id: `${rowId}_${column.id}`,
+          row,
+          column,
+          getValue: () => extractValue(rowData, column),
+          renderValue: () => {
+            const value = extractValue(rowData, column);
+            return value;
+          },
+        };
+        return cell;
+      });
+    },
+
+    getCell(columnId: string): Cell<TData> | undefined {
+      const column = columns.find((col) => col.id === columnId);
+      if (!column) return undefined;
+
+      return {
+        id: `${rowId}_${column.id}`,
+        row,
+        column,
+        getValue: () => extractValue(rowData, column),
+        renderValue: () => {
+          const value = extractValue(rowData, column);
+          return value;
+        },
+      };
+    },
+
+    getValue<TValue = unknown>(columnId: string): TValue {
+      const cell = this.getCell(columnId);
+      return cell ? cell.getValue() : (undefined as any);
+    },
+
+    getIsSelected(): boolean {
+      const state = table.getState();
+      return !!state.rowSelection[rowId];
+    },
+
+    toggleSelected(value?: boolean): void {
+      const state = table.getState();
+      const current = !!state.rowSelection[rowId];
+      const newValue = value ?? !current;
+
+      table.setState((prev) => ({
+        ...prev,
+        rowSelection: {
+          ...prev.rowSelection,
+          [rowId]: newValue,
+        },
+      }));
+    },
+
+    getIsExpanded(): boolean {
+      const state = table.getState();
+      return !!state.expanded[rowId];
+    },
+
+    toggleExpanded(value?: boolean): void {
+      const state = table.getState();
+      const current = !!state.expanded[rowId];
+      const newValue = value ?? !current;
+
+      table.setState((prev) => ({
+        ...prev,
+        expanded: {
+          ...prev.expanded,
+          [rowId]: newValue,
+        },
+      }));
+    },
+
+    getParentRows(): Row<TData>[] {
+      const parents: Row<TData>[] = [];
+      let current = parentRow;
+      while (current) {
+        parents.unshift(current);
+        current = current.parentRow;
+      }
+      return parents;
+    },
+
+    getLeafRows(): Row<TData>[] {
+      const leaves: Row<TData>[] = [];
+
+      const collectLeaves = (row: Row<TData>) => {
+        if (row.subRows.length === 0) {
+          leaves.push(row);
+        } else {
+          row.subRows.forEach(collectLeaves);
+        }
+      };
+
+      collectLeaves(row);
+      return leaves;
+    },
+  };
+
+  return row;
+}
+
+/**
+ * Build complete row model from data.
+ * Creates all rows, handles flattening for tree data, and builds lookup maps.
+ *
+ * @template TData - Row data type
+ * @param options - Row model options
+ * @returns Complete row model
+ *
+ * @public
+ */
 export function buildRowModel<TData extends RowData>(
-  config: RowModelConfig<TData>
+  options: BuildRowModelOptions<TData>
 ): RowModel<TData> {
+  const {
+    data,
+    columns,
+    getRowId,
+    table,
+    parentRow,
+    depth = parentRow ? parentRow.depth + 1 : 0,
+  } = options;
+  // Validate inputs
+  if (!Array.isArray(data)) {
+    throw new GridKitError('Data must be an array', {
+      code: 'INVALID_DATA',
+      context: { data },
+    });
+  }
+
+  if (typeof getRowId !== 'function') {
+    throw new GridKitError('getRowId must be a function', {
+      code: 'INVALID_GET_ROW_ID',
+      context: { getRowId },
+    });
+  }
+
   const rows: Row<TData>[] = [];
   const flatRows: Row<TData>[] = [];
   const rowsById = new Map<RowId, Row<TData>>();
 
-  config.data.forEach((data, index) => {
+  // Create rows
+  data.forEach((rowData, index) => {
     const row = createRow({
-      data,
+      rowData,
       index,
-      table: config.table,
-      columns: config.columns,
-      getRowId: config.getRowId,
-      parentRow: config.parentRow,
-      depth: config.depth ?? 0,
+      columns,
+      table,
+      getRowId,
+      parentRow,
+      depth,
     });
 
     rows.push(row);
     flatRows.push(row);
     rowsById.set(row.id, row);
 
-    if (config.parentRow) {
-      config.parentRow.subRows.push(row);
+    // Add to parent's subRows if provided
+    if (parentRow) {
+      parentRow.subRows.push(row);
     }
   });
 
-  return { rows, flatRows, rowsById };
+  return {
+    rows,
+    flatRows,
+    rowsById,
+  };
 }
-
-import type { RowData, RowId } from '../types/base';
-import type { Row, Cell, RowModel } from '../types/row';
-import type { Column } from '../types/column';
-import type { Table } from '../types/table';
-import { GridKitError } from '../errors';

@@ -18,10 +18,17 @@ import type {
 } from './base';
 import type { Column, ColumnDef } from './column';
 import type { Row, RowModel } from './row';
+import type {
+  EventType,
+  EventPayload,
+  EventHandler,
+  EventHandlerOptions,
+  EventPriority,
+} from '../events/types';
 
 /**
  * Main table instance interface.
- * Provides access to all table functionality.
+ * Provides access to all table functionality including event system.
  *
  * @template TData - The row data type extending RowData
  *
@@ -35,6 +42,11 @@ import type { Row, RowModel } from './row';
  * // Access table methods
  * const state = table.getState();
  * const rows = table.getRowModel();
+ *
+ * // Use event system
+ * table.on('row:add', (event) => {
+ *   console.log('Row added:', event.payload.rowId);
+ * });
  * ```
  *
  * @public
@@ -133,6 +145,129 @@ export interface Table<TData extends RowData> {
    * Table cannot be used after calling this method.
    */
   destroy(): void;
+
+  /**
+   * Subscribe to an event.
+   *
+   * @template T - Event type
+   * @param event - Event type
+   * @param handler - Event handler
+   * @param options - Handler options
+   * @returns Unsubscribe function
+   *
+   * @example
+   * ```typescript
+   * const unsubscribe = table.on('row:add', (event) => {
+   *   console.log('Row added:', event.payload.rowId);
+   * });
+   *
+   * // Later:
+   * unsubscribe();
+   * ```
+   */
+  on<T extends EventType>(
+    event: T,
+    handler: EventHandler<EventPayload<T>>,
+    options?: EventHandlerOptions
+  ): () => void;
+
+  /**
+   * Subscribe to event once.
+   * Automatically unsubscribes after first invocation.
+   *
+   * @template T - Event type
+   * @param event - Event type
+   * @param handler - Event handler
+   * @returns Unsubscribe function
+   *
+   * @example
+   * ```typescript
+   * table.once('grid:ready', (event) => {
+   *   console.log('Grid is ready!');
+   * });
+   * ```
+   */
+  once<T extends EventType>(
+    event: T,
+    handler: EventHandler<EventPayload<T>>
+  ): () => void;
+
+  /**
+   * Unsubscribe from event.
+   *
+   * @template T - Event type
+   * @param event - Event type
+   * @param handler - Event handler
+   *
+   * @example
+   * ```typescript
+   * const handler = (event) => console.log(event);
+   * table.on('row:add', handler);
+   *
+   * // Later:
+   * table.off('row:add', handler);
+   * ```
+   */
+  off<T extends EventType>(
+    event: T,
+    handler: EventHandler<EventPayload<T>>
+  ): void;
+
+  /**
+   * Emit an event.
+   *
+   * @template T - Event type
+   * @param event - Event type
+   * @param payload - Event payload
+   * @param options - Emission options
+   *
+   * @example
+   * ```typescript
+   * table.emit('row:add', {
+   *   rowId: '123',
+   *   index: 0,
+   *   isNew: true
+   * });
+   * ```
+   */
+  emit<T extends EventType>(
+    event: T,
+    payload: EventPayload<T>,
+    options?: {
+      priority?: EventPriority;
+      source?: string;
+      metadata?: Record<string, unknown>;
+    }
+  ): void;
+
+  /**
+   * Emit multiple events in batch.
+   * More efficient than individual emits.
+   *
+   * @template T - Event type
+   * @param events - Array of events to emit
+   *
+   * @example
+   * ```typescript
+   * table.emitBatch([
+   *   {
+   *     event: 'row:update',
+   *     payload: { rowId: '1', changes: {} },
+   *   },
+   *   {
+   *     event: 'selection:change',
+   *     payload: { selectedIds: ['1'] },
+   *   },
+   * ]);
+   * ```
+   */
+  emitBatch<T extends EventType>(
+    events: Array<{
+      event: T;
+      payload: EventPayload<T>;
+      priority?: EventPriority;
+    }>
+  ): void;
 
   /**
    * Original options used to create the table.

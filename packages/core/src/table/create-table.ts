@@ -1,3 +1,17 @@
+import { createColumn } from '../column';
+import { RowData, TableOptions, Table, TableState } from '../core';
+import { GridKitError } from '../errors';
+import {
+  createEventBus,
+  EventHandler,
+  EventHandlerOptions,
+  EventPayload,
+  EventPriority,
+  EventType,
+} from '../events';
+import { buildRowModel } from '../row';
+import { createStore } from '../state';
+
 /**
  * Creates a new table instance.
  *
@@ -98,8 +112,90 @@ export function createTable<TData extends RowData>(
   // Create store
   const store = createStore(initialState);
 
+  // Create event bus for this table instance
+  const eventBus = createEventBus({
+    devMode: normalizedOptions.debugMode,
+    maxHandlersPerEvent: 1000,
+  });
+
   // Track destroyed state
   let isDestroyed = false;
+
+  // Helper function to emit state change events
+  const emitStateChangeEvents = (
+    oldState: TableState<TData>,
+    newState: TableState<TData>
+  ) => {
+    if (isDestroyed) return;
+
+    // Emit grid events
+    if (oldState.data !== newState.data) {
+      // Data changed - emit row events
+      // Note: More sophisticated diffing could be added here
+      eventBus.emit('grid:data-change', {
+        oldData: oldState.data,
+        newData: newState.data,
+      });
+    }
+
+    // Column visibility changes
+    const oldVisibility = oldState.columnVisibility;
+    const newVisibility = newState.columnVisibility;
+    for (const columnId in newVisibility) {
+      if (oldVisibility[columnId] !== newVisibility[columnId]) {
+        eventBus.emit('column:visibility-change', {
+          columnId,
+          visible: newVisibility[columnId] !== false,
+        });
+      }
+    }
+
+    // Column order changes
+    if (
+      JSON.stringify(oldState.columnOrder) !==
+      JSON.stringify(newState.columnOrder)
+    ) {
+      eventBus.emit('column:order-change', {
+        oldOrder: oldState.columnOrder,
+        newOrder: newState.columnOrder,
+      });
+    }
+
+    // Row selection changes
+    const oldSelection = oldState.rowSelection;
+    const newSelection = newState.rowSelection;
+    const added: (string | number)[] = [];
+    const removed: (string | number)[] = [];
+
+    for (const rowId in newSelection) {
+      if (newSelection[rowId] && !oldSelection[rowId]) {
+        added.push(rowId);
+      }
+    }
+
+    for (const rowId in oldSelection) {
+      if (oldSelection[rowId] && !newSelection[rowId]) {
+        removed.push(rowId);
+      }
+    }
+
+    if (added.length > 0 || removed.length > 0) {
+      const selectedIds = Object.keys(newSelection).filter(
+        (id) => newSelection[id]
+      );
+      eventBus.emit('selection:change', {
+        selectedIds,
+      });
+
+      if (added.length > 10 || removed.length > 10) {
+        eventBus.emit('selection:bulk-change', {
+          added,
+          removed,
+          total: selectedIds.length,
+        });
+      }
+    }
+  };
 
   // Create table instance with basic methods first
   const tableInstance = {
@@ -109,16 +205,33 @@ export function createTable<TData extends RowData>(
     },
     setState: (updater: any) => {
       if (isDestroyed) return;
+
+      const oldState = store.getState();
       store.setState(updater);
+      const newState = store.getState();
+
+      // Emit state change events
+      emitStateChangeEvents(oldState, newState);
+
+      // Emit generic state change event
+      eventBus.emit('grid:state-change', {
+        oldState,
+        newState,
+        changedKeys: Object.keys(newState).filter(
+          (key) =>
+            JSON.stringify(oldState[key as keyof TableState<TData>]) !==
+            JSON.stringify(newState[key as keyof TableState<TData>])
+        ),
+      });
 
       // Trigger callback
       if (normalizedOptions.onStateChange) {
-        normalizedOptions.onStateChange(store.getState());
+        normalizedOptions.onStateChange(newState);
       }
 
       // Debug logging
       if (normalizedOptions.debugMode) {
-        console.log('[GridKit] State updated:', store.getState());
+        console.log('[GridKit] State updated:', newState);
       }
     },
     subscribe: (listener: any) => {
@@ -152,6 +265,56 @@ export function createTable<TData extends RowData>(
   // Now update table instance with column methods and remaining properties
   Object.assign(tableInstance, {
     options: normalizedOptions,
+
+    // Event bus methods
+    on: <T extends EventType>(
+      event: T,
+      handler: EventHandler<T>,
+      options?: EventHandlerOptions
+    ) => {
+      if (isDestroyed) return () => {};
+      return eventBus.on(event, handler, options);
+    },
+
+    once: <T extends EventType>(event: T, handler: EventHandler<T>) => {
+      if (isDestroyed) return () => {};
+      return eventBus.once(event, handler);
+    },
+
+    off: <T extends EventType>(event: T, handler: EventHandler<T>) => {
+      if (isDestroyed) return;
+      eventBus.off(event, handler);
+    },
+
+    emit: <T extends EventType>(
+      event: T,
+      payload: EventPayload<T>,
+      options?: {
+        priority?: EventPriority;
+        source?: string;
+        metadata?: Record<string, unknown>;
+      }
+    ) => {
+      if (isDestroyed) return;
+      eventBus.emit(event, payload, options);
+    },
+
+    emitBatch: <T extends EventType>(
+      events: Array<{
+        event: T;
+        payload: EventPayload<T>;
+        priority?: EventPriority;
+      }>
+    ) => {
+      if (isDestroyed) return;
+      for (const { event, payload, priority } of events) {
+        eventBus.emit(event, payload, { priority });
+      }
+    },
+
+    // Event bus accessor (for internal use)
+    _eventBus: eventBus,
+
     getAllColumns: () => columns,
     getVisibleColumns: () => {
       if (isDestroyed) return [];
@@ -166,11 +329,32 @@ export function createTable<TData extends RowData>(
 
     reset: () => {
       if (isDestroyed) return;
+      const oldState = store.getState();
       store.setState(initialState);
+
+      // Emit reset event
+      eventBus.emit('grid:reset', {
+        oldState,
+        newState: initialState,
+      });
     },
 
     destroy: () => {
       if (isDestroyed) return;
+
+      // Emit destroy event with IMMEDIATE priority to ensure it's processed before cleanup
+      const gridId = (tableInstance.options.meta as any)?.gridId || 'unknown';
+      eventBus.emit(
+        'grid:destroy',
+        {
+          gridId,
+        },
+        { priority: 0 }
+      ); // EventPriority.IMMEDIATE
+      // Cleanup event bus
+      eventBus.clear();
+
+      // Cleanup store and other resources
       store.destroy();
       columns.length = 0;
       // Clear row model
@@ -191,12 +375,26 @@ export function createTable<TData extends RowData>(
     });
   });
 
+  // Emit initialization events asynchronously to allow handlers to be registered first
+  const gridId = normalizedOptions.meta?.gridId || 'unknown';
+  setTimeout(() => {
+    if (!isDestroyed) {
+      eventBus.emit('grid:init', {
+        gridId,
+      });
+
+      // Emit ready event after initialization
+      setTimeout(() => {
+        if (!isDestroyed) {
+          eventBus.emit('grid:ready', {
+            gridId,
+            timestamp: Date.now(),
+            meta: normalizedOptions.meta,
+          });
+        }
+      }, 0);
+    }
+  }, 0);
+
   return tableInstance;
 }
-
-import type { RowData } from '../types/base';
-import type { Table, TableOptions, TableState } from '../types/table';
-import { createStore } from '../state';
-import { createColumn } from '../column';
-import { buildRowModel } from '../row';
-import { GridKitError } from '../errors';

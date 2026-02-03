@@ -13,7 +13,7 @@ describe('createRow', () => {
       city: string;
     };
   }
-  
+
   const mockTable = {
     getState: vi.fn(() => ({
       columnVisibility: {},
@@ -24,7 +24,7 @@ describe('createRow', () => {
     })),
     setState: vi.fn(),
   } as any;
-  
+
   const mockColumns = [
     {
       id: 'name',
@@ -39,12 +39,12 @@ describe('createRow', () => {
       getIsVisible: () => true,
     } as any,
   ];
-  
+
   describe('validation', () => {
     it('should throw when data is missing', () => {
       expect(() => {
         createRow({
-          data: null as any,
+          rowData: null as any,
           index: 0,
           table: mockTable,
           columns: mockColumns,
@@ -52,11 +52,16 @@ describe('createRow', () => {
         });
       }).toThrow(GridKitError);
     });
-    
+
     it('should throw when getRowId is not a function', () => {
       expect(() => {
         createRow({
-          data: { id: 1, name: 'Test', email: 'test@test.com', profile: { age: 30, city: 'NYC' } },
+          rowData: {
+            id: 1,
+            name: 'Test',
+            email: 'test@test.com',
+            profile: { age: 30, city: 'NYC' },
+          },
           index: 0,
           table: mockTable,
           columns: mockColumns,
@@ -65,7 +70,7 @@ describe('createRow', () => {
       }).toThrow(GridKitError);
     });
   });
-  
+
   describe('creation', () => {
     const testUser: User = {
       id: 1,
@@ -73,35 +78,35 @@ describe('createRow', () => {
       email: 'john@example.com',
       profile: { age: 30, city: 'New York' },
     };
-    
+
     it('should create row with basic data', () => {
       const row = createRow({
-        data: testUser,
+        rowData: testUser,
         index: 0,
         table: mockTable,
         columns: mockColumns,
         getRowId: (row: User) => row.id.toString(),
       });
-      
+
       expect(row).toBeDefined();
       expect(row.id).toBe('1');
       expect(row.original).toBe(testUser);
       expect(row.index).toBe(0);
       expect(row.depth).toBe(0);
     });
-    
+
     it('should create row with custom getRowId', () => {
       const row = createRow({
-        data: testUser,
+        rowData: testUser,
         index: 0,
         table: mockTable,
         columns: mockColumns,
         getRowId: (row: User) => `user-${row.id}`,
       });
-      
+
       expect(row.id).toBe('user-1');
     });
-    
+
     it('should create row with parent row', () => {
       const parentRow = {
         id: 'parent',
@@ -111,9 +116,9 @@ describe('createRow', () => {
         depth: 0,
         subRows: [] as any[],
       } as any;
-      
+
       const row = createRow({
-        data: testUser,
+        rowData: testUser,
         index: 0,
         table: mockTable,
         columns: mockColumns,
@@ -121,12 +126,12 @@ describe('createRow', () => {
         parentRow,
         depth: 1,
       });
-      
+
       expect(row.parentRow).toBe(parentRow);
       expect(row.depth).toBe(1);
     });
   });
-  
+
   describe('row methods', () => {
     const testUser: User = {
       id: 1,
@@ -134,40 +139,40 @@ describe('createRow', () => {
       email: 'john@example.com',
       profile: { age: 30, city: 'New York' },
     };
-    
+
     let row: any;
-    
+
     beforeEach(() => {
       row = createRow({
-        data: testUser,
+        rowData: testUser,
         index: 0,
         table: mockTable,
         columns: mockColumns,
         getRowId: (row: User) => row.id.toString(),
       });
     });
-    
+
     it('should get all cells', () => {
       const cells = row.getAllCells();
       expect(cells).toHaveLength(2);
       expect(cells[0].column.id).toBe('name');
       expect(cells[1].column.id).toBe('email');
     });
-    
+
     it('should get cell by column ID', () => {
       const cell = row.getCell('name');
       expect(cell).toBeDefined();
       expect(cell?.column.id).toBe('name');
-      
+
       const nonExistent = row.getCell('non-existent');
       expect(nonExistent).toBeUndefined();
     });
-    
+
     it('should get value from cell', () => {
       const value = row.getValue('name');
       expect(value).toBe('John Doe');
     });
-    
+
     it('should check selection state', () => {
       mockTable.getState.mockReturnValue({
         columnVisibility: {},
@@ -176,30 +181,30 @@ describe('createRow', () => {
         rowSelection: { '1': true },
         expanded: {},
       });
-      
+
       expect(row.getIsSelected()).toBe(true);
     });
-    
+
     it('should toggle selection', () => {
       row.toggleSelected();
       expect(mockTable.setState).toHaveBeenCalled();
     });
-    
+
     it('should get parent rows', () => {
       const parentRow = {
         id: 'parent',
         parentRow: undefined,
       } as any;
-      
+
       const childRow = createRow({
-        data: testUser,
+        rowData: testUser,
         index: 0,
         table: mockTable,
         columns: mockColumns,
         getRowId: (row: User) => row.id.toString(),
         parentRow,
       });
-      
+
       const parents = childRow.getParentRows();
       expect(parents).toEqual([parentRow]);
     });
@@ -211,7 +216,7 @@ describe('buildRowModel', () => {
     id: number;
     name: string;
   }
-  
+
   const mockTable = {
     getState: vi.fn(() => ({
       columnVisibility: {},
@@ -222,7 +227,7 @@ describe('buildRowModel', () => {
     })),
     setState: vi.fn(),
   } as any;
-  
+
   const mockColumns = [
     {
       id: 'name',
@@ -231,27 +236,27 @@ describe('buildRowModel', () => {
       getIsVisible: () => true,
     } as any,
   ];
-  
+
   it('should build row model from data', () => {
     const users: User[] = [
       { id: 1, name: 'Alice' },
       { id: 2, name: 'Bob' },
       { id: 3, name: 'Charlie' },
     ];
-    
+
     const rowModel = buildRowModel({
       data: users,
       columns: mockColumns,
       getRowId: (row: User) => row.id.toString(),
       table: mockTable,
     });
-    
+
     expect(rowModel.rows).toHaveLength(3);
     expect(rowModel.flatRows).toHaveLength(3);
     expect(rowModel.rowsById.size).toBe(3);
     expect(rowModel.rowsById.get('1')?.original.name).toBe('Alice');
   });
-  
+
   it('should build row model with parent row', () => {
     const parentRow = {
       id: 'parent',
@@ -261,12 +266,12 @@ describe('buildRowModel', () => {
       depth: 0,
       subRows: [] as any[],
     } as any;
-    
+
     const users: User[] = [
       { id: 1, name: 'Child 1' },
       { id: 2, name: 'Child 2' },
     ];
-    
+
     const rowModel = buildRowModel({
       data: users,
       columns: mockColumns,
@@ -275,7 +280,7 @@ describe('buildRowModel', () => {
       parentRow,
       depth: 1,
     });
-    
+
     expect(rowModel.rows).toHaveLength(2);
     expect(parentRow.subRows).toHaveLength(2);
     expect(rowModel.rows[0].depth).toBe(1);

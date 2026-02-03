@@ -4,6 +4,8 @@
  * Core table functionality for GridKit.
  * Framework-agnostic, zero dependencies.
  *
+ * Includes type-safe event system for pub/sub communication.
+ *
  * @packageDocumentation
  */
 
@@ -33,6 +35,39 @@ export type { Store } from './state';
 // Export table factory
 export { createTable } from './table';
 export type { Table, TableOptions, TableState, TableMeta } from './table';
+
+// Export event system
+export {
+  // Event bus
+  createEventBus,
+  getEventBus,
+  resetEventBus,
+  EventBus,
+  // Event utilities
+  EventPriority,
+  createLoggerMiddleware,
+  simpleLogger,
+  // Helper functions
+  createEventFactory,
+  createDebouncedHandler,
+  createThrottledHandler,
+} from './events';
+export type {
+  // Event types
+  EventType,
+  EventPayload,
+  EventHandler,
+  EventHandlerOptions,
+  EventRegistry,
+  GridEvent,
+  EventNamespace,
+  EventMiddleware,
+  EventSubscription,
+  // Event bus types
+  EventBusOptions,
+  // Logger types
+  LoggerMiddlewareOptions,
+} from './events';
 
 // Export all Core API modules from core.ts
 export * from './core';
