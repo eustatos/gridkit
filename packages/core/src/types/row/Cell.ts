@@ -1,7 +1,8 @@
-import type { RowData, Row } from '../base';
+import type { RowData } from '../base';
 import type { Column } from '../column';
-import type { CellId, ColumnId } from '../base';
+import type { CellId } from '../base';
 import type { CellMeta, CellPosition } from './Metadata';
+import type { Row } from './Row';
 
 /**
  * Represents a single table cell with data and UI state.
