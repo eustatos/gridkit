@@ -156,8 +156,8 @@ export interface CellPosition {
 /**
  * Predicate function for row filtering.
  */
-export type RowPredicate<TData> = (
-  row: any,
+export type RowPredicate<TData extends RowData> = (
+  row: Row<TData>,
   index: number,
-  array: readonly any[]
+  array: readonly Row<TData>[]
 ) => boolean;

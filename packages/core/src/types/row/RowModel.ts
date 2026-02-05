@@ -5,7 +5,7 @@ import type { RowModelMeta } from './Metadata';
 /**
  * Predicate function for row filtering.
  */
-type RowPredicate<TData> = (
+type RowPredicate<TData extends RowData> = (
   row: Row<TData>,
   index: number,
   array: readonly Row<TData>[]
