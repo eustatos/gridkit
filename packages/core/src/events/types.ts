@@ -11,9 +11,9 @@ export * from './types/registry';
  * Event handler options
  */
 export interface EventHandlerOptions {
-  priority?: EventPriority;
+  priority?: import('./types/base').EventPriority;
   once?: boolean;
-  filter?: (event: GridEvent) => boolean;
+  filter?: (event: import('./types/base').GridEvent) => boolean;
   debounce?: number;
   throttle?: number;
 }
@@ -22,7 +22,7 @@ export interface EventHandlerOptions {
  * Event middleware function
  * Can modify, cancel, or pass through events
  */
-export type EventMiddleware = (event: GridEvent) => GridEvent | null;
+export type EventMiddleware = (event: import('./types/base').GridEvent) => import('./types/base').GridEvent | null;
 
 /**
  * Event namespace aligned with core architecture
@@ -56,12 +56,12 @@ export interface EventSubscription {
  */
 export class EventCancelledError extends Error {
   /** The event that was cancelled */
-  public readonly event: GridEvent;
+  public readonly event: import('./types/base').GridEvent;
 
   /** Reason for cancellation */
   public readonly reason?: string;
 
-  constructor(event: GridEvent, reason?: string) {
+  constructor(event: import('./types/base').GridEvent, reason?: string) {
     super(`Event '${event.type}' was cancelled${reason ? `: ${reason}` : ''}`);
     this.name = 'EventCancelledError';
     this.event = event;
