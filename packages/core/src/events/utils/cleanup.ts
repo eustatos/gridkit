@@ -8,7 +8,7 @@ export interface CleanupManager {
  * Create cleanup manager for memory leak prevention
  */
 export function createCleanupManager(): CleanupManager {
-  const cleanups = new WeakMap<symbol, () => void>();
+  const cleanups = new Map<symbol, () => void>();
   const tracked = new Set<symbol>();
 
   return {
@@ -33,6 +33,7 @@ export function createCleanupManager(): CleanupManager {
         }
       }
       tracked.clear();
+      cleanups.clear();
     },
   };
 }

@@ -18,7 +18,6 @@ import {
 const createRowId = (id: string) => id as any;
 const createColumnId = (id: string) => id as any;
 const createGridId = (id: string) => id as any;
-const createCellId = (id: string) => id as any;
 
 // Example 1: Basic Usage
 function basicUsageExample() {
@@ -28,15 +27,15 @@ function basicUsageExample() {
   const bus = getEventBus();
   
   // Subscribe to row add events
-  const unsubscribe = bus.on('row:add', (event) => {
+  const unsubscribe = bus.on('row.added' as any, (event: any) => {
     console.log(`Row added: ${event.payload.rowId} at index ${event.payload.index}`);
   });
   
   // Emit a row add event
-  bus.emit('row:add', {
+  bus.emit('row.added' as any, {
+    gridId: createGridId('test-grid'),
     rowId: createRowId('row-1'),
     index: 0,
-    isNew: true
   });
   
   // Unsubscribe when done
@@ -53,24 +52,24 @@ function priorityExample() {
   const executionOrder: string[] = [];
   
   // Subscribe with different priorities
-  bus.on('grid:init', () => {
+  bus.on('grid.created' as any, () => {
     executionOrder.push('LOW');
   }, { priority: EventPriority.LOW });
   
-  bus.on('grid:init', () => {
+  bus.on('grid.created' as any, () => {
     executionOrder.push('NORMAL');
   }, { priority: EventPriority.NORMAL });
   
-  bus.on('grid:init', () => {
+  bus.on('grid.created' as any, () => {
     executionOrder.push('HIGH');
   }, { priority: EventPriority.HIGH });
   
-  bus.on('grid:init', () => {
+  bus.on('grid.created' as any, () => {
     executionOrder.push('IMMEDIATE');
   }, { priority: EventPriority.IMMEDIATE });
   
   // Emit event
-  bus.emit('grid:init', { gridId: createGridId('test-grid') });
+  bus.emit('grid.created' as any, { gridId: createGridId('test-grid') });
   
   // Wait for processing
   setTimeout(() => {
@@ -97,15 +96,18 @@ function middlewareExample() {
   bus.use(debounceMiddleware);
   
   // Subscribe to events
-  bus.on('data:load', (event) => {
-    console.log(`Data loaded: ${event.payload.data.length} items`);
+  bus.on('cell.value.changed' as any, (event: any) => {
+    console.log(`Data loaded: ${event.payload.newValue}`);
   });
   
   // Emit multiple events that will be batched
   for (let i = 0; i < 3; i++) {
-    bus.emit('data:load', {
-      data: Array(10).fill(0).map((_, idx) => `item-${i}-${idx}`),
-      source: 'manual'
+    bus.emit('cell.value.changed' as any, {
+      gridId: createGridId('test-grid'),
+      rowId: createRowId(`row-${i}`),
+      columnId: createColumnId(`col-${i}`),
+      oldValue: `old-${i}`,
+      newValue: `new-${i}`,
     });
   }
   
@@ -119,7 +121,7 @@ function customEventsExample() {
   // In a real implementation, you would extend the EventRegistry type:
   /*
   declare module '../types' {
-    interface EventRegistry {
+    interface EventPayloadMap {
       'custom:my-event': {
         message: string;
         timestamp: number;
@@ -151,14 +153,14 @@ function errorHandlingExample() {
   const bus = createEventBus();
   
   // Subscribe with error-prone handler
-  bus.on('row:update' as any, (event: any) => {
+  bus.on('row.moved' as any, (event: any) => {
     console.log(`Updating row: ${event.payload.rowId}`);
     // Simulate an error
     throw new Error('Simulated error in event handler');
   });
   
   // Subscribe with async handler
-  bus.on('column:resize' as any, async (event: any) => {
+  bus.on('column.moved' as any, async (event: any) => {
     console.log(`Resizing column: ${event.payload.columnId}`);
     try {
       // Simulate async operation
@@ -170,16 +172,18 @@ function errorHandlingExample() {
   });
   
   // Emit events
-  bus.emit('row:update' as any, {
+  bus.emit('row.moved' as any, {
+    gridId: createGridId('test-grid'),
     rowId: createRowId('row-1'),
-    changes: { name: 'New Name' },
-    isDirty: true
+    fromIndex: 0,
+    toIndex: 1,
   });
   
-  bus.emit('column:resize' as any, {
+  bus.emit('column.moved' as any, {
+    gridId: createGridId('test-grid'),
     columnId: createColumnId('col-1'),
-    width: 200,
-    oldWidth: 150
+    fromIndex: 0,
+    toIndex: 1,
   });
   
   console.log('Error handling example completed');
@@ -192,10 +196,10 @@ function memoryManagementExample() {
   const bus = createEventBus();
   
   // Add many handlers
-  const unsubscribes: Array<() => void> = [];
+  const unsubscribes: Array<(() => void) | undefined> = [];
   
   for (let i = 0; i < 100; i++) {
-    const unsubscribe = bus.on('grid:init' as any, () => {
+    const unsubscribe = bus.on('grid.created' as any, () => {
       // Handler logic
     });
     unsubscribes.push(unsubscribe);
@@ -205,7 +209,9 @@ function memoryManagementExample() {
   
   // Unsubscribe half of them
   for (let i = 0; i < 50; i++) {
-    unsubscribes[i]();
+    if (unsubscribes[i]) {
+      unsubscribes[i]!();
+    }
   }
   
   console.log(`Handlers after partial cleanup: ${bus.getStats().totalHandlers}`);
@@ -244,6 +250,6 @@ export {
 };
 
 // Run if this file is executed directly
-if (typeof window === 'undefined' && require.main === module) {
+if (typeof global === 'undefined' && typeof window === 'undefined' && typeof require !== 'undefined' && require.main === module) {
   runAllExamples();
 }

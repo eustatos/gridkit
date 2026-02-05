@@ -2,10 +2,6 @@
 export type {
   EventType,
   EventPayload,
-  EventHandler,
-  EventHandlerOptions,
-  EventRegistry,
-  GridEvent,
   EventNamespace,
   EventMiddleware,
   EventSubscription,
@@ -29,4 +25,4 @@ export { createDebounceMiddleware } from './middleware/debounce';
 export { extractNamespace } from './utils/namespace';
 
 // Augmentation helper for custom events
-export type { EventRegistry as ExtendEventRegistry } from './types';
+export type { EventPayloadMap as ExtendEventRegistry } from './types/registry';

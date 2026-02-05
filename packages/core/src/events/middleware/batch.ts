@@ -1,4 +1,5 @@
-import type { GridEvent, EventMiddleware } from '../types';
+import type { GridEvent } from '../types';
+import type { EventMiddleware } from '../types';
 
 interface BatchConfig {
   window: number; // Time window in ms
@@ -14,7 +15,7 @@ export function createBatchMiddleware(config: BatchConfig): EventMiddleware {
   const timers = new Map<string, number>();
 
   return (event: GridEvent): GridEvent | null => {
-    const key = event.type;
+    const key = event.type as string;
 
     if (!batches.has(key)) {
       batches.set(key, []);

@@ -1,4 +1,5 @@
-import type { GridEvent, EventMiddleware } from '../types';
+import type { GridEvent } from '../types';
+import type { EventMiddleware } from '../types';
 
 /**
  * Create debouncing middleware
@@ -9,7 +10,7 @@ export function createDebounceMiddleware(delay: number): EventMiddleware {
   const pending = new Map<string, GridEvent>();
 
   return (event: GridEvent): GridEvent | null => {
-    const key = event.type;
+    const key = event.type as string;
 
     // Clear existing timer
     if (timers.has(key)) {
