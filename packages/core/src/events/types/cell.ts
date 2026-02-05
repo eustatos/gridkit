@@ -39,6 +39,18 @@ export interface CellValueEvent extends GridEvent<{
   readonly type: 'cell:value';
 }
 
+// Cell update events
+export interface CellUpdateEvent extends GridEvent<{
+  readonly gridId: GridId;
+  readonly rowId: RowId;
+  readonly columnId: ColumnId;
+  readonly value: unknown;
+  readonly previousValue: unknown;
+  readonly source?: string;
+}> {
+  readonly type: 'cell:update';
+}
+
 // Cell selection events
 export interface CellSelectEvent extends GridEvent<{
   readonly gridId: GridId;
@@ -75,6 +87,7 @@ export type CellEventType =
   | CellFocusEvent
   | CellEditEvent
   | CellValueEvent
+  | CellUpdateEvent
   | CellSelectEvent
   | CellHoverEvent
   | CellValidationErrorEvent;
@@ -84,6 +97,7 @@ export interface CellEventPayloadMap {
   'cell:focus': CellFocusEvent['payload'];
   'cell:edit': CellEditEvent['payload'];
   'cell:value': CellValueEvent['payload'];
+  'cell:update': CellUpdateEvent['payload'];
   'cell:select': CellSelectEvent['payload'];
   'cell:hover': CellHoverEvent['payload'];
   'cell:validation-error': CellValidationErrorEvent['payload'];

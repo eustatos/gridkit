@@ -7,6 +7,7 @@ import type {
   ColumnAddEvent,
   RowAddEvent,
   CellFocusEvent,
+  CellUpdateEvent,
   StateUpdateEvent,
   TableSortEvent,
   EventRegistry,
@@ -62,6 +63,19 @@ const createCellFocusEvent = (): CellFocusEvent => ({
     columnId: TEST_COLUMN_ID,
     previousRowId: undefined,
     previousColumnId: undefined,
+  },
+  timestamp: Date.now(),
+});
+
+const createCellUpdateEvent = (): CellUpdateEvent => ({
+  type: 'cell:update',
+  payload: {
+    gridId: TEST_GRID_ID,
+    rowId: TEST_ROW_ID,
+    columnId: TEST_COLUMN_ID,
+    value: 'new value',
+    previousValue: 'old value',
+    source: 'test',
   },
   timestamp: Date.now(),
 });
@@ -151,6 +165,19 @@ describe('Event Registry', () => {
       expect(event.payload.rowId).toBe(TEST_ROW_ID);
       expect(event.payload.columnId).toBe(TEST_COLUMN_ID);
     });
+
+    it('should create a valid CellUpdateEvent', () => {
+      const event = createCellUpdateEvent();
+      
+      expect(event).toBeDefined();
+      expect(event.type).toBe('cell:update');
+      expect(event.payload.gridId).toBe(TEST_GRID_ID);
+      expect(event.payload.rowId).toBe(TEST_ROW_ID);
+      expect(event.payload.columnId).toBe(TEST_COLUMN_ID);
+      expect(event.payload.value).toBe('new value');
+      expect(event.payload.previousValue).toBe('old value');
+      expect(event.payload.source).toBe('test');
+    });
   });
 
   describe('State Events', () => {
@@ -198,17 +225,19 @@ describe('Event Registry', () => {
         createColumnAddEvent(),
         createRowAddEvent(),
         createCellFocusEvent(),
+        createCellUpdateEvent(),
         createStateUpdateEvent(),
         createTableSortEvent(),
       ];
       
-      expect(events).toHaveLength(6);
+      expect(events).toHaveLength(7);
       expect(events[0].type).toBe('grid:init');
       expect(events[1].type).toBe('column:add');
       expect(events[2].type).toBe('row:add');
       expect(events[3].type).toBe('cell:focus');
-      expect(events[4].type).toBe('state:update');
-      expect(events[5].type).toBe('table:sort');
+      expect(events[4].type).toBe('cell:update');
+      expect(events[5].type).toBe('state:update');
+      expect(events[6].type).toBe('table:sort');
     });
 
     it('should support all event types in EventType union', () => {
@@ -218,17 +247,19 @@ describe('Event Registry', () => {
         createColumnAddEvent(),
         createRowAddEvent(),
         createCellFocusEvent(),
+        createCellUpdateEvent(),
         createStateUpdateEvent(),
         createTableSortEvent(),
       ];
       
-      expect(events).toHaveLength(6);
+      expect(events).toHaveLength(7);
       expect(events[0].type).toBe('grid:init');
       expect(events[1].type).toBe('column:add');
       expect(events[2].type).toBe('row:add');
       expect(events[3].type).toBe('cell:focus');
-      expect(events[4].type).toBe('state:update');
-      expect(events[5].type).toBe('table:sort');
+      expect(events[4].type).toBe('cell:update');
+      expect(events[5].type).toBe('state:update');
+      expect(events[6].type).toBe('table:sort');
     });
   });
 
