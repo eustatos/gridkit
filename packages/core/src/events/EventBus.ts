@@ -1,14 +1,13 @@
 import type {
   EventType,
   EventPayload,
-  EventHandler,
   EventHandlerOptions,
   GridEvent,
-  EventPriority,
   EventMiddleware,
-  EventNamespace,
-  EventSubscription,
 } from './types';
+import {
+  EventPriority,
+} from './types/base';
 import { createPriorityQueue, type PriorityQueue } from './utils/priority';
 import { createCleanupManager, type CleanupManager } from './utils/cleanup';
 import { extractNamespace } from './utils/namespace';
@@ -16,8 +15,8 @@ import { extractNamespace } from './utils/namespace';
 /**
  * Handler entry with metadata
  */
-interface HandlerEntry {
-  handler: EventHandler;
+interface HandlerEntry<T extends EventType> {
+  handler: EventHandler<EventPayload<T>>;
   options: EventHandlerOptions;
   id: symbol;
   addedAt: number;
@@ -45,7 +44,7 @@ interface EventBusStats {
  * - DevTools integration
  */
 export class EventBus {
-  private handlers = new Map<string, Set<HandlerEntry>>();
+  private handlers = new Map<string, Set<HandlerEntry<EventType>>>();
   private middlewares: EventMiddleware[] = [];
   private priorityQueue: PriorityQueue;
   private cleanupManager: CleanupManager;
@@ -78,8 +77,8 @@ export class EventBus {
     handler: EventHandler<EventPayload<T>>,
     options: EventHandlerOptions = {}
   ): () => void {
-    const entry: HandlerEntry = {
-      handler: handler as EventHandler,
+    const entry: HandlerEntry<T> = {
+      handler,
       options,
       id: Symbol('handler'),
       addedAt: performance.now(),
@@ -89,12 +88,15 @@ export class EventBus {
       this.handlers.set(event, new Set());
     }
 
-    this.handlers.get(event)!.add(entry);
+    this.handlers.get(event)!.add(entry as HandlerEntry<EventType>);
     this.stats.totalHandlers++;
 
     // Register with cleanup manager
     this.cleanupManager.track(entry.id, () => {
-      this.handlers.get(event)?.delete(entry);
+      const handlers = this.handlers.get(event);
+      if (handlers) {
+        handlers.delete(entry as HandlerEntry<EventType>);
+      }
     });
 
     // Return unsubscribe function
@@ -158,7 +160,6 @@ export class EventBus {
   ): void {
     const gridEvent: GridEvent<EventPayload<T>> = {
       type: event,
-      namespace: extractNamespace(event),
       payload,
       timestamp: performance.now(),
       source: options?.source,
@@ -255,11 +256,11 @@ export class EventBus {
   // Private Methods
   // ============================================
 
-  private executeHandlers(event: string, gridEvent: GridEvent): void {
+  private executeHandlers<T extends EventType>(event: T, gridEvent: GridEvent<EventPayload<T>>): void {
     const handlers = this.handlers.get(event);
     if (!handlers || handlers.size === 0) return;
 
-    const toRemove: HandlerEntry[] = [];
+    const toRemove: HandlerEntry<EventType>[] = [];
     const startTime = performance.now();
 
     for (const entry of handlers) {
@@ -310,7 +311,7 @@ export class EventBus {
     }
   }
 
-  private applyMiddleware(event: GridEvent): GridEvent | null {
+  private applyMiddleware<T extends EventType>(event: GridEvent<EventPayload<T>>): GridEvent<EventPayload<T>> | null {
     let currentEvent = event;
 
     for (const middleware of this.middlewares) {

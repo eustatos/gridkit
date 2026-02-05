@@ -250,6 +250,6 @@ export {
 };
 
 // Run if this file is executed directly
-if (typeof global === 'undefined' && typeof window === 'undefined' && typeof require !== 'undefined' && require.main === module) {
+if (typeof global === 'undefined' && typeof window !== 'undefined' && typeof require !== 'undefined' && require.main === module) {
   runAllExamples();
 }
