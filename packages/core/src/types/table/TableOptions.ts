@@ -8,7 +8,7 @@
 
 import type { RowId, RowData, DeepPartial } from '@/types';
 import type { TableState } from './TableState';
-import type { ColumnDef, ColumnMeta } from './Column';
+import type { ColumnDef } from './Column';
 
 // ===================================================================
 // Table Options (Configuration)

@@ -20,7 +20,6 @@ import type { TableState } from './TableState';
 import type { TableOptions } from './TableOptions';
 import type { Row, RowModel } from './Row';
 import type { Column } from './Column';
-import type { GridKitError } from './Errors';
 
 // ===================================================================
 // Table Instance Interface
