@@ -4,7 +4,7 @@
 import type { RowData } from '../base'
 import type { ColumnId, ColumnGroupId, Comparator, FilterFn, AggregationFn, ColumnMeta } from './SupportingTypes'
 import type { HeaderRenderer, CellRenderer, FooterRenderer } from './RenderContext'
-import type { AccessorKey, AccessorFn, AccessorValue } from './AccessorTypes'
+import type { AccessorKey, AccessorFn } from './AccessorTypes'
 
 /**
  * Complete column definition with type-safe accessors.

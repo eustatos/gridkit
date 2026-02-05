@@ -75,14 +75,14 @@ export interface FooterContext<TData extends RowData, TValue = unknown> {
 /**
  * Renderer function types.
  */
-export type HeaderRenderer<TData, TValue> = (
+export type HeaderRenderer<TData extends RowData, TValue = unknown> = (
   context: HeaderContext<TData, TValue>
 ) => unknown;
 
-export type CellRenderer<TData, TValue> = (
+export type CellRenderer<TData extends RowData, TValue = unknown> = (
   context: CellContext<TData, TValue>
 ) => unknown;
 
-export type FooterRenderer<TData, TValue> = (
+export type FooterRenderer<TData extends RowData, TValue = unknown> = (
   context: FooterContext<TData, TValue>
 ) => unknown;

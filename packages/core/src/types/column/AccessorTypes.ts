@@ -42,8 +42,6 @@ export type AccessorFn<TData extends RowData, TValue = unknown> = (
  * Advanced inference for both key and function accessors.
  *
  * @template TDef - ColumnDef type
- * @template TData - Row data type
- * @template TKey - Accessor key type
  */
 export type ColumnValue<TDef> =
   TDef extends ColumnDef<infer TData, infer TValue>
@@ -70,7 +68,7 @@ export type AccessorValue<T, K extends string> = K extends keyof T
 
 // We need to import ColumnDef for ColumnValue type, but we can't import it directly due to circular dependency
 // Instead, we'll define a minimal version here for type inference
-interface ColumnDef<TData, TValue> {
+interface ColumnDef<TData extends RowData, TValue> {
   accessorKey?: string;
   accessorFn?: AccessorFn<TData, TValue>;
 }
