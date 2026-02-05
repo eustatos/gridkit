@@ -1,598 +1,656 @@
----
+# CORE-011: Immutable State Store Implementation
+
+## Task Card
+
+```
 task_id: CORE-011
-epic_id: EPIC-001
-module: @gridkit/core
-file: src/core/state/create-store.ts
 priority: P0
-complexity: medium
+complexity: Medium
 estimated_tokens: ~12,000
-assignable_to_ai: yes
-dependencies:
-  - CORE-001
-guidelines:
-  - .github/AI_GUIDELINES.md
-  - CONTRIBUTING.md
-  - docs/patterns/factory-pattern.md
----
-
-# Task: Implement State Store
-
-## Context
-
-Implement a lightweight, reactive state store for table state management. This is the foundation for all state updates - it must be:
-- Immutable (all updates create new state)
-- Observable (subscribers notified on changes)
-- Performant (minimal overhead)
-- Type-safe (full TypeScript support)
-
-This store is used internally by the table to manage all state (sorting, filtering, selection, etc.).
-
-## Guidelines Reference
-
-- `.github/AI_GUIDELINES.md` - Factory pattern, performance
-- `CONTRIBUTING.md` - Code organization
-- `docs/architecture/ARCHITECTURE.md` - State management pattern
-
-## Objectives
-
-- [ ] Implement `createStore<T>()` factory function
-- [ ] Implement `Store<T>` interface
-- [ ] Support both direct state and updater functions
-- [ ] Implement pub/sub pattern for subscribers
-- [ ] Add lifecycle methods (reset, destroy)
-- [ ] Ensure immutability
-- [ ] Add comprehensive tests
-
----
-
-## Implementation Requirements
-
-### 1. Store Interface
-
-**File: `src/core/state/types.ts`**
-
-```typescript
-import type { Updater, Listener, Unsubscribe } from '../types/base';
-
-/**
- * Store interface for reactive state management.
- * 
- * @template T - The state type
- * 
- * @public
- */
-export interface Store<T> {
-  /**
-   * Get current state (immutable).
-   * 
-   * @returns Current state
-   */
-  getState(): T;
-  
-  /**
-   * Update state immutably.
-   * 
-   * @param updater - New state or updater function
-   * 
-   * @example
-   * ```typescript
-   * // Direct state
-   * store.setState(newState);
-   * 
-   * // Updater function (recommended)
-   * store.setState(prev => ({ ...prev, count: prev.count + 1 }));
-   * ```
-   */
-  setState(updater: Updater<T>): void;
-  
-  /**
-   * Subscribe to state changes.
-   * Listener is called immediately with current state,
-   * then on every state update.
-   * 
-   * @param listener - Callback function
-   * @param fireImmediately - Whether to call listener immediately
-   * @returns Unsubscribe function
-   * 
-   * @example
-   * ```typescript
-   * const unsubscribe = store.subscribe((state) => {
-   *   console.log('State:', state);
-   * });
-   * 
-   * // Later
-   * unsubscribe();
-   * ```
-   */
-  subscribe(listener: Listener<T>, fireImmediately?: boolean): Unsubscribe;
-  
-  /**
-   * Reset state to initial value.
-   */
-  reset(): void;
-  
-  /**
-   * Destroy store and remove all listeners.
-   * Store cannot be used after calling this.
-   */
-  destroy(): void;
-}
+ai_ready: true
+dependencies: [CORE-001]
+requires_review: true (reactive state foundation)
 ```
 
-### 2. Store Implementation
+## 🎯 Objective
 
-**File: `src/core/state/create-store.ts`**
+Implement a lightweight, reactive state store with immutable updates and efficient pub/sub. This store serves as the foundation for GridKit's reactive state management, providing predictable updates and memory-safe subscriptions.
 
-```typescript
-import type { Updater, Listener, Unsubscribe } from '../types/base';
-import type { Store } from './types';
+## 📋 Implementation Scope
 
+### **1. Store Core Interface**
+
+````typescript
 /**
- * Creates a reactive store for state management.
- * 
- * Implements a simple pub/sub pattern with immutable state updates.
- * All state updates create new state objects.
- * 
- * @template T - The state type
- * 
- * @param initialState - Initial state value
- * @returns Store instance
- * 
+ * Reactive state store with immutable updates.
+ * Provides pub/sub pattern with automatic cleanup.
+ *
+ * @template TState - State type (must be serializable)
+ *
  * @example
- * Basic usage:
  * ```typescript
  * interface AppState {
  *   count: number;
- *   user: User | null;
+ *   user: { name: string };
  * }
- * 
+ *
  * const store = createStore<AppState>({
  *   count: 0,
- *   user: null,
+ *   user: { name: 'Alice' },
  * });
- * 
+ *
  * // Subscribe to changes
- * const unsubscribe = store.subscribe((state) => {
- *   console.log('Count:', state.count);
+ * const unsubscribe = store.subscribe(state => {
+ *   console.log('State updated:', state);
  * });
- * 
- * // Update state
- * store.setState(prev => ({ ...prev, count: prev.count + 1 }));
- * 
+ *
+ * // Update state immutably
+ * store.setState(prev => ({
+ *   ...prev,
+ *   count: prev.count + 1,
+ * }));
+ *
  * // Cleanup
  * unsubscribe();
+ * store.destroy();
  * ```
- * 
- * @example
- * With immediate notification:
- * ```typescript
- * // Listener called immediately with current state
- * store.subscribe((state) => {
- *   console.log('Initial state:', state);
- * }, true);
- * ```
- * 
- * @public
  */
-export function createStore<T>(initialState: T): Store<T> {
-  let state = initialState;
-  const listeners = new Set<Listener<T>>();
+export interface Store<TState> {
+  /**
+   * Get current immutable state.
+   * Returns a frozen copy for safety.
+   */
+  getState(): Readonly<TState>;
+
+  /**
+   * Update state immutably.
+   * Returns true if state changed.
+   */
+  setState(updater: Updater<TState>): boolean;
+
+  /**
+   * Subscribe to state changes.
+   * Returns cleanup function for memory safety.
+   */
+  subscribe(
+    listener: StateListener<TState>,
+    options?: SubscribeOptions
+  ): Unsubscribe;
+
+  /**
+   * Batch multiple updates in single notification.
+   */
+  batch(updater: () => void): void;
+
+  /**
+   * Reset to initial state.
+   */
+  reset(): void;
+
+  /**
+   * Destroy store and cleanup resources.
+   */
+  destroy(): void;
+}
+````
+
+### **2. Main Factory Implementation**
+
+```typescript
+/**
+ * Creates a reactive state store.
+ *
+ * @template TState - State type
+ * @param initialState - Initial state (will be deep cloned)
+ * @param options - Store configuration
+ */
+export function createStore<TState>(
+  initialState: TState,
+  options: StoreOptions = {}
+): Store<TState> {
+  // Deep clone initial state to prevent mutations
+  let currentState = deepClone(initialState);
   let isDestroyed = false;
-  
-  const store: Store<T> = {
+
+  // Use WeakRef for automatic cleanup
+  const listeners = new Set<WeakRef<StateListener<TState>>>();
+  const cleanupRegistry = new FinalizationRegistry<symbol>(cleanupListener);
+
+  // Performance tracking
+  let updateCount = 0;
+  let lastUpdateTime = 0;
+
+  // Batch state
+  let isBatching = false;
+  let hasPendingUpdate = false;
+
+  // Store instance
+  const store: Store<TState> = {
     getState: () => {
-      if (isDestroyed) {
-        throw new Error('Cannot get state from destroyed store');
-      }
-      return state;
+      validateNotDestroyed(isDestroyed);
+      return Object.freeze(deepClone(currentState));
     },
-    
-    setState: (updater: Updater<T>) => {
-      if (isDestroyed) {
-        throw new Error('Cannot set state on destroyed store');
+
+    setState: (updater) => {
+      validateNotDestroyed(isDestroyed);
+
+      const startTime = performance.now();
+      const newState = computeNewState(currentState, updater);
+
+      // Skip if state unchanged
+      if (shallowEqual(currentState, newState)) {
+        return false;
       }
-      
-      const newState = typeof updater === 'function'
-        ? (updater as (prev: T) => T)(state)
-        : updater;
-      
-      // Only update if state actually changed
-      if (newState !== state) {
-        state = newState;
-        
-        // Notify all listeners
-        listeners.forEach(listener => {
-          listener(state);
-        });
+
+      // Update state reference
+      currentState = newState;
+      updateCount++;
+      lastUpdateTime = Date.now();
+
+      // Notify listeners (unless batching)
+      if (!isBatching) {
+        notifyListeners(listeners, currentState);
+      } else {
+        hasPendingUpdate = true;
       }
+
+      // Performance logging
+      const duration = performance.now() - startTime;
+      if (options.debug && duration > options.slowUpdateThreshold) {
+        console.warn(`[Store] Slow state update: ${duration.toFixed(2)}ms`);
+      }
+
+      return true;
     },
-    
-    subscribe: (listener: Listener<T>, fireImmediately = false) => {
-      if (isDestroyed) {
-        throw new Error('Cannot subscribe to destroyed store');
+
+    subscribe: (listener, options = {}) => {
+      validateNotDestroyed(isDestroyed);
+
+      // Create WeakRef for automatic cleanup
+      const listenerRef = new WeakRef(listener);
+      const listenerId = Symbol('listener');
+
+      // Track for cleanup
+      listeners.add(listenerRef);
+      cleanupRegistry.register(listener, listenerId);
+
+      // Fire immediately if requested
+      if (options.fireImmediately) {
+        safeNotify(listener, currentState);
       }
-      
-      listeners.add(listener);
-      
-      // Optionally fire immediately with current state
-      if (fireImmediately) {
-        listener(state);
-      }
-      
+
       // Return unsubscribe function
       return () => {
-        listeners.delete(listener);
+        listeners.delete(listenerRef);
+        cleanupRegistry.unregister(listener);
       };
     },
-    
-    reset: () => {
-      if (isDestroyed) {
-        throw new Error('Cannot reset destroyed store');
+
+    batch: (updater) => {
+      validateNotDestroyed(isDestroyed);
+
+      isBatching = true;
+      hasPendingUpdate = false;
+
+      try {
+        updater();
+      } finally {
+        isBatching = false;
+        if (hasPendingUpdate) {
+          notifyListeners(listeners, currentState);
+          hasPendingUpdate = false;
+        }
       }
-      
-      state = initialState;
-      
-      // Notify listeners of reset
-      listeners.forEach(listener => {
-        listener(state);
-      });
     },
-    
+
+    reset: () => {
+      validateNotDestroyed(isDestroyed);
+
+      store.setState(() => deepClone(initialState));
+    },
+
     destroy: () => {
-      isDestroyed = true;
+      if (isDestroyed) return;
+
+      // Clear all listeners
       listeners.clear();
+      cleanupRegistry.unregisterAll?.();
+
+      // Clear state references
+      currentState = null as any;
+      isDestroyed = true;
+
+      // Performance summary
+      if (options.debug) {
+        console.log(`[Store] Destroyed after ${updateCount} updates`);
+      }
     },
   };
-  
+
   return store;
 }
 ```
 
----
-
-## Test Requirements
-
-**File: `src/core/state/__tests__/create-store.test.ts`**
+### **3. State Computation Utilities**
 
 ```typescript
-import { describe, it, expect, vi } from 'vitest';
-import { createStore } from '../create-store';
+/**
+ * Computes new state with immutability guarantees.
+ */
+function computeNewState<TState>(
+  currentState: TState,
+  updater: Updater<TState>
+): TState {
+  if (typeof updater === 'function') {
+    const updaterFn = updater as (prev: TState) => TState;
 
-interface TestState {
-  count: number;
-  name: string;
+    // For functions, ensure they don't mutate current state
+    const clonedState = deepClone(currentState);
+    const result = updaterFn(clonedState);
+
+    // Ensure function returns a new object
+    if (result === clonedState) {
+      console.warn('[Store] Updater function returned same reference');
+    }
+
+    return result;
+  }
+
+  // Direct value - must be different reference
+  if (updater === currentState) {
+    console.warn('[Store] setState called with same reference');
+    return currentState;
+  }
+
+  return updater;
 }
 
+/**
+ * Deep clone with circular reference handling.
+ */
+function deepClone<T>(obj: T): T {
+  // Handle primitives and null
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map((item) => deepClone(item)) as T;
+  }
+
+  // Handle dates
+  if (obj instanceof Date) {
+    return new Date(obj.getTime()) as T;
+  }
+
+  // Handle regular objects
+  const cloned: any = {};
+  const seen = new WeakMap();
+
+  const stack = [{ original: obj, cloned }];
+
+  while (stack.length > 0) {
+    const { original, cloned } = stack.pop()!;
+
+    // Track visited objects for circular references
+    seen.set(original, cloned);
+
+    for (const key in original) {
+      if (Object.prototype.hasOwnProperty.call(original, key)) {
+        const value = original[key];
+
+        // Handle circular references
+        if (value && typeof value === 'object') {
+          if (seen.has(value)) {
+            cloned[key] = seen.get(value);
+            continue;
+          }
+
+          // Create new object/array
+          let newValue: any;
+          if (Array.isArray(value)) {
+            newValue = [];
+          } else if (value instanceof Date) {
+            newValue = new Date(value.getTime());
+          } else {
+            newValue = {};
+          }
+
+          cloned[key] = newValue;
+          stack.push({ original: value, cloned: newValue });
+        } else {
+          // Primitive value
+          cloned[key] = value;
+        }
+      }
+    }
+  }
+
+  return cloned as T;
+}
+```
+
+### **4. Listener Management**
+
+```typescript
+/**
+ * Safely notifies all listeners with error boundaries.
+ */
+function notifyListeners<TState>(
+  listeners: Set<WeakRef<StateListener<TState>>>,
+  state: TState
+): void {
+  const deadRefs: WeakRef<StateListener<TState>>[] = [];
+
+  for (const ref of listeners) {
+    const listener = ref.deref();
+
+    if (!listener) {
+      // Listener was garbage collected
+      deadRefs.push(ref);
+      continue;
+    }
+
+    safeNotify(listener, state);
+  }
+
+  // Clean up dead references
+  deadRefs.forEach((ref) => listeners.delete(ref));
+}
+
+/**
+ * Safely calls listener with error handling.
+ */
+function safeNotify<TState>(
+  listener: StateListener<TState>,
+  state: TState
+): void {
+  try {
+    listener(state);
+  } catch (error) {
+    console.error('[Store] Error in listener:', error);
+    // Don't throw - preserve other listeners
+  }
+}
+
+/**
+ * Cleanup handler for FinalizationRegistry.
+ */
+function cleanupListener(listenerId: symbol): void {
+  // Called when listener is garbage collected
+  // Additional cleanup if needed
+}
+```
+
+### **5. Performance Optimizations**
+
+```typescript
+/**
+ * Shallow equality check for state comparison.
+ * Optimized for common state shapes.
+ */
+function shallowEqual<T>(a: T, b: T): boolean {
+  // Same reference
+  if (a === b) return true;
+
+  // Different types or null
+  if (typeof a !== typeof b || a === null || b === null) {
+    return false;
+  }
+
+  // Compare object keys
+  if (typeof a === 'object') {
+    const keysA = Object.keys(a as object);
+    const keysB = Object.keys(b as object);
+
+    if (keysA.length !== keysB.length) return false;
+
+    for (const key of keysA) {
+      if ((a as any)[key] !== (b as any)[key]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Primitives
+  return a === b;
+}
+
+/**
+ * Validates store is not destroyed.
+ */
+function validateNotDestroyed(isDestroyed: boolean): void {
+  if (isDestroyed) {
+    throw new GridError('STORE_DESTROYED', 'Cannot use store after destroy()', {
+      timestamp: Date.now(),
+    });
+  }
+}
+```
+
+### **6. Supporting Types**
+
+```typescript
+/**
+ * State update function or direct value.
+ */
+export type Updater<T> = T | ((prev: T) => T);
+
+/**
+ * State change listener.
+ */
+export type StateListener<T> = (state: T) => void;
+
+/**
+ * Store configuration options.
+ */
+export interface StoreOptions {
+  /**
+   * Enable debug mode with performance logging.
+   * @default false
+   */
+  debug?: boolean;
+
+  /**
+   * Threshold for slow update warnings (ms).
+   * @default 16 (60fps frame budget)
+   */
+  slowUpdateThreshold?: number;
+
+  /**
+   * Enable state change history for debugging.
+   * @default false
+   */
+  enableHistory?: boolean;
+
+  /**
+   * Maximum history size when enabled.
+   * @default 100
+   */
+  maxHistorySize?: number;
+
+  /**
+   * Enable state validation on updates.
+   * @default false
+   */
+  validateState?: boolean;
+}
+
+/**
+ * Subscription options.
+ */
+export interface SubscribeOptions {
+  /**
+   * Call listener immediately with current state.
+   * @default false
+   */
+  fireImmediately?: boolean;
+
+  /**
+   * Only notify when state passes predicate.
+   */
+  predicate?: (state: any) => boolean;
+
+  /**
+   * Equality function to prevent unnecessary notifications.
+   */
+  equalityFn?: (a: any, b: any) => boolean;
+}
+```
+
+## 🚫 **DO NOT IMPLEMENT**
+
+- ❌ No complex state persistence (localStorage, etc.)
+- ❌ No middleware or enhancers
+- ❌ No time-travel debugging (separate task)
+- ❌ No Redux DevTools integration (separate package)
+- ❌ No complex state selectors or memoization
+- ❌ No framework-specific integrations
+
+## 📁 **File Structure**
+
+```
+packages/core/src/state/
+├── create-store.ts          # Main factory
+├── types.ts                # Core interfaces
+├── utils/                  # Internal utilities
+│   ├── clone.ts           # Deep cloning
+│   ├── equality.ts        # Equality checks
+│   └── validation.ts      # State validation
+└── index.ts              # Exports
+```
+
+## 🧪 **Test Requirements**
+
+```typescript
 describe('createStore', () => {
-  describe('initialization', () => {
-    it('should create store with initial state', () => {
-      const store = createStore<TestState>({
-        count: 0,
-        name: 'test',
-      });
-      
-      expect(store.getState()).toEqual({
-        count: 0,
-        name: 'test',
-      });
-    });
+  test('creates store with initial state', () => {
+    const store = createStore({ count: 0 });
+    expect(store.getState()).toEqual({ count: 0 });
   });
 
-  describe('getState', () => {
-    it('should return current state', () => {
-      const store = createStore({ count: 42 });
-      
-      expect(store.getState().count).toBe(42);
-    });
-    
-    it('should throw when store is destroyed', () => {
-      const store = createStore({ count: 0 });
-      store.destroy();
-      
-      expect(() => store.getState()).toThrow('destroyed');
-    });
+  test('updates state immutably', () => {
+    const store = createStore({ count: 0 });
+    const oldState = store.getState();
+
+    store.setState((prev) => ({ count: prev.count + 1 }));
+    const newState = store.getState();
+
+    expect(newState.count).toBe(1);
+    expect(newState).not.toBe(oldState);
   });
 
-  describe('setState', () => {
-    it('should update state with direct value', () => {
-      const store = createStore({ count: 0 });
-      
-      store.setState({ count: 10 });
-      
-      expect(store.getState().count).toBe(10);
-    });
+  test('notifies subscribers on changes', () => {
+    const store = createStore({ count: 0 });
+    const listener = jest.fn();
 
-    it('should update state with updater function', () => {
-      const store = createStore({ count: 0 });
-      
-      store.setState(prev => ({ count: prev.count + 1 }));
-      
-      expect(store.getState().count).toBe(1);
-    });
+    store.subscribe(listener);
+    store.setState({ count: 1 });
 
-    it('should create new state object (immutability)', () => {
-      const store = createStore({ count: 0 });
-      const oldState = store.getState();
-      
-      store.setState(prev => ({ count: prev.count + 1 }));
-      const newState = store.getState();
-      
-      expect(newState).not.toBe(oldState);
-    });
-
-    it('should not notify listeners if state unchanged', () => {
-      const store = createStore({ count: 0 });
-      const listener = vi.fn();
-      
-      store.subscribe(listener);
-      
-      // Set to same reference
-      const currentState = store.getState();
-      store.setState(currentState);
-      
-      expect(listener).not.toHaveBeenCalled();
-    });
-
-    it('should throw when store is destroyed', () => {
-      const store = createStore({ count: 0 });
-      store.destroy();
-      
-      expect(() => store.setState({ count: 1 })).toThrow('destroyed');
-    });
+    expect(listener).toHaveBeenCalledWith({ count: 1 });
   });
 
-  describe('subscribe', () => {
-    it('should call listener on state change', () => {
-      const store = createStore({ count: 0 });
-      const listener = vi.fn();
-      
-      store.subscribe(listener);
+  test('supports batching updates', () => {
+    const store = createStore({ count: 0 });
+    const listener = jest.fn();
+
+    store.subscribe(listener);
+
+    store.batch(() => {
       store.setState({ count: 1 });
-      
-      expect(listener).toHaveBeenCalledWith({ count: 1 });
-    });
-
-    it('should call listener immediately when fireImmediately is true', () => {
-      const store = createStore({ count: 42 });
-      const listener = vi.fn();
-      
-      store.subscribe(listener, true);
-      
-      expect(listener).toHaveBeenCalledWith({ count: 42 });
-    });
-
-    it('should not call listener immediately by default', () => {
-      const store = createStore({ count: 42 });
-      const listener = vi.fn();
-      
-      store.subscribe(listener);
-      
-      expect(listener).not.toHaveBeenCalled();
-    });
-
-    it('should support multiple listeners', () => {
-      const store = createStore({ count: 0 });
-      const listener1 = vi.fn();
-      const listener2 = vi.fn();
-      
-      store.subscribe(listener1);
-      store.subscribe(listener2);
-      
-      store.setState({ count: 1 });
-      
-      expect(listener1).toHaveBeenCalledWith({ count: 1 });
-      expect(listener2).toHaveBeenCalledWith({ count: 1 });
-    });
-
-    it('should return unsubscribe function', () => {
-      const store = createStore({ count: 0 });
-      const listener = vi.fn();
-      
-      const unsubscribe = store.subscribe(listener);
-      
-      store.setState({ count: 1 });
-      expect(listener).toHaveBeenCalledTimes(1);
-      
-      unsubscribe();
-      
       store.setState({ count: 2 });
-      expect(listener).toHaveBeenCalledTimes(1); // Not called again
+      store.setState({ count: 3 });
     });
 
-    it('should handle unsubscribe multiple times safely', () => {
-      const store = createStore({ count: 0 });
-      const listener = vi.fn();
-      
-      const unsubscribe = store.subscribe(listener);
-      
-      unsubscribe();
-      unsubscribe(); // Should not throw
-      
-      expect(() => unsubscribe()).not.toThrow();
-    });
-
-    it('should throw when subscribing to destroyed store', () => {
-      const store = createStore({ count: 0 });
-      store.destroy();
-      
-      expect(() => store.subscribe(() => {})).toThrow('destroyed');
-    });
+    // Should only notify once after batch
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(store.getState().count).toBe(3);
   });
 
-  describe('reset', () => {
-    it('should reset to initial state', () => {
-      const store = createStore({ count: 0 });
-      
-      store.setState({ count: 10 });
-      expect(store.getState().count).toBe(10);
-      
-      store.reset();
-      expect(store.getState().count).toBe(0);
-    });
+  test('cleans up on destroy', () => {
+    const store = createStore({ count: 0 });
+    const listener = jest.fn();
 
-    it('should notify listeners on reset', () => {
-      const store = createStore({ count: 0 });
-      const listener = vi.fn();
-      
-      store.subscribe(listener);
-      store.setState({ count: 10 });
-      
-      listener.mockClear();
-      
-      store.reset();
-      
-      expect(listener).toHaveBeenCalledWith({ count: 0 });
-    });
+    store.subscribe(listener);
+    store.destroy();
 
-    it('should throw when store is destroyed', () => {
-      const store = createStore({ count: 0 });
-      store.destroy();
-      
-      expect(() => store.reset()).toThrow('destroyed');
-    });
+    expect(() => store.setState({ count: 1 })).toThrow('destroyed');
+    expect(listener).not.toHaveBeenCalled();
   });
 
-  describe('destroy', () => {
-    it('should clear all listeners', () => {
-      const store = createStore({ count: 0 });
-      const listener = vi.fn();
-      
-      store.subscribe(listener);
-      store.destroy();
-      
-      // setState would throw, but listeners are cleared
-      expect(listener).not.toHaveBeenCalled();
-    });
+  test('handles deep state efficiently', () => {
+    const deepState = {
+      level1: {
+        level2: {
+          level3: { value: 'deep' },
+        },
+      },
+    };
 
-    it('should allow multiple destroy calls', () => {
-      const store = createStore({ count: 0 });
-      
-      store.destroy();
-      
-      expect(() => store.destroy()).not.toThrow();
-    });
-  });
+    const store = createStore(deepState);
 
-  describe('performance', () => {
-    it('should handle many listeners efficiently', () => {
-      const store = createStore({ count: 0 });
-      const listeners = Array.from({ length: 1000 }, () => vi.fn());
-      
-      listeners.forEach(l => store.subscribe(l));
-      
-      const start = performance.now();
-      store.setState({ count: 1 });
-      const duration = performance.now() - start;
-      
-      expect(duration).toBeLessThan(10); // < 10ms for 1000 listeners
-      listeners.forEach(l => expect(l).toHaveBeenCalled());
-    });
+    // Update deep property
+    store.setState((prev) => ({
+      ...prev,
+      level1: {
+        ...prev.level1,
+        level2: {
+          ...prev.level1.level2,
+          level3: { value: 'updated' },
+        },
+      },
+    }));
 
-    it('should handle rapid updates efficiently', () => {
-      const store = createStore({ count: 0 });
-      
-      const start = performance.now();
-      
-      for (let i = 0; i < 1000; i++) {
-        store.setState(prev => ({ count: prev.count + 1 }));
-      }
-      
-      const duration = performance.now() - start;
-      
-      expect(duration).toBeLessThan(50); // < 50ms for 1000 updates
-      expect(store.getState().count).toBe(1000);
-    });
-  });
-
-  describe('memory', () => {
-    it('should not leak memory with unsubscribe', () => {
-      const store = createStore({ count: 0 });
-      const unsubscribes: Array<() => void> = [];
-      
-      // Add and remove many listeners
-      for (let i = 0; i < 1000; i++) {
-        const unsub = store.subscribe(() => {});
-        unsubscribes.push(unsub);
-      }
-      
-      // Unsubscribe all
-      unsubscribes.forEach(unsub => unsub());
-      
-      // After unsubscribe, internal Set should be empty
-      // (We can't test this directly, but state updates should be fast)
-      const start = performance.now();
-      store.setState({ count: 1 });
-      const duration = performance.now() - start;
-      
-      expect(duration).toBeLessThan(1); // Should be instant with no listeners
-    });
+    expect(store.getState().level1.level2.level3.value).toBe('updated');
+    // Original should remain unchanged
+    expect(deepState.level1.level2.level3.value).toBe('deep');
   });
 });
 ```
 
----
+## 💡 **Performance Optimizations**
 
-## Edge Cases
-
-- [ ] Empty initial state
-- [ ] setState with same reference (should not notify)
-- [ ] Multiple rapid updates
-- [ ] Unsubscribe during notification
-- [ ] Subscribe/unsubscribe in listener
-- [ ] Destroy during notification
-- [ ] Many listeners (1000+)
-
----
-
-## Performance Requirements
-
-- setState with 100 listeners: **< 5ms**
-- getState: **< 0.1ms** (just return reference)
-- subscribe/unsubscribe: **< 0.5ms**
-- No memory leaks on unsubscribe
-
----
-
-## Files to Create/Modify
-
-- [ ] `src/core/state/types.ts` - Store interface
-- [ ] `src/core/state/create-store.ts` - Implementation
-- [ ] `src/core/state/__tests__/create-store.test.ts` - Tests
-- [ ] `src/core/state/index.ts` - Exports
-- [ ] `src/core/index.ts` - Re-export createStore
-
-**`src/core/state/index.ts`:**
 ```typescript
-export { createStore } from './create-store';
-export type { Store } from './types';
+// 1. Use WeakRef for automatic GC of listeners
+const ref = new WeakRef(listener);
+listeners.add(ref);
+
+// 2. Batch microtask for multiple updates
+queueMicrotask(() => {
+  if (hasPendingUpdate) {
+    notifyListeners(listeners, currentState);
+  }
+});
+
+// 3. Skip equality checks for primitives
+if (typeof currentState !== 'object' || currentState === null) {
+  return currentState === newState;
+}
 ```
 
+## 📊 **Success Metrics**
+
+- ✅ 1000 updates with 100 listeners < 50ms
+- ✅ Memory usage stable after 10k subscribe/unsubscribe cycles
+- ✅ Deep cloning handles 10-level nested objects < 5ms
+- ✅ No memory leaks after destroy()
+- ✅ Immutability guaranteed (Object.freeze)
+- ✅ 100% test coverage for edge cases
+
+## 🎯 **AI Implementation Instructions**
+
+1. **Start with core store interface** - get immutability right
+2. **Implement listener management** - with WeakRef for GC
+3. **Add deep cloning** - handle circular references
+4. **Implement batching** - for performance
+5. **Add validation and error handling** - fail safely
+6. **Write performance tests** - verify efficiency
+
+**Critical:** The store must be memory-safe. WeakRef and FinalizationRegistry are essential for automatic cleanup of garbage-collected listeners.
+
 ---
 
-## Success Criteria
-
-- [ ] All tests pass with 100% coverage
-- [ ] TypeScript compiles without errors
-- [ ] Performance benchmarks met
-- [ ] No memory leaks verified
-- [ ] Immutability verified (state objects never mutated)
-- [ ] Follows factory pattern from AI_GUIDELINES.md
-- [ ] JSDoc complete with examples
-
----
-
-## Related Tasks
-
-- **Depends on:** CORE-001 (base types)
-- **Blocks:** CORE-010 (table factory uses this store)
-
----
-
-## Notes for AI
-
-- Keep it simple - this is just pub/sub with immutability
-- Use Set for listeners (O(1) add/delete)
-- Don't notify listeners if state reference unchanged
-- Test memory leaks with many subscribe/unsubscribe cycles
-- Ensure listeners are called AFTER state is updated
-- Consider edge case: listener modifying state during notification (should work)
+**Status:** Ready for implementation. Focus on memory safety and performance.

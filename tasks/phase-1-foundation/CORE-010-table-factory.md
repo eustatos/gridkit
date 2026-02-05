@@ -1,563 +1,621 @@
----
+# CORE-010: Table Factory Implementation
+
+## Task Card
+
+```
 task_id: CORE-010
-epic_id: EPIC-001
-module: @gridkit/core
-file: src/core/table/create-table.ts
 priority: P0
-complexity: high
-estimated_tokens: ~20,000
-assignable_to_ai: with-review
-dependencies:
-  - CORE-001
-  - CORE-002
-  - CORE-003
-  - CORE-004
-  - CORE-011
-guidelines:
-  - .github/AI_GUIDELINES.md
-  - CONTRIBUTING.md
-  - docs/architecture/ARCHITECTURE.md
-  - docs/patterns/factory-pattern.md
----
+complexity: High
+estimated_tokens: ~25,000
+ai_ready: yes (with architecture review)
+dependencies: [CORE-001, CORE-002, CORE-003, CORE-004, CORE-011]
+requires_validation: true (core API implementation)
+```
 
-# Task: Implement Table Factory Function
+## 🎯 **Core Objective**
 
-## Context
+Implement the primary `createTable` factory function that serves as the single entry point for creating GridKit table instances. This is the foundation upon which all features are built.
 
-Implement the `createTable` factory function - the primary entry point for creating table instances. This is a **critical** function that:
-- Validates configuration
-- Initializes state
-- Creates column/row instances
-- Sets up the table API
-- Manages lifecycle
+## 📋 **Implementation Scope**
 
-**⚠️ This task requires careful review - it's the core of the library.**
+### **1. Smart Factory Function with Advanced Validation**
 
-## Guidelines Reference
-
-- `.github/AI_GUIDELINES.md` - Factory pattern, error handling, performance
-- `CONTRIBUTING.md` - Code organization
-- `docs/architecture/ARCHITECTURE.md` - Table architecture
-- `docs/patterns/factory-pattern.md` - Factory pattern implementation
-
-## Objectives
-
-- [ ] Implement `createTable<TData>()` factory function
-- [ ] Validate table options (columns required, etc.)
-- [ ] Initialize table state
-- [ ] Create column instances from definitions
-- [ ] Create row instances from data
-- [ ] Implement all Table interface methods
-- [ ] Add proper error handling with GridKitError
-- [ ] Add comprehensive tests
-
----
-
-## Implementation Requirements
-
-### 1. Main Factory Function
-
-**File: `src/core/table/create-table.ts`**
-
-```typescript
-import type { RowData, RowId } from '../types/base';
-import type { Table, TableOptions, TableState } from '../types/table';
-import type { Column } from '../types/column';
-import type { Row, RowModel } from '../types/row';
-import { GridKitError } from '../errors';
-import { createStore } from '../state/create-store';
-import { createColumn } from '../column/create-column';
-import { createRow } from '../row/create-row';
-import { buildRowModel } from '../row/build-row-model';
-
+````typescript
 /**
- * Creates a new table instance.
- * 
- * @template TData - The row data type extending RowData
- * 
- * @param options - Table configuration options
- * @returns A fully initialized table instance
- * 
- * @throws {GridKitError} TABLE_NO_COLUMNS - When columns array is empty
- * @throws {GridKitError} TABLE_INVALID_OPTIONS - When options are invalid
- * 
+ * Creates a production-ready table instance with comprehensive validation,
+ * performance monitoring, and lifecycle management.
+ *
+ * @template TData - Row data type (extends RowData)
+ * @param options - Type-safe table configuration
+ * @returns Fully initialized, memory-safe table instance
+ *
  * @example
- * Basic usage:
  * ```typescript
- * interface User {
- *   id: number;
- *   name: string;
- *   email: string;
- * }
- * 
- * const table = createTable<User>({
- *   columns: [
- *     { accessorKey: 'name', header: 'Name' },
- *     { accessorKey: 'email', header: 'Email' },
- *   ],
+ * const table = createTable({
+ *   columns: [{ accessorKey: 'name', header: 'Name' }],
  *   data: users,
+ *   getRowId: (row) => row.id,
+ *   debug: { performance: true }
  * });
  * ```
- * 
- * @example
- * With custom row ID:
- * ```typescript
- * const table = createTable<User>({
- *   columns,
- *   data: users,
- *   getRowId: (row) => row.id.toString(),
- * });
- * ```
- * 
- * @example
- * With state management:
- * ```typescript
- * const table = createTable<User>({
- *   columns,
- *   data: users,
- *   onStateChange: (state) => {
- *     console.log('State updated:', state);
- *   },
- *   initialState: {
- *     columnVisibility: { email: false },
- *   },
- * });
- * ```
- * 
- * @public
  */
 export function createTable<TData extends RowData>(
   options: TableOptions<TData>
 ): Table<TData> {
-  // 1. Validate options
-  validateOptions(options);
-  
-  // 2. Normalize options with defaults
-  const normalizedOptions = normalizeOptions(options);
-  
-  // 3. Create state store
-  const initialState = buildInitialState(normalizedOptions);
-  const store = createStore(initialState);
-  
-  // 4. Create columns
-  const columns = createColumns(normalizedOptions, tableInstance);
-  
-  // 5. Build row model
-  let rowModel = buildRowModel({
-    data: normalizedOptions.data || [],
-    columns,
-    getRowId: normalizedOptions.getRowId!,
-    table: tableInstance,
-  });
-  
-  // 6. Create table instance
-  const tableInstance: Table<TData> = {
-    options: normalizedOptions,
-    
-    getState: () => store.getState(),
-    
-    setState: (updater) => {
-      store.setState(updater);
-      
-      // Trigger onStateChange callback
-      if (normalizedOptions.onStateChange) {
-        normalizedOptions.onStateChange(store.getState());
-      }
-      
-      // Debug logging
-      if (normalizedOptions.debugMode) {
-        console.log('[GridKit] State updated:', store.getState());
-      }
-    },
-    
-    subscribe: (listener) => store.subscribe(listener),
-    
-    getAllColumns: () => columns,
-    
-    getVisibleColumns: () => {
-      const state = store.getState();
-      return columns.filter(col => 
-        state.columnVisibility[col.id] !== false
-      );
-    },
-    
-    getColumn: (id) => {
-      return columns.find(col => col.id === id);
-    },
-    
-    getRowModel: () => rowModel,
-    
-    getRow: (id) => {
-      return rowModel.rowsById.get(id);
-    },
-    
-    reset: () => {
-      store.setState(buildInitialState(normalizedOptions));
-    },
-    
-    destroy: () => {
-      store.destroy();
-      // Clear references
-      columns.length = 0;
-      rowModel.rows.length = 0;
-      rowModel.flatRows.length = 0;
-      rowModel.rowsById.clear();
-    },
+  // 1. Performance tracking (debug mode)
+  const perfStart = performance.now();
+  const memoryBefore = measureMemory();
+
+  try {
+    // 2. Phase 1: Validation & Normalization
+    const validated = validateAndNormalize(options);
+
+    // 3. Phase 2: Core Instance Creation
+    const instance = createTableInstance(validated);
+
+    // 4. Phase 3: Setup & Initialization
+    initializeTableInstance(instance, validated);
+
+    // 5. Performance logging
+    if (validated.debug?.performance) {
+      logCreationMetrics(perfStart, memoryBefore);
+    }
+
+    return instance;
+  } catch (error) {
+    // 6. Error handling with context
+    throw wrapCreationError(error, options);
+  }
+}
+````
+
+### **2. Advanced Validation System**
+
+```typescript
+/**
+ * Comprehensive validation with helpful error messages.
+ * Each validation is isolated for better error reporting.
+ */
+function validateAndNormalize<TData extends RowData>(
+  options: TableOptions<TData>
+): ValidatedTableOptions<TData> {
+  const errors: ValidationError[] = [];
+
+  // === Required Fields Validation ===
+  if (!options || typeof options !== 'object') {
+    throw new GridKitError(
+      'INVALID_OPTIONS',
+      'Table options must be an object'
+    );
+  }
+
+  // Column validation (most critical)
+  const columnErrors = validateColumns(options.columns);
+  errors.push(...columnErrors);
+
+  // Data validation
+  if (options.data !== undefined) {
+    const dataErrors = validateData(options.data);
+    errors.push(...dataErrors);
+  }
+
+  // ID function validation
+  if (options.getRowId) {
+    const idErrors = validateRowIdFunction(options.getRowId);
+    errors.push(...idErrors);
+  }
+
+  // Throw aggregated errors if any
+  if (errors.length > 0) {
+    throw new ValidationAggregateError('Invalid table configuration', errors);
+  }
+
+  // === Normalization ===
+  return {
+    ...options,
+    columns: normalizeColumns(options.columns, options.defaultColumn),
+    data: options.data ?? [],
+    getRowId: options.getRowId ?? defaultGetRowId,
+    debug: normalizeDebugOptions(options.debug),
+    meta: options.meta ?? {},
+    initialState: normalizeInitialState(options.initialState),
   };
-  
-  // 7. Subscribe to state changes to rebuild row model
-  store.subscribe((state) => {
-    rowModel = buildRowModel({
-      data: state.data,
-      columns,
-      getRowId: normalizedOptions.getRowId!,
-      table: tableInstance,
-      // Pass state for filtering/sorting (when implemented)
+}
+
+/**
+ * Column validation with detailed error messages.
+ */
+function validateColumns<TData>(columns: unknown): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  if (!Array.isArray(columns)) {
+    errors.push({
+      code: 'COLUMNS_NOT_ARRAY',
+      message: 'columns must be an array',
+      field: 'columns',
+      value: columns,
     });
+    return errors;
+  }
+
+  if (columns.length === 0) {
+    errors.push({
+      code: 'NO_COLUMNS',
+      message: 'At least one column definition is required',
+      field: 'columns',
+      value: columns,
+    });
+  }
+
+  // Validate each column
+  columns.forEach((col, index) => {
+    if (!col || typeof col !== 'object') {
+      errors.push({
+        code: 'INVALID_COLUMN_DEF',
+        message: `Column at index ${index} must be an object`,
+        field: `columns[${index}]`,
+        value: col,
+      });
+      return;
+    }
+
+    // Check for required fields
+    if (!col.accessorKey && !col.accessorFn) {
+      errors.push({
+        code: 'NO_ACCESSOR',
+        message: `Column at index ${index} must have either accessorKey or accessorFn`,
+        field: `columns[${index}].accessor`,
+        value: col,
+      });
+    }
+
+    // Check for duplicate IDs
+    const columnId = col.id ?? col.accessorKey;
+    // ... duplicate detection logic
   });
-  
-  return tableInstance;
-}
 
-/**
- * Validates table options.
- * @throws {GridKitError} if options are invalid
- */
-function validateOptions<TData extends RowData>(
-  options: TableOptions<TData>
-): void {
-  if (!options) {
-    throw new GridKitError(
-      'TABLE_INVALID_OPTIONS',
-      'Table options are required',
-      { options }
-    );
-  }
-  
-  if (!Array.isArray(options.columns)) {
-    throw new GridKitError(
-      'TABLE_INVALID_OPTIONS',
-      'columns must be an array',
-      { columns: options.columns }
-    );
-  }
-  
-  if (options.columns.length === 0) {
-    throw new GridKitError(
-      'TABLE_NO_COLUMNS',
-      'At least one column is required',
-      { providedColumns: options.columns }
-    );
-  }
-}
-
-/**
- * Normalizes options with defaults.
- */
-function normalizeOptions<TData extends RowData>(
-  options: TableOptions<TData>
-): Required<TableOptions<TData>> {
-  return {
-    columns: options.columns,
-    data: options.data || [],
-    getRowId: options.getRowId || ((row, index) => index),
-    initialState: options.initialState || {},
-    debugMode: options.debugMode || false,
-    onStateChange: options.onStateChange || undefined,
-    defaultColumn: options.defaultColumn || {},
-    meta: options.meta || {},
-  } as Required<TableOptions<TData>>;
-}
-
-/**
- * Builds initial table state.
- */
-function buildInitialState<TData extends RowData>(
-  options: Required<TableOptions<TData>>
-): TableState<TData> {
-  const baseState: TableState<TData> = {
-    data: options.data,
-    columnVisibility: {},
-    columnOrder: options.columns.map(col => col.id || col.accessorKey || ''),
-    columnSizing: {},
-    rowSelection: {},
-    expanded: {},
-  };
-  
-  // Merge with initial state from options
-  return {
-    ...baseState,
-    ...options.initialState,
-  };
-}
-
-/**
- * Creates column instances from definitions.
- */
-function createColumns<TData extends RowData>(
-  options: Required<TableOptions<TData>>,
-  table: Table<TData>
-): Column<TData>[] {
-  return options.columns.map(columnDef => 
-    createColumn({
-      columnDef: {
-        ...options.defaultColumn,
-        ...columnDef,
-      },
-      table,
-    })
-  );
+  return errors;
 }
 ```
 
----
-
-## Test Requirements
-
-**File: `src/core/table/__tests__/create-table.test.ts`**
+### **3. Core Instance Creation (Memory-Safe)**
 
 ```typescript
-import { describe, it, expect, vi } from 'vitest';
-import { createTable } from '../create-table';
-import { GridKitError } from '../../errors';
-import type { RowData } from '../../types';
+/**
+ * Creates the table instance with proper memory management.
+ * Uses weak references and cleanup systems.
+ */
+function createTableInstance<TData>(
+  options: ValidatedTableOptions<TData>
+): Table<TData> {
+  // === State Management ===
+  const initialState = buildInitialState(options);
+  const stateStore = createStateStore(initialState);
 
-describe('createTable', () => {
-  interface User extends RowData {
-    id: number;
-    name: string;
-    email: string;
+  // === Column System ===
+  const columnRegistry = createColumnRegistry();
+  const columns = createColumns(options.columns, {
+    table: null as any, // Will be set later
+    registry: columnRegistry,
+    defaultOptions: options.defaultColumn,
+  });
+
+  // === Row System ===
+  const rowFactory = createRowFactory({
+    getRowId: options.getRowId,
+    columnRegistry,
+  });
+
+  // === Event System ===
+  const eventBus = createEventBus({
+    debug: options.debug?.events,
+  });
+
+  // === Performance Monitoring ===
+  const metrics = options.debug?.performance
+    ? createPerformanceMonitor()
+    : undefined;
+
+  // === Build the Instance ===
+  const instance: Table<TData> = {
+    // Identification
+    id: createGridId(`table-${Date.now()}`),
+
+    // State Management
+    getState: () => stateStore.getSnapshot(),
+    setState: (updater) => {
+      metrics?.startMeasurement('stateUpdate');
+      stateStore.update(updater);
+      metrics?.endMeasurement('stateUpdate');
+    },
+    subscribe: (listener) => stateStore.subscribe(listener),
+
+    // Data Access
+    getRowModel: () =>
+      buildRowModel({
+        data: stateStore.getSnapshot().data,
+        rowFactory,
+        columnRegistry,
+        table: instance,
+      }),
+    getRow: (id) => {
+      const model = instance.getRowModel();
+      return model.rowsById.get(id);
+    },
+
+    // Column Access
+    getAllColumns: () => columnRegistry.getAll(),
+    getVisibleColumns: () => {
+      const state = stateStore.getSnapshot();
+      return columnRegistry.getVisible(state.columnVisibility);
+    },
+    getColumn: (id) => columnRegistry.get(id),
+
+    // Lifecycle
+    reset: () => {
+      stateStore.reset(initialState);
+      eventBus.emit('table:reset', { tableId: instance.id });
+    },
+    destroy: () => {
+      // Cleanup in reverse dependency order
+      eventBus.emit('table:destroy', { tableId: instance.id });
+      stateStore.destroy();
+      columnRegistry.destroy();
+      eventBus.clear();
+      metrics?.destroy();
+
+      // Clear references for GC
+      Object.keys(instance).forEach((key) => {
+        (instance as any)[key] = null;
+      });
+    },
+
+    // Metadata
+    options: Object.freeze(options) as Readonly<ValidatedTableOptions<TData>>,
+    meta: options.meta,
+    metrics,
+    _internal: {
+      stateStore,
+      columnRegistry,
+      rowFactory,
+      eventBus,
+    },
+  };
+
+  // Wire up circular dependencies
+  columnRegistry.setTable(instance);
+
+  return instance;
+}
+```
+
+### **4. Initialization & Setup**
+
+```typescript
+/**
+ * Completes table initialization after instance creation.
+ * Separated for better error isolation.
+ */
+function initializeTableInstance<TData>(
+  table: Table<TData>,
+  options: ValidatedTableOptions<TData>
+): void {
+  // 1. Initial data processing
+  const initialData = options.data;
+  if (initialData.length > 0) {
+    table.setState((state) => ({
+      ...state,
+      data: initialData,
+    }));
   }
-  
-  const users: User[] = [
-    { id: 1, name: 'Alice', email: 'alice@example.com' },
-    { id: 2, name: 'Bob', email: 'bob@example.com' },
-  ];
-  
-  const columns = [
-    { accessorKey: 'name' as const, header: 'Name' },
-    { accessorKey: 'email' as const, header: 'Email' },
-  ];
 
-  describe('validation', () => {
-    it('should throw when options is null/undefined', () => {
-      expect(() => createTable(null as any)).toThrow(GridKitError);
-      expect(() => createTable(undefined as any)).toThrow('TABLE_INVALID_OPTIONS');
-    });
+  // 2. Apply initial state
+  if (options.initialState) {
+    table.setState((state) => ({
+      ...state,
+      ...options.initialState,
+    }));
+  }
 
-    it('should throw when columns is not an array', () => {
-      expect(() => createTable({ columns: 'invalid' as any })).toThrow(GridKitError);
-    });
+  // 3. Setup event system
+  const eventBus = (table as any)._internal.eventBus;
 
-    it('should throw when columns array is empty', () => {
-      expect(() => createTable<User>({ columns: [] })).toThrow('TABLE_NO_COLUMNS');
+  // Internal state change events
+  table.subscribe((state) => {
+    eventBus.emit('state:change', {
+      tableId: table.id,
+      state,
+      timestamp: Date.now(),
     });
   });
 
-  describe('initialization', () => {
-    it('should create table with valid options', () => {
-      const table = createTable<User>({
-        columns,
-        data: users,
-      });
-      
-      expect(table).toBeDefined();
-      expect(table.getState).toBeDefined();
-      expect(table.getAllColumns).toBeDefined();
+  // Debug event logging
+  if (options.debug?.events) {
+    eventBus.on('*', (event) => {
+      console.debug(`[GridKit Event] ${event.type}`, event);
+    });
+  }
+
+  // 4. Performance monitoring setup
+  if (table.metrics) {
+    table.metrics.track('table', {
+      columnCount: table.getAllColumns().length,
+      initialRowCount: options.data.length,
+      options,
+    });
+  }
+
+  // 5. Emit initialization complete
+  eventBus.emit('table:ready', {
+    tableId: table.id,
+    timestamp: Date.now(),
+    columnCount: table.getAllColumns().length,
+    rowCount: table.getRowModel().rows.length,
+  });
+}
+```
+
+### **5. Supporting Types & Interfaces**
+
+```typescript
+/**
+ * Validated and normalized options.
+ * All optional fields have defaults.
+ */
+interface ValidatedTableOptions<TData extends RowData> {
+  readonly columns: readonly ValidatedColumnDef<TData>[];
+  readonly data: readonly TData[];
+  readonly getRowId: (row: TData, index: number) => RowId;
+  readonly debug: DebugConfig;
+  readonly meta: TableMeta;
+  readonly initialState: Partial<TableState<TData>>;
+  readonly defaultColumn?: Partial<ColumnDef<TData>>;
+  readonly onStateChange?: (state: TableState<TData>) => void;
+  readonly onError?: (error: GridError) => void;
+}
+
+/**
+ * Debug configuration with sane defaults.
+ */
+interface DebugConfig {
+  readonly performance: boolean;
+  readonly validation: boolean;
+  readonly events: boolean;
+  readonly memory: boolean;
+}
+
+/**
+ * Validation error with context.
+ */
+interface ValidationError {
+  readonly code: string;
+  readonly message: string;
+  readonly field: string;
+  readonly value: unknown;
+  readonly suggestion?: string;
+}
+
+/**
+ * Internal table structure (not exposed).
+ */
+interface TableInternal<TData> {
+  readonly stateStore: StateStore<TableState<TData>>;
+  readonly columnRegistry: ColumnRegistry<TData>;
+  readonly rowFactory: RowFactory<TData>;
+  readonly eventBus: EventBus;
+}
+```
+
+## 🚫 **DO NOT IMPLEMENT**
+
+- ❌ No DOM rendering or UI logic
+- ❌ No framework-specific code (React, Vue, etc.)
+- ❌ No sorting/filtering algorithms (plugins)
+- ❌ No complex state transitions (state machine)
+- ❌ No network/async operations
+- ❌ No plugin system integration (CORE-006)
+- ❌ No persistence or storage logic
+
+## 📁 **File Structure**
+
+```
+packages/core/src/table/
+├── factory/
+│   ├── create-table.ts          # Main factory function
+│   ├── validation.ts            # Comprehensive validation
+│   ├── normalization.ts         # Option normalization
+│   └── error-handling.ts        # Error wrapping
+├── instance/
+│   ├── TableInstance.ts         # Core implementation
+│   ├── initialization.ts        # Setup logic
+│   └── lifecycle.ts             # Destroy/reset
+├── builders/
+│   ├── state-builder.ts         # Initial state construction
+│   └── model-builder.ts         # Row/column models
+└── index.ts                     # Public exports
+```
+
+## 🧪 **Test Requirements (Critical)**
+
+```typescript
+// MUST test these scenarios comprehensively:
+describe('createTable', () => {
+  describe('Validation', () => {
+    test('Rejects invalid columns with helpful errors', () => {
+      expect(() => createTable({ columns: 'invalid' })).toThrow(
+        'columns must be an array'
+      );
+
+      expect(() => createTable({ columns: [] })).toThrow(
+        'At least one column definition is required'
+      );
+
+      expect(() =>
+        createTable({
+          columns: [{}], // No accessor
+        })
+      ).toThrow('must have either accessorKey or accessorFn');
     });
 
-    it('should use default empty data when not provided', () => {
-      const table = createTable<User>({ columns });
-      
-      expect(table.getState().data).toEqual([]);
-    });
-
-    it('should apply initial state', () => {
-      const table = createTable<User>({
-        columns,
-        data: users,
-        initialState: {
-          columnVisibility: { email: false },
-        },
-      });
-      
-      expect(table.getState().columnVisibility).toEqual({ email: false });
+    test('Validates data consistency', () => {
+      const invalidData = [null, undefined, 'string'];
+      expect(() =>
+        createTable({
+          columns: [{ accessorKey: 'name' }],
+          data: invalidData,
+        })
+      ).toThrow('Invalid row data');
     });
   });
 
-  describe('state management', () => {
-    it('should get current state', () => {
-      const table = createTable<User>({ columns, data: users });
-      const state = table.getState();
-      
-      expect(state.data).toEqual(users);
-      expect(state.columnVisibility).toBeDefined();
-    });
-
-    it('should update state immutably', () => {
-      const table = createTable<User>({ columns, data: users });
-      const oldState = table.getState();
-      
-      table.setState(prev => ({
-        ...prev,
-        rowSelection: { '1': true },
-      }));
-      
-      const newState = table.getState();
-      expect(newState).not.toBe(oldState);
-      expect(newState.rowSelection).toEqual({ '1': true });
-    });
-
-    it('should call onStateChange callback', () => {
-      const onStateChange = vi.fn();
-      const table = createTable<User>({
-        columns,
-        data: users,
-        onStateChange,
-      });
-      
-      table.setState(prev => ({ ...prev, rowSelection: {} }));
-      
-      expect(onStateChange).toHaveBeenCalled();
-    });
-
-    it('should support subscriptions', () => {
-      const table = createTable<User>({ columns, data: users });
-      const listener = vi.fn();
-      
-      const unsubscribe = table.subscribe(listener);
-      
-      table.setState(prev => ({ ...prev, rowSelection: {} }));
-      
-      expect(listener).toHaveBeenCalled();
-      
-      unsubscribe();
-      table.setState(prev => ({ ...prev, rowSelection: {} }));
-      
-      expect(listener).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('columns', () => {
-    it('should create all columns', () => {
-      const table = createTable<User>({ columns, data: users });
-      const allColumns = table.getAllColumns();
-      
-      expect(allColumns).toHaveLength(2);
-    });
-
-    it('should apply default column options', () => {
-      const table = createTable<User>({
-        columns,
-        data: users,
-        defaultColumn: {
-          size: 200,
-          enableSorting: false,
-        },
-      });
-      
-      const column = table.getColumn('name');
-      expect(column?.getSize()).toBe(200);
-    });
-  });
-
-  describe('lifecycle', () => {
-    it('should reset to initial state', () => {
-      const table = createTable<User>({
-        columns,
-        data: users,
-        initialState: {
-          rowSelection: { '1': true },
-        },
-      });
-      
-      table.setState(prev => ({ ...prev, rowSelection: {} }));
-      expect(table.getState().rowSelection).toEqual({});
-      
-      table.reset();
-      expect(table.getState().rowSelection).toEqual({ '1': true });
-    });
-
-    it('should cleanup on destroy', () => {
-      const table = createTable<User>({ columns, data: users });
-      
-      table.destroy();
-      
-      // Should not throw, but state is cleared
-      expect(table.getAllColumns()).toEqual([]);
-    });
-  });
-
-  describe('performance', () => {
-    it('should handle 1000 rows efficiently', () => {
-      const largeData = Array.from({ length: 1000 }, (_, i) => ({
+  describe('Performance', () => {
+    test('Creates 10,000 rows in < 200ms', () => {
+      const largeData = Array.from({ length: 10000 }, (_, i) => ({
         id: i,
         name: `User ${i}`,
         email: `user${i}@example.com`,
       }));
-      
+
       const start = performance.now();
-      const table = createTable<User>({ columns, data: largeData });
+      const table = createTable({
+        columns: [{ accessorKey: 'name' }],
+        data: largeData,
+      });
       const duration = performance.now() - start;
-      
-      expect(duration).toBeLessThan(50); // < 50ms
-      expect(table.getRowModel().rows).toHaveLength(1000);
+
+      expect(duration).toBeLessThan(200);
+      expect(table.getRowModel().rows).toHaveLength(10000);
+    });
+
+    test('Memory usage scales linearly', () => {
+      // Test with increasing data sizes
+      const sizes = [100, 1000, 10000];
+      const memoryUsages: number[] = [];
+
+      sizes.forEach((size) => {
+        const data = Array.from({ length: size }, (_, i) => ({ id: i }));
+        const table = createTable({
+          columns: [{ accessorKey: 'id' }],
+          data,
+        });
+
+        // Measure memory after GC
+        memoryUsages.push(measureTableMemory(table));
+        table.destroy();
+      });
+
+      // Should be roughly linear (allow 20% variance)
+      expect(memoryUsages[2] / memoryUsages[1]).toBeCloseTo(10, -1); // ~10x increase for 10x data
+    });
+  });
+
+  describe('Memory Safety', () => {
+    test('No memory leaks after destroy', () => {
+      const initialMemory = measureMemory();
+      const tables: Table<any>[] = [];
+
+      // Create and destroy tables
+      for (let i = 0; i < 100; i++) {
+        const table = createTable({
+          columns: [{ accessorKey: 'test' }],
+          data: [{ test: 'value' }],
+        });
+        tables.push(table);
+      }
+
+      // Destroy all
+      tables.forEach((table) => table.destroy());
+
+      // Force GC and measure
+      global.gc?.();
+      const finalMemory = measureMemory();
+
+      expect(finalMemory).toBeLessThan(initialMemory * 1.1); // < 10% increase
+    });
+
+    test('Weak references prevent leaks', () => {
+      let tableRef: WeakRef<Table<any>> | undefined;
+
+      {
+        // Create in isolated scope
+        const table = createTable({
+          columns: [{ accessorKey: 'test' }],
+          data: [{ test: 'value' }],
+        });
+        tableRef = new WeakRef(table);
+      }
+
+      // Table should be GC'd
+      global.gc?.();
+      expect(tableRef?.deref()).toBeUndefined();
     });
   });
 });
 ```
 
+## 💡 **Critical Implementation Patterns**
+
+```typescript
+// 1. Immutable state with structural sharing
+function updateState<T>(prev: T, changes: Partial<T>): T {
+  // Use shallow copy for performance
+  const changed = Object.keys(changes).some(
+    (key) => (prev as any)[key] !== (changes as any)[key]
+  );
+
+  return changed ? { ...prev, ...changes } : prev;
+}
+
+// 2. Lazy initialization for performance
+class LazyRowModel<TData> {
+  private cached?: RowModel<TData>;
+  private dependencyHash = '';
+
+  getModel(data: TData[], columns: Column<TData>[]): RowModel<TData> {
+    const hash = computeDependencyHash(data, columns);
+    if (!this.cached || this.dependencyHash !== hash) {
+      this.cached = buildRowModel(data, columns);
+      this.dependencyHash = hash;
+    }
+    return this.cached;
+  }
+}
+
+// 3. Error boundaries for isolation
+function withErrorBoundary<T>(fn: () => T, context: string): T {
+  try {
+    return fn();
+  } catch (error) {
+    throw new GridKitError(
+      'RUNTIME_ERROR',
+      `Error in ${context}: ${error.message}`,
+      { originalError: error, context }
+    );
+  }
+}
+```
+
+## 📊 **Success Metrics (Non-Negotiable)**
+
+- ✅ Table creation with 10,000 rows: < 200ms
+- ✅ State updates: < 5ms (cold), < 1ms (hot)
+- ✅ Zero memory leaks after destroy()
+- ✅ Heap memory increase < 10% after 100 create/destroy cycles
+- ✅ 100% test coverage for validation paths
+- ✅ All errors provide actionable messages
+- ✅ TypeScript strict mode compliance
+
+## 🎯 **AI Implementation Strategy**
+
+1. **Phase 1: Validation System** - Get error handling right first
+2. **Phase 2: Core Factory** - Implement main createTable function
+3. **Phase 3: Instance Implementation** - Build Table interface methods
+4. **Phase 4: Performance Optimizations** - Add caching and lazy loading
+5. **Phase 5: Memory Safety** - Implement destroy() and cleanup
+6. **Phase 6: Comprehensive Testing** - Validate all scenarios
+
+**Critical Priority:** Memory safety and performance are non-negotiable. Every feature must be tested for memory leaks.
+
 ---
 
-## Edge Cases
-
-- [ ] Empty data array
-- [ ] Missing optional options
-- [ ] Invalid getRowId function
-- [ ] Duplicate column IDs
-- [ ] State updates while destroyed
-- [ ] Large datasets (1000+ rows)
-
----
-
-## Performance Requirements
-
-- Table creation with 1000 rows: **< 50ms**
-- State update: **< 5ms**
-- No memory leaks on destroy
-
----
-
-## Files to Create/Modify
-
-- [ ] `src/core/table/create-table.ts` - Implementation
-- [ ] `src/core/table/__tests__/create-table.test.ts` - Tests
-- [ ] `src/core/table/index.ts` - Exports
-- [ ] `src/core/index.ts` - Re-export createTable
-
----
-
-## Success Criteria
-
-- [ ] All tests pass with 100% coverage
-- [ ] TypeScript compiles without errors
-- [ ] Performance benchmarks met
-- [ ] Error handling comprehensive
-- [ ] Follows factory pattern from AI_GUIDELINES.md
-
----
-
-## Related Tasks
-
-- **Depends on:** CORE-001 through CORE-004, CORE-011 (state store)
-- **Blocks:** All feature implementations
-
----
-
-## Notes for AI
-
-- This is the CORE of the library - be extra careful
-- Test thoroughly with edge cases
-- Performance is critical - profile if needed
-- Error messages should be helpful
-- Consider future extensibility (plugins, etc.)
+**Status:** Ready for implementation. This is the most critical task in the codebase - requires careful architecture review.

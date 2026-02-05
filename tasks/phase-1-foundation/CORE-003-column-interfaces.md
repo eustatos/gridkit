@@ -1,658 +1,565 @@
----
+# CORE-003: Column System Types & Interfaces
+
+## Task Card
+
+```
 task_id: CORE-003
-epic_id: EPIC-001
-module: @gridkit/core
-file: src/core/types/column.ts
 priority: P0
-complexity: medium
+complexity: High
 estimated_tokens: ~15,000
-assignable_to_ai: yes
-dependencies:
-  - CORE-001
-  - CORE-002
-guidelines:
-  - .github/AI_GUIDELINES.md
-  - CONTRIBUTING.md
-  - specs/api-specs/core.md
----
+ai_ready: true
+dependencies: [CORE-001, CORE-002]
+requires_review: true (complex type inference)
+```
 
-# Task: Define Column Interfaces
+## 🎯 Objective
 
-## Context
+Define the complete column type system with advanced type inference for data access, rendering, and feature enablement. Columns are the most complex part of GridKit's type system, requiring sophisticated TypeScript patterns for excellent developer experience.
 
-Define the column type system - one of the most important parts of GridKit. Columns define how data is accessed, displayed, and manipulated. The type system must support:
-- Type-safe data access (string keys and functions)
-- Nested property access (dot notation)
-- Custom renderers
-- Feature flags (sorting, filtering, etc.)
+## 📋 Implementation Scope
 
-## Guidelines Reference
+### **1. Column Definition (User Configuration)**
 
-- `.github/AI_GUIDELINES.md` - TypeScript standards
-- `CONTRIBUTING.md` - Naming conventions  
-- `specs/api-specs/core.md` - Column API specification
-- `docs/architecture/ARCHITECTURE.md` - Column system design
-
-## Objectives
-
-- [ ] Define `ColumnDef<TData, TValue>` interface (column definition)
-- [ ] Define `Column<TData>` interface (runtime column instance)
-- [ ] Define accessor types (`AccessorFn`, `AccessorKey`)
-- [ ] Define renderer types (header, cell, footer)
-- [ ] Define context types for renderers
-- [ ] Add comprehensive JSDoc with examples
-
----
-
-## Implementation Requirements
-
-### 1. Accessor Types
-
-**File: `src/core/types/column.ts`**
-
-```typescript
-import type { RowData, ColumnId, AccessorValue } from './base';
-import type { Table } from './table';
-import type { Row } from './row';
-
+````typescript
 /**
- * Function that extracts cell value from row data.
- * 
+ * Complete column definition with type-safe accessors.
+ * Supports both simple key access and complex computed values.
+ *
  * @template TData - Row data type
- * @template TValue - Cell value type
- * 
- * @param row - Row data
- * @returns Cell value
- * 
+ * @template TValue - Inferred cell value type
+ *
  * @example
  * ```typescript
- * const accessor: AccessorFn<User, string> = (row) => 
- *   `${row.firstName} ${row.lastName}`;
+ * // Simple column
+ * const col: ColumnDef<User> = {
+ *   accessorKey: 'name',
+ *   header: 'Name'
+ * };
+ *
+ * // Computed column
+ * const col: ColumnDef<User, string> = {
+ *   id: 'fullName',
+ *   accessorFn: row => `${row.firstName} ${row.lastName}`,
+ *   header: 'Full Name'
+ * };
  * ```
- * 
- * @public
+ */
+export interface ColumnDef<TData extends RowData, TValue = unknown> {
+  // === Required: Accessor Definition ===
+
+  /**
+   * String key for data access (dot notation supported).
+   * Mutually exclusive with `accessorFn`.
+   *
+   * @example 'user.profile.name'
+   */
+  accessorKey?: AccessorKey<TData>;
+
+  /**
+   * Function for computed values.
+   * Requires explicit `id` since no key is provided.
+   * Mutually exclusive with `accessorKey`.
+   */
+  accessorFn?: AccessorFn<TData, TValue>;
+
+  /**
+   * Unique column ID (auto-generated from accessorKey).
+   * Required when using `accessorFn`.
+   */
+  id?: ColumnId;
+
+  // === Rendering ===
+
+  /**
+   * Header content (string or render function).
+   */
+  header?: string | HeaderRenderer<TData, TValue>;
+
+  /**
+   * Cell content renderer.
+   * Receives typed context with getValue().
+   */
+  cell?: CellRenderer<TData, TValue>;
+
+  /**
+   * Footer content (string or render function).
+   */
+  footer?: string | FooterRenderer<TData, TValue>;
+
+  // === Layout & Sizing ===
+
+  /**
+   * Initial width in pixels.
+   * @default 150
+   */
+  size?: number;
+
+  /**
+   * Minimum width (resizing constraint).
+   * @default 50
+   */
+  minSize?: number;
+
+  /**
+   * Maximum width (resizing constraint).
+   * @default Infinity
+   */
+  maxSize?: number;
+
+  // === Feature Flags ===
+
+  /**
+   * Enable sorting for this column.
+   * @default true
+   */
+  enableSorting?: boolean;
+
+  /**
+   * Enable filtering for this column.
+   * @default true
+   */
+  enableFiltering?: boolean;
+
+  /**
+   * Enable column resizing.
+   * @default true
+   */
+  enableResizing?: boolean;
+
+  /**
+   * Enable column visibility toggling.
+   * @default true
+   */
+  enableHiding?: boolean;
+
+  /**
+   * Enable column reordering.
+   * @default true
+   */
+  enableReordering?: boolean;
+
+  /**
+   * Enable column pinning (freeze).
+   * @default false
+   */
+  enablePinning?: boolean;
+
+  // === Advanced Configuration ===
+
+  /**
+   * Custom metadata for application use.
+   */
+  meta?: ColumnMeta;
+
+  /**
+   * Custom sort function (overrides default).
+   */
+  sortFn?: Comparator<TValue>;
+
+  /**
+   * Custom filter function (overrides default).
+   */
+  filterFn?: FilterFn<TData, TValue>;
+
+  /**
+   * Aggregation function for grouped data.
+   */
+  aggregationFn?: AggregationFn<TValue>;
+
+  /**
+   * Column grouping ID (for header grouping).
+   */
+  columnGroupId?: ColumnGroupId;
+}
+````
+
+### **2. Accessor Types (Type-Safe Data Access)**
+
+```typescript
+/**
+ * String key for accessing row data.
+ * Uses template literal types for dot notation inference.
+ *
+ * @template TData - Row data type
+ */
+export type AccessorKey<TData extends RowData> =
+  // Extract all string keys
+  StringKeys<TData> extends infer K
+    ? K extends string
+      ? // Handle nested paths recursively
+          | K
+          | (TData[K] extends RowData ? `${K}.${AccessorKey<TData[K]>}` : never)
+      : never
+    : never;
+
+/**
+ * Function accessor with proper typing.
+ *
+ * @template TData - Row data type
+ * @template TValue - Return type (inferred if possible)
  */
 export type AccessorFn<TData extends RowData, TValue = unknown> = (
-  row: TData
+  row: TData,
+  index: number
 ) => TValue;
 
 /**
- * String key for accessing row data.
- * Supports dot notation for nested properties.
- * 
- * @template TData - Row data type
- * 
- * @example
- * ```typescript
- * type Key = AccessorKey<User>; // 'name' | 'email' | 'profile.avatar' | ...
- * ```
- * 
- * @public
+ * Extracts value type from accessor definition.
+ * Advanced inference for both key and function accessors.
+ *
+ * @template TDef - ColumnDef type
  */
-export type AccessorKey<TData extends RowData> = string & keyof TData;
+export type ColumnValue<TDef> =
+  TDef extends ColumnDef<infer TData, infer TValue>
+    ? TValue
+    : TDef extends { accessorKey: infer TKey }
+      ? TKey extends string
+        ? AccessorValue<TData, TKey>
+        : unknown
+      : unknown;
 ```
 
-### 2. Renderer Context Types
+### **3. Renderer Context Types**
 
 ```typescript
 /**
  * Context provided to header renderers.
- * 
- * @template TData - Row data type
- * @template TValue - Cell value type
- * 
- * @public
+ * Includes column state and utilities.
  */
 export interface HeaderContext<TData extends RowData, TValue = unknown> {
-  /**
-   * Column instance
-   */
-  column: Column<TData, TValue>;
-  
-  /**
-   * Table instance
-   */
-  table: Table<TData>;
+  /** Column instance */
+  readonly column: Column<TData, TValue>;
+
+  /** Table instance */
+  readonly table: Table<TData>;
+
+  /** Header string (if provided) */
+  readonly header: string;
+
+  /** Check if column is sorted */
+  readonly getIsSorted: () => boolean;
+
+  /** Get sort direction */
+  readonly getSortDirection: () => 'asc' | 'desc' | false;
+
+  /** Toggle sorting */
+  readonly toggleSorting: (desc?: boolean) => void;
 }
 
 /**
- * Context provided to cell renderers.
- * 
- * @template TData - Row data type
- * @template TValue - Cell value type
- * 
- * @public
+ * Rich context for cell renderers with typed value access.
  */
 export interface CellContext<TData extends RowData, TValue = unknown> {
-  /**
-   * Get the cell value.
-   * Uses accessor function/key defined in column.
-   * 
-   * @returns Cell value
-   */
-  getValue(): TValue;
-  
-  /**
-   * Row instance
-   */
-  row: Row<TData>;
-  
-  /**
-   * Column instance
-   */
-  column: Column<TData, TValue>;
-  
-  /**
-   * Table instance
-   */
-  table: Table<TData>;
-  
-  /**
-   * Render the value using default renderer.
-   * Useful for wrapping default behavior.
-   * 
-   * @returns Rendered value
-   */
-  renderValue(): unknown;
+  /** Get typed cell value */
+  readonly getValue: () => TValue;
+
+  /** Get raw row data */
+  readonly getRow: () => Row<TData>;
+
+  /** Get column instance */
+  readonly column: Column<TData, TValue>;
+
+  /** Get table instance */
+  readonly table: Table<TData>;
+
+  /** Row index in current view */
+  readonly rowIndex: number;
+
+  /** Cell index in row */
+  readonly cellIndex: number;
+
+  /** Check if cell is selected */
+  readonly getIsSelected: () => boolean;
+
+  /** Render default cell content */
+  readonly renderValue: () => unknown;
+
+  /** Cell metadata */
+  readonly meta: CellMeta;
 }
 
 /**
- * Context provided to footer renderers.
- * 
- * @template TData - Row data type
- * @template TValue - Cell value type
- * 
- * @public
+ * Context for footer renderers.
  */
 export interface FooterContext<TData extends RowData, TValue = unknown> {
-  /**
-   * Column instance
-   */
-  column: Column<TData, TValue>;
-  
-  /**
-   * Table instance
-   */
-  table: Table<TData>;
+  readonly column: Column<TData, TValue>;
+  readonly table: Table<TData>;
+  readonly footer: string;
 }
 ```
 
-### 3. Renderer Types
+### **4. Runtime Column Instance**
 
 ```typescript
 /**
- * Header renderer function or component.
- * Can return any renderable value (string, React element, etc.).
- * 
+ * Runtime column instance with state and methods.
+ * Created from ColumnDef with added runtime capabilities.
+ *
  * @template TData - Row data type
  * @template TValue - Cell value type
- * 
- * @public
  */
-export type HeaderRenderer<TData extends RowData, TValue = unknown> = (
+export interface Column<TData extends RowData, TValue = unknown> {
+  // === Identification ===
+
+  /** Unique column ID */
+  readonly id: ColumnId;
+
+  /** Parent table reference */
+  readonly table: Table<TData>;
+
+  /** Original column definition */
+  readonly columnDef: ColumnDef<TData, TValue>;
+
+  // === State Accessors ===
+
+  /** Get current width */
+  readonly getSize: () => number;
+
+  /** Check if visible */
+  readonly getIsVisible: () => boolean;
+
+  /** Get display index */
+  readonly getIndex: () => number;
+
+  /** Get pinned position */
+  readonly getPinnedPosition: () => 'left' | 'right' | false;
+
+  // === State Mutators ===
+
+  /** Toggle visibility */
+  readonly toggleVisibility: (visible?: boolean) => void;
+
+  /** Update size */
+  readonly setSize: (size: number) => void;
+
+  /** Reset to default size */
+  readonly resetSize: () => void;
+
+  /** Toggle pinning */
+  readonly togglePinned: (position?: 'left' | 'right' | false) => void;
+
+  // === Feature State ===
+
+  /** Check if sorted */
+  readonly getIsSorted: () => boolean;
+
+  /** Get sort direction */
+  readonly getSortDirection: () => 'asc' | 'desc' | false;
+
+  /** Toggle sorting */
+  readonly toggleSorting: (desc?: boolean) => void;
+
+  /** Check if filtered */
+  readonly getIsFiltered: () => boolean;
+
+  /** Get filter value */
+  readonly getFilterValue: () => unknown;
+
+  /** Set filter value */
+  readonly setFilterValue: (value: unknown) => void;
+
+  // === Metadata ===
+
+  /** Column metadata */
+  readonly meta: ColumnMeta;
+
+  /** Custom utilities */
+  readonly utils: ColumnUtils<TData, TValue>;
+}
+```
+
+### **5. Supporting Types**
+
+```typescript
+/**
+ * Column metadata (extensible).
+ */
+export interface ColumnMeta {
+  /** Display alignment */
+  readonly align?: 'left' | 'center' | 'right';
+
+  /** CSS class names */
+  readonly className?: string;
+
+  /** Tooltip text */
+  readonly tooltip?: string;
+
+  /** Formatting options */
+  readonly format?: ColumnFormat;
+
+  /** Custom properties */
+  readonly [key: string]: unknown;
+}
+
+/**
+ * Cell metadata.
+ */
+export interface CellMeta {
+  /** Is cell editable */
+  readonly editable?: boolean;
+
+  /** Validation rules */
+  readonly validation?: CellValidation;
+
+  /** CSS classes */
+  readonly className?: string;
+
+  /** Data type hint */
+  readonly type?: 'text' | 'number' | 'date' | 'boolean' | 'custom';
+}
+
+/**
+ * Column utilities for advanced use cases.
+ */
+export interface ColumnUtils<TData extends RowData, TValue> {
+  /** Format value according to column rules */
+  readonly formatValue: (value: TValue) => string;
+
+  /** Parse input to value */
+  readonly parseValue: (input: string) => TValue;
+
+  /** Validate value */
+  readonly validateValue: (value: TValue) => ValidationResult;
+
+  /** Compare two values for sorting */
+  readonly compareValues: (a: TValue, b: TValue) => number;
+
+  /** Check if value matches filter */
+  readonly matchesFilter: (value: TValue, filter: unknown) => boolean;
+}
+
+/**
+ * Renderer function types.
+ */
+export type HeaderRenderer<TData, TValue> = (
   context: HeaderContext<TData, TValue>
 ) => unknown;
 
-/**
- * Cell renderer function or component.
- * 
- * @template TData - Row data type
- * @template TValue - Cell value type
- * 
- * @public
- */
-export type CellRenderer<TData extends RowData, TValue = unknown> = (
+export type CellRenderer<TData, TValue> = (
   context: CellContext<TData, TValue>
 ) => unknown;
 
-/**
- * Footer renderer function or component.
- * 
- * @template TData - Row data type
- * @template TValue - Cell value type
- * 
- * @public
- */
-export type FooterRenderer<TData extends RowData, TValue = unknown> = (
+export type FooterRenderer<TData, TValue> = (
   context: FooterContext<TData, TValue>
 ) => unknown;
-```
-
-### 4. Column Definition Interface
-
-```typescript
-/**
- * Column definition.
- * Defines how a column behaves and renders.
- * 
- * @template TData - Row data type
- * @template TValue - Cell value type (inferred from accessor)
- * 
- * @example
- * Simple column:
- * ```typescript
- * const column: ColumnDef<User> = {
- *   accessorKey: 'name',
- *   header: 'Name',
- * };
- * ```
- * 
- * @example
- * With custom accessor:
- * ```typescript
- * const column: ColumnDef<User, string> = {
- *   id: 'fullName',
- *   accessorFn: (row) => `${row.firstName} ${row.lastName}`,
- *   header: 'Full Name',
- * };
- * ```
- * 
- * @example
- * With custom renderer:
- * ```typescript
- * const column: ColumnDef<User> = {
- *   accessorKey: 'email',
- *   header: 'Email',
- *   cell: ({ getValue }) => (
- *     <a href={`mailto:${getValue()}`}>{getValue()}</a>
- *   ),
- * };
- * ```
- * 
- * @public
- */
-export interface ColumnDef<
-  TData extends RowData,
-  TValue = unknown
-> {
-  /**
-   * Unique column identifier.
-   * Auto-generated from accessorKey if not provided.
-   * Required when using accessorFn.
-   * 
-   * @example
-   * ```typescript
-   * { id: 'fullName' }
-   * ```
-   */
-  id?: ColumnId;
-  
-  /**
-   * Key to access data from row object.
-   * Supports dot notation: 'user.profile.name'
-   * 
-   * Cannot be used with accessorFn (mutually exclusive).
-   * 
-   * @example
-   * ```typescript
-   * { accessorKey: 'name' } // row.name
-   * { accessorKey: 'user.email' } // row.user.email
-   * ```
-   */
-  accessorKey?: AccessorKey<TData>;
-  
-  /**
-   * Custom accessor function.
-   * Use when accessorKey is not sufficient.
-   * 
-   * Cannot be used with accessorKey (mutually exclusive).
-   * Requires 'id' to be specified.
-   * 
-   * @example
-   * ```typescript
-   * {
-   *   id: 'fullName',
-   *   accessorFn: (row) => `${row.firstName} ${row.lastName}`,
-   * }
-   * ```
-   */
-  accessorFn?: AccessorFn<TData, TValue>;
-  
-  /**
-   * Column header.
-   * Can be a string or custom render function.
-   * 
-   * @default Column ID
-   * 
-   * @example
-   * ```typescript
-   * { header: 'Full Name' }
-   * 
-   * {
-   *   header: ({ column }) => (
-   *     <div>
-   *       {column.id}
-   *       {column.getIsSorted() && <SortIcon />}
-   *     </div>
-   *   ),
-   * }
-   * ```
-   */
-  header?: string | HeaderRenderer<TData, TValue>;
-  
-  /**
-   * Footer content.
-   * Can be a string or custom render function.
-   * 
-   * @example
-   * ```typescript
-   * { footer: 'Total' }
-   * 
-   * {
-   *   footer: ({ table }) => (
-   *     <div>Total: {table.getRowModel().rows.length}</div>
-   *   ),
-   * }
-   * ```
-   */
-  footer?: string | FooterRenderer<TData, TValue>;
-  
-  /**
-   * Cell renderer.
-   * Defaults to displaying the raw value.
-   * 
-   * @example
-   * ```typescript
-   * {
-   *   cell: ({ getValue }) => (
-   *     <strong>{getValue().toUpperCase()}</strong>
-   *   ),
-   * }
-   * ```
-   */
-  cell?: CellRenderer<TData, TValue>;
-  
-  /**
-   * Column width in pixels.
-   * 
-   * @default 150
-   */
-  size?: number;
-  
-  /**
-   * Minimum width in pixels.
-   * 
-   * @default 50
-   */
-  minSize?: number;
-  
-  /**
-   * Maximum width in pixels.
-   * 
-   * @default Number.MAX_SAFE_INTEGER
-   */
-  maxSize?: number;
-  
-  /**
-   * Enable sorting for this column.
-   * 
-   * @default true
-   */
-  enableSorting?: boolean;
-  
-  /**
-   * Enable filtering for this column.
-   * 
-   * @default true
-   */
-  enableFiltering?: boolean;
-  
-  /**
-   * Enable resizing for this column.
-   * 
-   * @default true
-   */
-  enableResizing?: boolean;
-  
-  /**
-   * Enable hiding/showing for this column.
-   * 
-   * @default true
-   */
-  enableHiding?: boolean;
-  
-  /**
-   * Custom metadata for this column.
-   * Not used by GridKit internally.
-   * 
-   * @example
-   * ```typescript
-   * {
-   *   meta: {
-   *     type: 'currency',
-   *     align: 'right',
-   *   },
-   * }
-   * ```
-   */
-  meta?: ColumnMeta;
-}
 
 /**
- * Custom column metadata.
- * Can be extended for application-specific data.
- * 
- * @public
+ * Specialized function types.
  */
-export type ColumnMeta = Record<string, unknown>;
+export type FilterFn<TData, TValue> = (
+  row: TData,
+  value: TValue,
+  filterValue: unknown
+) => boolean;
+
+export type AggregationFn<TValue> = (values: TValue[]) => TValue;
 ```
 
-### 5. Runtime Column Interface
+## 🚫 **DO NOT IMPLEMENT**
 
-```typescript
-/**
- * Runtime column instance.
- * Created from ColumnDef.
- * 
- * @template TData - Row data type
- * @template TValue - Cell value type
- * 
- * @public
- */
-export interface Column<TData extends RowData, TValue = unknown> {
-  /**
-   * Unique column ID.
-   */
-  readonly id: ColumnId;
-  
-  /**
-   * Reference to parent table.
-   */
-  readonly table: Table<TData>;
-  
-  /**
-   * Original column definition.
-   */
-  readonly columnDef: ColumnDef<TData, TValue>;
-  
-  /**
-   * Get current column size in pixels.
-   * 
-   * @returns Column width
-   */
-  getSize(): number;
-  
-  /**
-   * Check if column is visible.
-   * 
-   * @returns True if visible
-   */
-  getIsVisible(): boolean;
-  
-  /**
-   * Toggle column visibility.
-   * 
-   * @param value - New visibility state (toggles if undefined)
-   */
-  toggleVisibility(value?: boolean): void;
-  
-  /**
-   * Reset column to default size.
-   */
-  resetSize(): void;
-  
-  /**
-   * Get column index in current order.
-   * 
-   * @returns Column index (0-based)
-   */
-  getIndex(): number;
-}
+- ❌ No implementation of column methods
+- ❌ No state management logic
+- ❌ No rendering engine
+- ❌ No sorting/filtering algorithms
+- ❌ No DOM manipulation or event handling
+- ❌ No framework-specific renderers
+
+## 📁 **File Structure**
+
+```
+packages/core/src/types/column/
+├── ColumnDef.ts        # Column definition types
+├── AccessorTypes.ts    # Accessor type utilities
+├── RenderContext.ts    # Renderer context types
+├── ColumnInstance.ts   # Runtime column interface
+├── SupportingTypes.ts  # Meta, utils, etc.
+└── index.ts           # Exports
 ```
 
----
-
-## Test Requirements
-
-**File: `src/core/types/__tests__/column.test.ts`**
+## 🧪 **Test Requirements**
 
 ```typescript
-import { describe, it, expectTypeOf } from 'vitest';
-import type {
-  ColumnDef,
-  Column,
-  AccessorFn,
-  HeaderContext,
-  CellContext,
-} from '../column';
-import type { RowData } from '../base';
+describe('Column Type System', () => {
+  test('AccessorKey infers nested paths', () => {
+    interface Data {
+      user: {
+        profile: { name: string; age: number };
+        email: string;
+      };
+    }
 
-describe('Column Types', () => {
-  interface User extends RowData {
-    id: number;
-    name: string;
-    email: string;
-    profile: {
-      avatar: string;
+    type Keys = AccessorKey<Data>;
+    // Should include: 'user', 'user.profile', 'user.profile.name',
+    // 'user.profile.age', 'user.email'
+  });
+
+  test('ColumnValue infers from accessorKey', () => {
+    interface User {
+      name: string;
+      age: number;
+    }
+
+    type Col1 = ColumnDef<User, string> & { accessorKey: 'name' };
+    type Value1 = ColumnValue<Col1>; // Should be string
+
+    type Col2 = ColumnDef<User> & { accessorKey: 'age' };
+    type Value2 = ColumnValue<Col2>; // Should be number
+  });
+
+  test('Mutually exclusive accessors enforced', () => {
+    // @ts-expect-error - Should not allow both
+    const invalid: ColumnDef<any> = {
+      accessorKey: 'name',
+      accessorFn: () => 'test',
     };
-  }
-
-  describe('ColumnDef', () => {
-    it('should accept simple accessor key', () => {
-      const column: ColumnDef<User> = {
-        accessorKey: 'name',
-        header: 'Name',
-      };
-      
-      expectTypeOf(column).toMatchTypeOf<ColumnDef<User>>();
-    });
-
-    it('should accept accessor function', () => {
-      const column: ColumnDef<User, string> = {
-        id: 'fullName',
-        accessorFn: (row) => `${row.name} - ${row.email}`,
-        header: 'Full Name',
-      };
-      
-      expectTypeOf(column.accessorFn).toMatchTypeOf<AccessorFn<User, string> | undefined>();
-    });
-
-    it('should infer value type from accessor', () => {
-      const column: ColumnDef<User, number> = {
-        accessorKey: 'id',
-        cell: ({ getValue }) => {
-          const value = getValue();
-          expectTypeOf(value).toBeNumber();
-          return value;
-        },
-      };
-    });
-
-    it('should allow custom renderers', () => {
-      const column: ColumnDef<User> = {
-        accessorKey: 'email',
-        header: ({ column }) => {
-          expectTypeOf(column).toMatchTypeOf<Column<User>>();
-          return column.id;
-        },
-        cell: ({ getValue, row }) => {
-          expectTypeOf(getValue()).toBeString();
-          expectTypeOf(row.original).toMatchTypeOf<User>();
-          return getValue();
-        },
-      };
-    });
-  });
-
-  describe('CellContext', () => {
-    it('should provide correct context', () => {
-      type Context = CellContext<User, string>;
-      
-      expectTypeOf<Context['getValue']>().returns.toBeString();
-      expectTypeOf<Context['row']['original']>().toMatchTypeOf<User>();
-    });
-  });
-
-  describe('Column', () => {
-    it('should have correct interface', () => {
-      type ColumnInstance = Column<User>;
-      
-      expectTypeOf<ColumnInstance['id']>().toBeString();
-      expectTypeOf<ColumnInstance['getSize']>().returns.toBeNumber();
-      expectTypeOf<ColumnInstance['getIsVisible']>().returns.toBeBoolean();
-    });
   });
 });
 ```
 
----
+## 💡 **Advanced TypeScript Patterns**
 
-## Edge Cases
-
-- [ ] Mutually exclusive accessorKey/accessorFn enforced by types
-- [ ] Value type inference works for nested properties
-- [ ] Custom renderers have correct context types
-- [ ] Optional fields work correctly
-- [ ] Metadata is extensible
-
----
-
-## Files to Create/Modify
-
-- [ ] `src/core/types/column.ts` - Column type definitions
-- [ ] `src/core/types/__tests__/column.test.ts` - Type tests
-- [ ] `src/core/types/index.ts` - Add exports
-
-**Update `src/core/types/index.ts`:**
 ```typescript
-export type {
-  ColumnDef,
-  Column,
-  AccessorFn,
-  AccessorKey,
-  HeaderContext,
-  CellContext,
-  FooterContext,
-  HeaderRenderer,
-  CellRenderer,
-  FooterRenderer,
-  ColumnMeta,
-} from './column';
+// 1. Conditional type inference for accessors
+type InferValue<TData, TDef> = TDef extends { accessorFn: infer Fn }
+  ? Fn extends AccessorFn<TData, infer V>
+    ? V
+    : unknown
+  : TDef extends { accessorKey: infer Key }
+    ? Key extends string
+      ? AccessorValue<TData, Key>
+      : unknown
+    : unknown;
+
+// 2. Distributive conditional types for union handling
+type DistributiveKeys<T> = T extends any ? keyof T : never;
+
+// 3. Template literal types for path inference
+type NestedKeys<T> = {
+  [K in keyof T & string]: T[K] extends object
+    ? K | `${K}.${NestedKeys<T[K]>}`
+    : K;
+}[keyof T & string];
 ```
 
+## 📊 **Success Metrics**
+
+- ✅ Full type inference for nested property access
+- ✅ Mutually exclusive accessors enforced at compile time
+- ✅ Renderer contexts provide all necessary utilities
+- ✅ Column metadata is fully extensible
+- ✅ 100% type test coverage with complex scenarios
+- ✅ No `any` types in public interfaces
+
+## 🎯 **AI Implementation Instructions**
+
+1. **Start with `AccessorKey` type** - most complex part
+2. **Implement `ColumnDef` interface** - user configuration
+3. **Add renderer context types** - typed value access
+4. **Create `Column` instance interface** - runtime API
+5. **Write comprehensive type tests** - focus on inference
+
+**Critical:** The `AccessorKey` type must correctly infer nested paths with dot notation. This is the core of GridKit's type safety.
+
 ---
 
-## Success Criteria
-
-- [ ] All type tests pass
-- [ ] TypeScript compiles with strict mode
-- [ ] JSDoc complete with examples
-- [ ] No `any` types
-- [ ] Type inference works correctly
-- [ ] Follows AI_GUIDELINES.md
-
----
-
-## Related Tasks
-
-- **Depends on:** CORE-001, CORE-002
-- **Blocks:** COLUMN-001 (column implementation)
-
----
-
-## Notes for AI
-
-- Column types are central to the API - design carefully
-- Value type inference is critical for good DX
-- Ensure mutually exclusive accessor types
-- Renderer context should provide everything needed
+**Status:** Ready for implementation. Complex type inference required.

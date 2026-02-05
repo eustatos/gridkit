@@ -1,355 +1,175 @@
 /**
- * GridKit Core Types
- * 
- * This module contains the foundational TypeScript types that all other
- * GridKit modules depend on. These types are designed to be:
- * - Strictly typed (no `any`)
- * - Framework-agnostic
- * - Extensible via generics
- * - Well-documented with examples
- * 
- * @module @gridkit/core/types
+ * Branded types for GridKit IDs with compile-time safety.
+ *
+ * These types use TypeScript's unique symbol branding pattern
+ * to prevent ID mixing while adding zero runtime overhead.
+ *
+ * @packageDocumentation
+ * @module CoreTypes
  */
 
-/**
- * Base constraint for row data.
- * All row data must extend this type to ensure type safety.
- * 
- * @template TData - The specific row data type
- * 
- * @example
- * Basic usage:
- * ```typescript
- * interface User extends RowData {
- *   id: number;
- *   name: string;
- *   email: string;
- * }
- * ```
- * 
- * @example
- * With nested properties:
- * ```typescript
- * interface Product extends RowData {
- *   id: string;
- *   details: {
- *     name: string;
- *     price: number;
- *     category: string;
- *   };
- *   inventory: {
- *     stock: number;
- *     warehouse: string;
- *   };
- * }
- * ```
- * 
- * @public
- */
-export type RowData = Record<string, unknown>;
+// ===================================================================
+// Branded ID Types
+// ===================================================================
 
 /**
- * Unique identifier for a column.
- * Must be a string to support dot notation accessors.
- * 
- * @example
- * ```typescript
- * const columnId: ColumnId = 'user.name';
- * const nestedColumnId: ColumnId = 'user.profile.avatar.url';
- * const simpleId: ColumnId = 'id';
- * ```
- * 
- * @public
+ * Branded type for Grid IDs with runtime validation.
+ * Prevents ID mixing and enables compile-time safety.
  */
-export type ColumnId = string;
+declare const __gridId: unique symbol;
+export type GridId = string & { readonly [__gridId]: never };
 
 /**
- * Unique identifier for a row.
- * Can be string or number for flexibility with different data sources.
- * 
- * @example
- * ```typescript
- * const stringId: RowId = 'user-123';
- * const numericId: RowId = 123;
- * const uuid: RowId = '550e8400-e29b-41d4-a716-446655440000';
- * ```
- * 
- * @public
+ * Branded type for Column IDs with structure validation.
+ * Ensures consistent ID format and prevents collisions.
  */
-export type RowId = string | number;
+declare const __columnId: unique symbol;
+export type ColumnId = string & { readonly [__columnId]: never };
 
 /**
- * Extracts the value type for a given accessor key.
- * Supports dot notation for nested properties.
- * 
- * @template TData - The row data type, must extend RowData
- * @template TKey - The accessor key (supports dot notation)
- * 
- * @example
- * Simple property access:
- * ```typescript
- * interface User {
- *   name: string;
- *   age: number;
- * }
- * 
- * type NameType = AccessorValue<User, 'name'>; // string
- * type AgeType = AccessorValue<User, 'age'>; // number
- * ```
- * 
- * @example
- * Nested property access:
- * ```typescript
- * interface User {
- *   profile: {
- *     name: string;
- *     bio: string;
- *   };
- * }
- * 
- * type NameType = AccessorValue<User, 'profile.name'>; // string
- * type BioType = AccessorValue<User, 'profile.bio'>; // string
- * ```
- * 
- * @example
- * Deep nesting (5+ levels):
- * ```typescript
- * interface ComplexData {
- *   a: {
- *     b: {
- *       c: {
- *         d: {
- *           e: {
- *             value: number;
- *           };
- *         };
- *       };
- *     };
- *   };
- * }
- * 
- * type DeepValue = AccessorValue<ComplexData, 'a.b.c.d.e.value'>; // number
- * ```
- * 
- * @example
- * Invalid key returns unknown:
- * ```typescript
- * interface User {
- *   name: string;
- * }
- * 
- * type InvalidType = AccessorValue<User, 'invalid'>; // unknown
- * type NestedInvalid = AccessorValue<User, 'profile.invalid'>; // unknown
- * ```
- * 
- * @public
+ * Branded type for Row IDs with flexible but safe typing.
+ * Supports both string and number while maintaining type safety.
  */
-export type AccessorValue<
-  TData extends RowData,
-  TKey extends string
-> = TKey extends `${infer TFirst}.${infer TRest}`
-  ? TFirst extends keyof TData
-    ? TData[TFirst] extends RowData
-      ? AccessorValue<TData[TFirst], TRest>
-      : unknown
-    : unknown
-  : TKey extends keyof TData
-  ? TData[TKey]
-  : unknown;
+declare const __rowId: unique symbol;
+export type RowId = (string | number) & { readonly [__rowId]: never };
 
 /**
- * Makes specific properties of a type required.
- * 
- * @template T - The base type
- * @template K - Keys to make required (must be keys of T)
- * 
- * @example
- * ```typescript
- * interface Options {
- *   a?: string;
- *   b?: number;
- *   c?: boolean;
- * }
- * 
- * type RequiredA = RequireKeys<Options, 'a'>;
- * // { a: string; b?: number; c?: boolean }
- * 
- * type RequiredAB = RequireKeys<Options, 'a' | 'b'>;
- * // { a: string; b: number; c?: boolean }
- * ```
- * 
- * @public
+ * Branded type for Cell IDs with composite structure.
+ * Format: `${RowId}_${ColumnId}` for O(1) lookups.
  */
-export type RequireKeys<T, K extends keyof T> = T & Required<Pick<T, K>>;
+declare const __cellId: unique symbol;
+export type CellId = string & { readonly [__cellId]: never };
+
+// ===================================================================
+// Base Types
+// ===================================================================
 
 /**
- * Deep partial type - makes all properties optional recursively.
- * 
- * @template T - The type to make deep partial
- * 
- * @example
- * ```typescript
- * interface Config {
- *   nested: {
- *     value: string;
- *     deep: {
- *       prop: number;
- *     };
- *   };
- *   other: boolean;
- * }
- * 
- * type PartialConfig = DeepPartial<Config>;
- * // {
- * //   nested?: {
- * //     value?: string;
- * //     deep?: {
- * //       prop?: number;
- * //     };
- * //   };
- * //   other?: boolean;
- * // }
- * ```
- * 
- * @example
- * With arrays:
- * ```typescript
- * interface WithArray {
- *   items: Array<{
- *     id: number;
- *     name: string;
- *   }>;
- * }
- * 
- * type PartialWithArray = DeepPartial<WithArray>;
- * // {
- * //   items?: Array<{
- * //     id?: number;
- * //     name?: string;
- * //   }>;
- * // }
- * ```
- * 
- * @public
+ * Base interface for all row data types.
+ *
+ * All data passed to GridKit must extend this interface.
+ * Use TypeScript's intersection types to add constraints.
  */
-export type DeepPartial<T> = T extends object
-  ? {
-      [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
-    }
-  : T;
+export interface RowData {
+  [key: string]: unknown;
+}
 
 /**
- * A function that updates state immutably.
- * Can be a direct value or an updater function.
- * 
- * @template T - The state type
- * 
- * @example
- * Direct value:
- * ```typescript
- * const updater: Updater<number> = 42;
- * ```
- * 
- * @example
- * Updater function:
- * ```typescript
- * const updater: Updater<number> = (prev) => prev + 1;
- * ```
- * 
- * @example
- * Complex state update:
- * ```typescript
- * interface AppState {
- *   count: number;
- *   user: {
- *     name: string;
- *     age: number;
- *   };
- * }
- * 
- * const stateUpdater: Updater<AppState> = (prev) => ({
- *   ...prev,
- *   count: prev.count + 1,
- *   user: {
- *     ...prev.user,
- *     age: prev.user.age + 1,
- *   },
- * });
- * ```
- * 
- * @public
+ * Basic validator interface for runtime type checking.
+ */
+export interface Validator<T> {
+  (value: unknown): value is T;
+}
+
+// ===================================================================
+// Utility Types
+// ===================================================================
+
+/**
+ * Updater function type with better inference.
+ * Supports both direct values and functional updates.
+ *
+ * @template T - The type being updated
  */
 export type Updater<T> = T | ((prev: T) => T);
 
 /**
- * A listener function that receives state updates.
- * 
- * @template T - The state type
- * 
- * @example
- * ```typescript
- * const listener: Listener<AppState> = (state) => {
- *   console.log('State updated:', state);
- *   // Perform side effects based on state changes
- * };
- * ```
- * 
- * @public
+ * Listener with unsubscribe capability.
+ * Memory-safe with automatic cleanup.
+ *
+ * @template T - The type of value being listened to
  */
-export type Listener<T> = (state: T) => void;
+export type Listener<T> = (value: T) => void | (() => void);
 
 /**
- * A function that unsubscribes a listener.
- * 
- * @example
- * ```typescript
- * const unsubscribe = store.subscribe(listener);
- * 
- * // Later, when you want to stop listening:
- * unsubscribe();
- * ```
- * 
- * @public
+ * Comparator with null-safe handling.
+ * Returns -1, 0, or 1 for stable sorting.
+ *
+ * @template T - The type being compared
+ */
+export type Comparator<T> = (a: T, b: T) => -1 | 0 | 1;
+
+/**
+ * Predicate with context support.
+ * Includes index and array for advanced filtering.
+ *
+ * @template T - The type being filtered
+ */
+export type Predicate<T> = (value: T, index: number, array: T[]) => boolean;
+
+/**
+ * Unsubscribe function type.
  */
 export type Unsubscribe = () => void;
 
 /**
- * A comparator function for sorting.
- * Returns negative if a < b, positive if a > b, zero if equal.
- * 
- * @template T - The type being compared
- * 
- * @example
- * ```typescript
- * const numericComparator: Comparator<number> = (a, b) => a - b;
- * [3, 1, 2].sort(numericComparator); // [1, 2, 3]
- * 
- * const stringComparator: Comparator<string> = (a, b) => 
- *   a.localeCompare(b);
- * ['c', 'a', 'b'].sort(stringComparator); // ['a', 'b', 'c']
- * 
- * const dateComparator: Comparator<Date> = (a, b) => 
- *   a.getTime() - b.getTime();
- * ```
- * 
- * @public
+ * DeepPartial that handles arrays and readonly properties.
+ * More precise than standard Partial<T>.
+ *
+ * @template T - The type to make partial
  */
-export type Comparator<T> = (a: T, b: T) => number;
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends (infer U)[]
+    ? DeepPartial<U>[]
+    : T[P] extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T[P] extends object
+        ? DeepPartial<T[P]>
+        : T[P];
+};
 
 /**
- * A predicate function for filtering.
- * 
- * @template T - The type being filtered
- * 
- * @example
- * ```typescript
- * const isEven: Predicate<number> = (n) => n % 2 === 0;
- * [1, 2, 3, 4].filter(isEven); // [2, 4]
- * 
- * const isAdult: Predicate<User> = (user) => user.age >= 18;
- * const adults = users.filter(isAdult);
- * ```
- * 
- * @public
+ * Extracts the type at a nested accessor path.
+ *
+ * Supports deep property access with dot notation.
+ * Type-safe: fails at compile-time for invalid paths.
+ *
+ * @template TData - The source data type (must extend RowData)
+ * @template TPath - The accessor path (e.g., "user.profile.name")
  */
-export type Predicate<T> = (value: T) => boolean;
+export type AccessorValue<
+  TData extends RowData,
+  TPath extends string,
+> = TPath extends `${infer First}.${infer Rest}`
+  ? First extends keyof TData
+    ? TData[First] extends RowData
+      ? AccessorValue<TData[First], Rest>
+      : never
+    : never
+  : TPath extends keyof TData
+    ? TData[TPath]
+    : never;
+
+// ===================================================================
+// Error Codes
+// ===================================================================
+
+/**
+ * Error code type for GridKit errors.
+ */
+export type ErrorCode =
+  // ID errors
+  | 'ID_INVALID_FORMAT'
+  // Column errors
+  | 'INVALID_COLUMN_PATH'
+  // Row errors
+  | 'ROW_INVALID_ID'
+  // Table errors
+  | 'TABLE_INVALID_OPTIONS'
+  | 'TABLE_NO_COLUMNS'
+  | 'TABLE_DESTROYED'
+  // Column errors
+  | 'COLUMN_INVALID_ACCESSOR'
+  | 'COLUMN_DUPLICATE_ID'
+  | 'COLUMN_NOT_FOUND'
+  // Row errors
+  | 'ROW_NOT_FOUND'
+  // State errors
+  | 'STATE_UPDATE_FAILED'
+  | 'STATE_INVALID'
+  // Data errors
+  | 'DATA_LOAD_FAILED'
+  | 'DATA_INVALID_RESPONSE'
+  // Plugin errors
+  | 'PLUGIN_NOT_FOUND'
+  | 'PLUGIN_REGISTRATION_FAILED';

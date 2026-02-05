@@ -1,79 +1,63 @@
 /**
- * @gridkit/core
- *
- * Core table functionality for GridKit.
- * Framework-agnostic, zero dependencies.
- *
- * Includes type-safe event system for pub/sub communication.
- *
+ * GridKit Core - Main entry point.
+ * 
+ * This module re-exports all publicly available functionality from the core package.
+ * 
+ * @example
+ * ```ts
+ * // Import factory functions
+ * import { createGridId, createColumnId, createRowId } from '@gridkit/core';
+ * 
+ * // Import types
+ * import type { GridId, ColumnId, RowId } from '@gridkit/core';
+ * 
+ * // Import error class
+ * import { GridKitError } from '@gridkit/core';
+ * 
+ * // Import type utilities
+ * import type { AccessorValue, DeepPartial } from '@gridkit/core/types';
+ * ```
+ * 
  * @packageDocumentation
  */
 
-// Re-export all core types
-// Note: For better tree-shaking, import types directly from './types/base'
+// Core types re-exports
 export type {
-  // Base constraint types
-  RowData,
+  GridId,
   ColumnId,
   RowId,
-  // Utility types
+  CellId,
+  RowData,
+  Validator,
+  ErrorCode,
+} from './types';
+
+// Factory functions
+export {
+  createGridId,
+  createColumnId,
+  createRowId,
+  createCellId,
+} from './types';
+
+// Error classes
+export { GridKitError } from './errors';
+
+// Re-export type utilities (tree-shakeable via /types subpath)
+export type {
   AccessorValue,
-  RequireKeys,
   DeepPartial,
-  // Function types
+  RequireKeys,
+  StringKeys,
   Updater,
   Listener,
-  Unsubscribe,
   Comparator,
   Predicate,
-} from './types/base';
-
-// Export state store
-export { createStore } from './state';
-export type { Store } from './state';
-
-// Export table factory
-export { createTable } from './table';
-export type { Table, TableOptions, TableState, TableMeta } from './table';
-
-// Export event system
-export {
-  // Event bus
-  createEventBus,
-  getEventBus,
-  resetEventBus,
-  EventBus,
-  // Event utilities
-  EventPriority,
-  createLoggerMiddleware,
-  simpleLogger,
-  // Helper functions
-  createEventFactory,
-  createDebouncedHandler,
-  createThrottledHandler,
-} from './events';
-export type {
-  // Event types
-  EventType,
-  EventPayload,
-  EventHandler,
-  EventHandlerOptions,
-  EventRegistry,
-  GridEvent,
-  EventNamespace,
-  EventMiddleware,
-  EventSubscription,
-  // Event bus types
-  EventBusOptions,
-  // Logger types
-  LoggerMiddlewareOptions,
-} from './events';
-
-// Export all Core API modules from core.ts
-export * from './core';
-
-// Also export the types module for convenience
-export type * as Types from './types';
-
-// Export version
-export const VERSION = '0.0.1';
+  FirstElement,
+  RestElements,
+  IsUndefined,
+  IsNull,
+  NonNullable,
+  ReturnTypeOrVoid,
+  MappedObject,
+} from './types';

@@ -1,50 +1,89 @@
 /**
- * Re-exports of all core types from GridKit.
+ * GridKit Core Types - Public API.
  *
- * This file provides a single entry point for importing all core types.
- * Use this for convenience when you need multiple types.
+ * This module re-exports all publicly available types from the core type system.
+ * All exports are tree-shakeable and follow GridKit's type safety patterns.
  *
  * @example
- * ```typescript
- * import type {
- *   RowData,
- *   ColumnId,
- *   RowId,
- *   AccessorValue,
- * } from '@gridkit/core/types';
+ * ```ts
+ * // Import branded types
+ * import type { GridId, ColumnId, RowId } from '@gridkit/core/types';
+ *
+ * // Import factory functions
+ * import { createGridId, createColumnId, createRowId } from '@gridkit/core';
+ *
+ * // Import utility types
+ * import type { AccessorValue, DeepPartial } from '@gridkit/core/types';
  * ```
  *
- * @module @gridkit/core/types
+ * @packageDocumentation
  */
 
+// Branded types (type-only export)
 export type {
-  RowData,
+  GridId,
   ColumnId,
   RowId,
-  AccessorValue,
-  RequireKeys,
-  DeepPartial,
-  Updater,
-  Listener,
-  Unsubscribe,
-  Comparator,
-  Predicate,
+  CellId,
+  RowData,
+  Validator,
 } from './base';
 
-export type { Table, TableOptions, TableState, TableMeta } from './table';
+// Re-export error codes for convenience
+export type { ErrorCode } from './base';
 
+// Factory functions
+export {
+  createGridId,
+  createColumnId,
+  createRowId,
+  createCellId,
+} from './factory';
+
+// Type utilities (zero-runtime)
 export type {
-  ColumnDef,
-  Column,
-  AccessorFn,
-  AccessorKey,
-  HeaderContext,
-  CellContext,
-  FooterContext,
-  HeaderRenderer,
-  CellRenderer,
-  FooterRenderer,
-  ColumnMeta,
-} from './column';
+  AccessorValue,
+  DeepPartial,
+  RequireKeys,
+  StringKeys,
+  Updater,
+  Listener,
+  Comparator,
+  Predicate,
+  FirstElement,
+  RestElements,
+  IsUndefined,
+  IsNull,
+  NonNullable,
+  ReturnTypeOrVoid,
+  MappedObject,
+} from './utils';
 
-export type { Row, RowModel, Cell } from './row';
+// Table interfaces (public API) - all types consolidated in Table.ts
+export type {
+  Table,
+  StateCallback,
+  Unsubscribe,
+  RowModel,
+  Row,
+  Column,
+  ColumnDef,
+  ColumnMeta,
+  TableOptions,
+  TableState,
+  SortingState,
+  FilteringState,
+  FilterOperator,
+  PaginationState,
+  GroupingState,
+  ScrollPosition,
+  CellCoordinate,
+  GridKitError,
+  DebugOptions,
+  TableMetrics,
+  PerformanceBudgets,
+  TableMeta,
+  ColumnAccessor,
+  ColumnAccessorFn,
+  ColumnValue,
+} from './table/Table';

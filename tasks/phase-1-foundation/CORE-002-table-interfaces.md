@@ -1,560 +1,513 @@
----
+# CORE-002: Table Interfaces & Core Types
+
+## Task Card
+
+```
 task_id: CORE-002
-epic_id: EPIC-001
-module: @gridkit/core
-file: src/core/types/table.ts
 priority: P0
-complexity: medium
+complexity: Medium
 estimated_tokens: ~12,000
-assignable_to_ai: yes
-dependencies:
-  - CORE-001
-guidelines:
-  - .github/AI_GUIDELINES.md
-  - CONTRIBUTING.md
-  - specs/api-specs/core.md
----
+ai_ready: true
+dependencies: [CORE-001]
+requires_review: true (core API design)
+```
 
-# Task: Define Table Interfaces
+## 🎯 Objective
 
-## Context
+Define the core Table interfaces that represent the main table instance, its configuration, and internal state. These interfaces are the public API foundation - they define what a table IS and how developers interact with it.
 
-Define the core Table interfaces that represent the main table instance and its configuration. These interfaces are the foundation for the entire library - they define what a table IS and how it's configured.
+## 📋 Implementation Scope
 
-## Guidelines Reference
+### **1. Table Instance Interface (Primary Public API)**
 
-- `.github/AI_GUIDELINES.md` - TypeScript standards
-- `CONTRIBUTING.md` - Naming conventions
-- `specs/api-specs/core.md` - API specification (reference for interface design)
-- `docs/architecture/ARCHITECTURE.md` - Understand table architecture
-
-## Objectives
-
-- [ ] Define `Table<TData>` interface (main table instance)
-- [ ] Define `TableOptions<TData>` interface (configuration)
-- [ ] Define `TableState<TData>` interface (internal state)
-- [ ] Define `TableMeta` type (custom metadata)
-- [ ] Add comprehensive JSDoc
-
----
-
-## Implementation Requirements
-
-### 1. Table Instance Interface
-
-**File: `src/core/types/table.ts`**
-
-```typescript
-import type { RowData, RowId, ColumnId, Updater, Listener, Unsubscribe } from './base';
-import type { Column } from './column';
-import type { Row, RowModel } from './row';
-
+````typescript
 /**
- * Main table instance interface.
- * Provides access to all table functionality.
- * 
- * @template TData - The row data type extending RowData
- * 
+ * Main table instance - the core GridKit API.
+ * Immutable by design with functional updates.
+ *
+ * @template TData - Row data type (must extend RowData)
+ *
  * @example
  * ```typescript
  * const table = createTable<User>({
- *   columns,
- *   data,
+ *   columns: [...],
+ *   data: users,
  * });
- * 
- * // Access table methods
- * const state = table.getState();
- * const rows = table.getRowModel();
+ *
+ * // Subscribe to changes
+ * const unsubscribe = table.subscribe(state => {
+ *   console.log('Table updated:', state);
+ * });
  * ```
- * 
- * @public
  */
 export interface Table<TData extends RowData> {
+  // === State Management ===
+
   /**
-   * Get current table state.
-   * State is immutable - returns a new object on each call.
-   * 
-   * @returns Current table state
+   * Get current immutable table state.
+   * Returns a new object on each call - safe for React/Vue.
    */
-  getState(): TableState<TData>;
-  
+  getState(): Readonly<TableState<TData>>;
+
   /**
    * Update table state immutably.
-   * 
-   * @param updater - New state or updater function
-   * 
+   * Supports both direct values and functional updates.
+   *
    * @example
    * ```typescript
-   * // Direct state
+   * // Direct update
    * table.setState(newState);
-   * 
-   * // Updater function
-   * table.setState(prev => ({ ...prev, sorting: newSorting }));
+   *
+   * // Functional update
+   * table.setState(prev => ({
+   *   ...prev,
+   *   sorting: [{ id: 'name', desc: false }]
+   * }));
    * ```
    */
   setState(updater: Updater<TableState<TData>>): void;
-  
+
   /**
    * Subscribe to state changes.
-   * Listener is called whenever state updates.
-   * 
-   * @param listener - Callback function
-   * @returns Unsubscribe function
-   * 
-   * @example
-   * ```typescript
-   * const unsubscribe = table.subscribe((state) => {
-   *   console.log('State updated:', state);
-   * });
-   * 
-   * // Later: stop listening
-   * unsubscribe();
-   * ```
+   * Returns cleanup function for memory safety.
+   *
+   * @returns Function to unsubscribe
    */
   subscribe(listener: Listener<TableState<TData>>): Unsubscribe;
-  
+
+  // === Data Access ===
+
   /**
-   * Get all columns (including hidden).
-   * 
-   * @returns Array of all column instances
-   */
-  getAllColumns(): Column<TData>[];
-  
-  /**
-   * Get only visible columns.
-   * 
-   * @returns Array of visible column instances
-   */
-  getVisibleColumns(): Column<TData>[];
-  
-  /**
-   * Get column by ID.
-   * 
-   * @param id - Column identifier
-   * @returns Column instance or undefined if not found
-   */
-  getColumn(id: ColumnId): Column<TData> | undefined;
-  
-  /**
-   * Get current row model.
-   * Row model contains all rows with current filtering/sorting applied.
-   * 
-   * @returns Current row model
+   * Get the row model with current filtering/sorting applied.
+   * This is the primary data access method.
    */
   getRowModel(): RowModel<TData>;
-  
+
   /**
-   * Get row by ID.
-   * 
-   * @param id - Row identifier
-   * @returns Row instance or undefined if not found
+   * Get a specific row by ID.
+   * O(1) lookup via internal index.
    */
   getRow(id: RowId): Row<TData> | undefined;
-  
+
+  /**
+   * Get all column instances (including hidden).
+   */
+  getAllColumns(): Column<TData>[];
+
+  /**
+   * Get only visible columns in current order.
+   */
+  getVisibleColumns(): Column<TData>[];
+
+  /**
+   * Get column by ID (case-sensitive).
+   */
+  getColumn(id: ColumnId): Column<TData> | undefined;
+
+  // === Lifecycle ===
+
   /**
    * Reset table to initial state.
-   * Useful for clearing filters, sorting, etc.
+   * Clears filters, sorting, pagination, etc.
    */
   reset(): void;
-  
+
   /**
-   * Destroy table instance and cleanup.
-   * Removes all listeners and frees resources.
-   * Table cannot be used after calling this method.
+   * Destroy table instance and clean up resources.
+   * Required for memory management in SPA applications.
    */
   destroy(): void;
-  
-  /**
-   * Original options used to create the table.
-   * Read-only reference to initial configuration.
-   */
-  readonly options: TableOptions<TData>;
-}
-```
 
-### 2. Table Options Interface
+  // === Metadata ===
+
+  /**
+   * Read-only reference to original configuration.
+   */
+  readonly options: Readonly<TableOptions<TData>>;
+
+  /**
+   * Unique table identifier for debugging.
+   */
+  readonly id: GridId;
+
+  /**
+   * Performance metrics (enabled in debug mode).
+   */
+  readonly metrics?: TableMetrics;
+}
+````
+
+### **2. Table Configuration (User Input)**
 
 ```typescript
-import type { ColumnDef } from './column';
-
 /**
- * Configuration options for creating a table.
- * 
- * @template TData - The row data type
- * 
- * @example
- * ```typescript
- * const options: TableOptions<User> = {
- *   columns: [
- *     { accessorKey: 'name', header: 'Name' },
- *     { accessorKey: 'email', header: 'Email' },
- *   ],
- *   data: users,
- *   getRowId: (row) => row.id.toString(),
- * };
- * ```
- * 
- * @public
+ * Complete table configuration.
+ * All fields are optional except `columns`.
+ *
+ * @template TData - Row data type
  */
 export interface TableOptions<TData extends RowData> {
+  // === Required Configuration ===
+
   /**
-   * Column definitions.
-   * At least one column is required.
+   * Column definitions - at least one required.
+   * Defines how data is displayed and interacted with.
    */
   columns: ColumnDef<TData>[];
-  
+
+  // === Data Configuration ===
+
   /**
-   * Initial data for the table.
-   * 
-   * @default []
+   * Initial data array.
+   * @default [] (empty array)
    */
   data?: TData[];
-  
+
   /**
-   * Function to get unique row ID.
-   * Used for row selection, expansion, and internal tracking.
-   * 
-   * @param row - Row data
-   * @param index - Row index in data array
-   * @returns Unique row identifier
-   * 
-   * @default (row, index) => index
-   * 
-   * @example
-   * ```typescript
-   * getRowId: (row) => row.id.toString()
-   * ```
+   * Function to extract unique row ID.
+   * Critical for row selection, expansion, and updates.
+   *
+   * @default (row, index) => index (using array index)
    */
   getRowId?: (row: TData, index: number) => RowId;
-  
+
+  // === Initial State ===
+
   /**
-   * Initial table state.
-   * Partial state - unspecified fields use defaults.
-   * 
-   * @default {}
-   * 
-   * @example
-   * ```typescript
-   * initialState: {
-   *   sorting: [{ id: 'name', desc: false }],
-   *   pagination: { pageIndex: 0, pageSize: 10 },
-   * }
-   * ```
+   * Partial initial state to override defaults.
+   * Useful for restoring saved views.
    */
-  initialState?: Partial<TableState<TData>>;
-  
+  initialState?: DeepPartial<TableState<TData>>;
+
+  // === Performance & Debugging ===
+
   /**
-   * Enable debug mode.
-   * Logs state changes and performance metrics to console.
-   * 
-   * @default false
+   * Enable debug mode for development.
+   * Adds performance tracking and validation.
+   * @default false (disabled in production)
    */
-  debugMode?: boolean;
-  
+  debug?: boolean | DebugOptions;
+
   /**
-   * Callback when state changes.
-   * Called after state is updated and listeners are notified.
-   * 
-   * @param state - New state
-   * 
-   * @example
-   * ```typescript
-   * onStateChange: (state) => {
-   *   console.log('State changed:', state);
-   *   localStorage.setItem('tableState', JSON.stringify(state));
-   * }
-   * ```
+   * Performance budgets for validation.
+   * Fails fast if budgets are exceeded.
+   */
+  performanceBudgets?: PerformanceBudgets;
+
+  // === Event Handlers ===
+
+  /**
+   * Called on every state change.
+   * Useful for persistence or analytics.
    */
   onStateChange?: (state: TableState<TData>) => void;
-  
+
   /**
-   * Default column options.
-   * Applied to all columns unless overridden in column definition.
-   * 
-   * @example
-   * ```typescript
-   * defaultColumn: {
-   *   size: 150,
-   *   minSize: 50,
-   *   enableSorting: true,
-   * }
-   * ```
+   * Called when table encounters an error.
+   * Prevents uncaught errors from crashing the app.
+   */
+  onError?: (error: GridError) => void;
+
+  // === Advanced Configuration ===
+
+  /**
+   * Default column options applied to all columns.
+   * Can be overridden by individual column definitions.
    */
   defaultColumn?: Partial<ColumnDef<TData>>;
-  
+
   /**
    * Custom metadata for application use.
-   * Not used by GridKit internally.
-   * 
-   * @example
-   * ```typescript
-   * meta: {
-   *   tableName: 'users',
-   *   permissions: ['read', 'write'],
-   * }
-   * ```
+   * Not used internally by GridKit.
    */
   meta?: TableMeta;
 }
 ```
 
-### 3. Table State Interface
+### **3. Table State (Immutable Internal State)**
 
 ```typescript
 /**
- * Complete table state.
- * All state is immutable - updates create new state objects.
- * 
- * @template TData - The row data type
- * 
- * @public
+ * Complete table state - immutable and serializable.
+ * This is what gets passed to subscribers and persisted.
+ *
+ * @template TData - Row data type
  */
 export interface TableState<TData extends RowData> {
+  // === Core Data ===
+
   /**
-   * Current data array.
+   * Current data array (immutable).
+   * May differ from initial data due to updates.
    */
-  data: TData[];
-  
+  readonly data: readonly TData[];
+
+  // === Column State ===
+
   /**
-   * Column visibility state.
-   * Maps column ID to visibility boolean.
-   * 
-   * @example
-   * ```typescript
-   * columnVisibility: {
-   *   'name': true,
-   *   'email': false, // hidden
-   * }
-   * ```
+   * Column visibility map.
+   * @example { 'name': true, 'email': false }
    */
-  columnVisibility: Record<ColumnId, boolean>;
-  
+  readonly columnVisibility: Readonly<Record<ColumnId, boolean>>;
+
   /**
-   * Column order.
-   * Array of column IDs in display order.
-   * 
-   * @example
-   * ```typescript
-   * columnOrder: ['name', 'email', 'age']
-   * ```
+   * Column display order.
+   * Array of column IDs in rendering order.
    */
-  columnOrder: ColumnId[];
-  
+  readonly columnOrder: readonly ColumnId[];
+
   /**
-   * Column sizing state.
-   * Maps column ID to width in pixels.
-   * 
-   * @example
-   * ```typescript
-   * columnSizing: {
-   *   'name': 200,
-   *   'email': 300,
-   * }
-   * ```
+   * Column sizes in pixels.
    */
-  columnSizing: Record<ColumnId, number>;
-  
+  readonly columnSizing: Readonly<Record<ColumnId, number>>;
+
+  /**
+   * Column pinning (frozen columns).
+   */
+  readonly columnPinning?: Readonly<{
+    left?: readonly ColumnId[];
+    right?: readonly ColumnId[];
+  }>;
+
+  // === Row State ===
+
   /**
    * Row selection state.
-   * Maps row ID to selection boolean.
-   * 
-   * @example
-   * ```typescript
-   * rowSelection: {
-   *   'user-1': true,
-   *   'user-3': true,
-   * }
-   * ```
+   * @example { 'row-1': true, 'row-2': false }
    */
-  rowSelection: Record<RowId, boolean>;
-  
+  readonly rowSelection: Readonly<Record<RowId, boolean>>;
+
   /**
-   * Expanded state for grouped/tree data.
-   * Maps row ID to expansion boolean.
+   * Row expansion state (for tree/grouped data).
    */
-  expanded: Record<RowId, boolean>;
+  readonly expanded: Readonly<Record<RowId, boolean>>;
+
+  // === Feature States ===
+
+  /**
+   * Sorting configuration.
+   * Array of sort descriptors.
+   */
+  readonly sorting?: readonly SortingState[];
+
+  /**
+   * Filter configuration.
+   */
+  readonly filtering?: FilteringState;
+
+  /**
+   * Pagination state.
+   */
+  readonly pagination?: PaginationState;
+
+  /**
+   * Grouping configuration.
+   */
+  readonly grouping?: GroupingState;
+
+  // === UI State ===
+
+  /**
+   * Currently focused cell (if any).
+   */
+  readonly focusedCell?: CellCoordinate;
+
+  /**
+   * Scroll position for virtualization.
+   */
+  readonly scroll?: ScrollPosition;
+
+  // === Metadata ===
+
+  /**
+   * State version for migration.
+   */
+  readonly version: number;
+
+  /**
+   * Last updated timestamp.
+   */
+  readonly updatedAt: number;
 }
 
 /**
- * Custom metadata type.
- * Can be extended by users for application-specific data.
- * 
- * @example
- * ```typescript
- * interface CustomMeta extends TableMeta {
-   *   tableName: string;
-   *   permissions: string[];
-   * }
-   * ```
- * 
- * @public
+ * Coordinate for cell focus/selection.
  */
-export type TableMeta = Record<string, unknown>;
+export interface CellCoordinate {
+  readonly rowId: RowId;
+  readonly columnId: ColumnId;
+}
 ```
 
----
-
-## Test Requirements
-
-**File: `src/core/types/__tests__/table.test.ts`**
+### **4. Supporting Types**
 
 ```typescript
-import { describe, it, expectTypeOf } from 'vitest';
-import type {
-  Table,
-  TableOptions,
-  TableState,
-  TableMeta,
-} from '../table';
-import type { RowData } from '../base';
+/**
+ * Debug configuration options.
+ */
+export interface DebugOptions {
+  /** Log state changes to console */
+  readonly logStateChanges?: boolean;
 
-describe('Table Types', () => {
-  interface User extends RowData {
-    id: number;
-    name: string;
-    email: string;
-  }
+  /** Log performance metrics */
+  readonly logPerformance?: boolean;
 
-  describe('Table', () => {
-    it('should have correct method signatures', () => {
-      type TableInstance = Table<User>;
-      
-      expectTypeOf<TableInstance['getState']>().toBeFunction();
-      expectTypeOf<TableInstance['getState']>().returns.toMatchTypeOf<TableState<User>>();
-      
-      expectTypeOf<TableInstance['setState']>().toBeFunction();
-      expectTypeOf<TableInstance['setState']>().parameter(0).toMatchTypeOf<TableState<User> | ((prev: TableState<User>) => TableState<User>)>();
-      
-      expectTypeOf<TableInstance['getAllColumns']>().returns.toBeArray();
-      expectTypeOf<TableInstance['getRowModel']>().toBeFunction();
-    });
+  /** Validate state on every change */
+  readonly validateState?: boolean;
+
+  /** Enable DevTools integration */
+  readonly devTools?: boolean;
+}
+
+/**
+ * Performance budgets for validation.
+ */
+export interface PerformanceBudgets {
+  /** Maximum render time in milliseconds */
+  readonly maxRenderTime?: number;
+
+  /** Maximum state update time */
+  readonly maxUpdateTime?: number;
+
+  /** Maximum memory usage in MB */
+  readonly maxMemoryUsage?: number;
+}
+
+/**
+ * Table metadata (user-defined).
+ */
+export interface TableMeta {
+  /** User-friendly table name */
+  readonly name?: string;
+
+  /** Table description */
+  readonly description?: string;
+
+  /** Any custom application data */
+  readonly [key: string]: unknown;
+}
+
+/**
+ * Performance metrics (debug mode only).
+ */
+export interface TableMetrics {
+  /** Total render count */
+  readonly renderCount: number;
+
+  /** Average render time */
+  readonly avgRenderTime: number;
+
+  /** Peak memory usage */
+  readonly peakMemory: number;
+
+  /** State update count */
+  readonly updateCount: number;
+}
+```
+
+## 🚫 **DO NOT IMPLEMENT**
+
+- ❌ No implementation logic (only interfaces)
+- ❌ No default values or initial states
+- ❌ No validation logic
+- ❌ No event system integration
+- ❌ No plugin system hooks
+- ❌ No framework-specific types
+
+## 📁 **File Structure**
+
+```
+packages/core/src/types/
+├── table/
+│   ├── Table.ts          # Main Table interface
+│   ├── TableOptions.ts   # Configuration types
+│   ├── TableState.ts     # State types
+│   └── support/         # Supporting types
+└── index.ts             # Exports
+```
+
+## 🧪 **Test Requirements**
+
+```typescript
+// MUST test these scenarios:
+describe('Table Interfaces', () => {
+  test('Table interface is immutable', () => {
+    const table: Table<User> = {} as any;
+
+    // @ts-expect-error - Should not be mutable
+    table.options = newOptions;
+
+    // @ts-expect-error - Should not be mutable
+    table.id = 'new-id';
   });
 
-  describe('TableOptions', () => {
-    it('should accept valid options', () => {
-      const options: TableOptions<User> = {
-        columns: [
-          { accessorKey: 'name', header: 'Name' },
-        ],
-        data: [],
-      };
-      
-      expectTypeOf(options).toMatchTypeOf<TableOptions<User>>();
-    });
+  test('TableState is deeply readonly', () => {
+    const state: TableState<User> = {} as any;
 
-    it('should make columns required', () => {
-      // @ts-expect-error - columns is required
-      const invalid: TableOptions<User> = {
-        data: [],
-      };
-    });
+    // @ts-expect-error - Should not be mutable
+    state.data.push(newUser);
 
-    it('should allow optional fields', () => {
-      const options: TableOptions<User> = {
-        columns: [],
-        // All other fields are optional
-      };
-      
-      expectTypeOf(options).toMatchTypeOf<TableOptions<User>>();
-    });
+    // @ts-expect-error - Should not be mutable
+    state.columnVisibility.name = false;
   });
 
-  describe('TableState', () => {
-    it('should have correct structure', () => {
-      const state: TableState<User> = {
-        data: [],
-        columnVisibility: {},
-        columnOrder: [],
-        columnSizing: {},
-        rowSelection: {},
-        expanded: {},
-      };
-      
-      expectTypeOf(state.data).toMatchTypeOf<User[]>();
-      expectTypeOf(state.columnVisibility).toMatchTypeOf<Record<string, boolean>>();
-      expectTypeOf(state.rowSelection).toMatchTypeOf<Record<string | number, boolean>>();
-    });
-  });
+  test('Generic type inference works', () => {
+    interface Product {
+      id: string;
+      name: string;
+      price: number;
+    }
 
-  describe('TableMeta', () => {
-    it('should allow any key-value pairs', () => {
-      const meta: TableMeta = {
-        tableName: 'users',
-        permissions: ['read', 'write'],
-        customField: { nested: true },
-      };
-      
-      expectTypeOf(meta).toMatchTypeOf<Record<string, unknown>>();
-    });
-
-    it('should be extensible', () => {
-      interface CustomMeta extends TableMeta {
-        tableName: string;
-        permissions: string[];
-      }
-      
-      const meta: CustomMeta = {
-        tableName: 'users',
-        permissions: ['read'],
-      };
-      
-      expectTypeOf(meta).toMatchTypeOf<TableMeta>();
-    });
+    const options: TableOptions<Product> = {
+      columns: [{ accessorKey: 'name' }],
+      // Should infer Product[] for data
+      data: [{ id: '1', name: 'Test', price: 100 }],
+    };
   });
 });
 ```
 
----
+## 💡 **Key Design Principles**
 
-## Edge Cases
+1. **Immutability First**: All state interfaces use `readonly`
+2. **Generic Safety**: Full type inference from `TData`
+3. **Separation of Concerns**: Config vs State vs Instance
+4. **Memory Safety**: Clear ownership and cleanup patterns
+5. **Debuggability**: Built-in metrics and error handling
 
-- [ ] Generic type inference works correctly
-- [ ] Optional fields are properly typed
-- [ ] State updater accepts both direct value and function
-- [ ] Readonly fields cannot be modified
-- [ ] Custom metadata is extensible
+## 🔍 **TypeScript Configuration**
 
----
-
-## Files to Create/Modify
-
-- [ ] `src/core/types/table.ts` - Table type definitions
-- [ ] `src/core/types/__tests__/table.test.ts` - Type tests
-- [ ] `src/core/types/index.ts` - Add exports
-
-**Update `src/core/types/index.ts`:**
 ```typescript
-export type {
-  Table,
-  TableOptions,
-  TableState,
-  TableMeta,
-} from './table';
+// Use these patterns:
+type Readonly<T> = { readonly [P in keyof T]: T[P] };
+type DeepReadonly<T> = { readonly [P in keyof T]: DeepReadonly<T[P]> };
+
+// Avoid these:
+interface MutableState {
+  data: any[]; // ❌ Mutable
+  columnVisibility: Record<string, boolean>; // ❌ Mutable
+}
 ```
 
+## 📊 **Success Metrics**
+
+- ✅ All interfaces are immutable (`readonly`)
+- ✅ Generic `TData` flows through all types
+- ✅ 100% type test coverage with edge cases
+- ✅ Clear separation between config/state/instance
+- ✅ Memory-safe patterns (unsubscribe, destroy)
+- ✅ Tree-shakeable type exports
+
+## 🎯 **AI Implementation Instructions**
+
+1. **Start with `Table` interface** - define the public API
+2. **Add `TableOptions`** - user configuration
+3. **Implement `TableState`** - immutable internal state
+4. **Add supporting types** - metadata, debug, metrics
+5. **Write comprehensive type tests** - focus on immutability
+
+**Remember:** This is TYPE DEFINITIONS only. No runtime code. Focus on API design and type safety.
+
 ---
 
-## Success Criteria
-
-- [ ] All type tests pass
-- [ ] TypeScript compiles with strict mode
-- [ ] JSDoc complete for all exports
-- [ ] No `any` types
-- [ ] Types work with generic constraints
-- [ ] Follows AI_GUIDELINES.md patterns
-
----
-
-## Related Tasks
-
-- **Depends on:** CORE-001 (base types)
-- **Blocks:** CORE-010 (table factory implementation)
-
----
-
-## Notes for AI
-
-- These interfaces define the PUBLIC API - be careful with design
-- Ensure all methods are documented with examples
-- State should be immutable - make sure types reflect this
-- Consider forward compatibility (can we add fields later?)
+**Status:** Ready for AI implementation. Dependencies (CORE-001) satisfied.
