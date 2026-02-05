@@ -1,7 +1,7 @@
 // AccessorTypes.ts
 // Accessor type utilities for type-safe data access
 
-import type { RowData } from '../base'
+import type { RowData } from '../base';
 
 /**
  * String key for accessing row data.
@@ -44,7 +44,8 @@ export type AccessorFn<TData extends RowData, TValue = unknown> = (
  * @template TDef - ColumnDef type
  */
 export type ColumnValue<TDef> =
-  TDef extends ColumnDef<infer TData extends RowData, infer TValue>
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  TDef extends ColumnDef<infer _TData extends RowData, infer TValue>
     ? TValue
     : TDef extends { accessorKey: infer TKey }
       ? TKey extends string

@@ -1,7 +1,7 @@
 // SupportingTypes.ts
 // Supporting types for column system
 
-import type { RowData } from '../base'
+import type { RowData } from '../base';
 
 /**
  * Column ID type
@@ -58,13 +58,13 @@ export interface ColumnMeta {
 export interface ColumnFormat {
   /** Number of decimal places for numbers */
   readonly decimals?: number;
-  
+
   /** Date format string */
   readonly dateFormat?: string;
-  
+
   /** Currency code */
   readonly currency?: string;
-  
+
   /** Custom formatter function */
   readonly formatter?: (value: unknown) => string;
 }
@@ -92,22 +92,22 @@ export interface CellMeta {
 export interface CellValidation {
   /** Required field */
   readonly required?: boolean;
-  
+
   /** Minimum value (for numbers) */
   readonly min?: number;
-  
+
   /** Maximum value (for numbers) */
   readonly max?: number;
-  
+
   /** Minimum length (for strings) */
   readonly minLength?: number;
-  
+
   /** Maximum length (for strings) */
   readonly maxLength?: number;
-  
+
   /** Regular expression pattern */
   readonly pattern?: RegExp;
-  
+
   /** Custom validation function */
   readonly validator?: (value: unknown) => ValidationResult;
 }
@@ -118,7 +118,7 @@ export interface CellValidation {
 export interface ValidationResult {
   /** Is value valid */
   readonly isValid: boolean;
-  
+
   /** Error message if invalid */
   readonly errorMessage?: string;
 }
@@ -126,7 +126,8 @@ export interface ValidationResult {
 /**
  * Column utilities for advanced use cases.
  */
-export interface ColumnUtils<TData extends RowData, TValue> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface ColumnUtils<_TData extends RowData, TValue> {
   /** Format value according to column rules */
   readonly formatValue: (value: TValue) => string;
 
