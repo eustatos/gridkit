@@ -7,7 +7,7 @@
  */
 export function extractNamespace(eventType: string): string {
   const parts = eventType.split('.');
-  return parts.length > 1 ? parts[0] : '';
+  return parts.length > 1 ? parts[0] ?? '' : '';
 }
 
 /**

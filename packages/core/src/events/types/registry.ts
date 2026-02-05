@@ -1,9 +1,11 @@
 // Core event registry with essential event types
 
 import type { GridEvent } from './base';
-import type { GridId } from '../../types/grid';
-import type { ColumnId } from '../../column/types';
-import type { RowId } from '../../row/types';
+
+// Placeholder types since the actual types are not yet implemented
+export type GridId = string;
+export type ColumnId = string;
+export type RowId = string;
 
 // Grid lifecycle events
 export interface GridCreatedEvent extends GridEvent<{ gridId: GridId }> {
