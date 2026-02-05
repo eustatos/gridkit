@@ -3,31 +3,38 @@
  * All table-related types are re-exported from Table.ts to avoid circular dependencies.
  */
 
-// Re-export all types from the consolidated Table.ts
+// Main table interface
+export type { Table, StateCallback } from './Table';
+
+// Table state types
 export type {
-  Table,
-  StateCallback,
-  Unsubscribe,
-  RowModel,
-  Row,
-  Column,
-  ColumnDef,
-  ColumnMeta,
-  TableOptions,
   TableState,
+  CellCoordinate,
   SortingState,
   FilteringState,
   FilterOperator,
   PaginationState,
   GroupingState,
   ScrollPosition,
-  CellCoordinate,
-  GridKitError,
-  DebugOptions,
-  TableMetrics,
-  PerformanceBudgets,
-  TableMeta,
+} from './TableState';
+
+// Table options types
+export type {
+  TableOptions,
+  ColumnDef,
+  ColumnMeta,
+} from './TableOptions';
+
+// Column types
+export type {
+  Column,
   ColumnAccessor,
   ColumnAccessorFn,
   ColumnValue,
-} from './Table';
+} from './Column';
+
+// Row types
+export type { Row, RowModel } from './Row';
+
+// Error types
+export type { GridKitError, ErrorCode } from './Errors';

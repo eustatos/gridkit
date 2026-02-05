@@ -32,6 +32,9 @@ export type {
 // Re-export error codes for convenience
 export type { ErrorCode } from './base';
 
+// Re-export Unsubscribe from base
+export type { Unsubscribe } from './base';
+
 // Factory functions
 export {
   createGridId,
@@ -63,7 +66,6 @@ export type {
 export type {
   Table,
   StateCallback,
-  Unsubscribe,
   RowModel,
   Row,
   Column,
@@ -86,4 +88,4 @@ export type {
   ColumnAccessor,
   ColumnAccessorFn,
   ColumnValue,
-} from './table/Table';
+} from './table';
