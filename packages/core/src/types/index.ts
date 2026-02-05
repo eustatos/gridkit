@@ -85,3 +85,30 @@ export type {
   ColumnAccessorFn,
   ColumnValue,
 } from './table';
+
+// Column interfaces (public API)
+export type {
+  ColumnDef as ColumnDefinition,
+  AccessorKey,
+  AccessorFn,
+  ColumnValue as ColumnValueType,
+  AccessorValue as AccessorValueType,
+  HeaderContext,
+  CellContext,
+  FooterContext,
+  HeaderRenderer,
+  CellRenderer,
+  FooterRenderer,
+  Column as ColumnInstance,
+  ColumnId as ColumnIdentifier,
+  ColumnGroupId,
+  Comparator as ColumnComparator,
+  FilterFn,
+  AggregationFn,
+  ColumnMeta as ColumnMetadata,
+  ColumnFormat,
+  CellMeta,
+  CellValidation,
+  ValidationResult,
+  ColumnUtils,
+} from './column';
