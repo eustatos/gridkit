@@ -7,7 +7,7 @@
  */
 
 import type { RowId, ColumnId, RowData } from '@/types';
-import type { Column, ColumnValue } from './Column';
+import type { ColumnValue } from './Column';
 
 // ===================================================================
 // Row Interface

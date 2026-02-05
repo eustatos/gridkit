@@ -6,11 +6,9 @@
  * @module @gridkit/core/types/table/options
  */
 
-import type { RowId, ColumnId, RowData, DeepPartial } from '@/types';
+import type { RowId, RowData, DeepPartial } from '@/types';
 import type { TableState } from './TableState';
 import type { ColumnDef, ColumnMeta } from './Column';
-import type { Column } from './Column';
-import type { ColumnAccessor } from './Column';
 
 // ===================================================================
 // Table Options (Configuration)

@@ -21,13 +21,13 @@ export type {
 // Table options types
 export type {
   TableOptions,
-  ColumnDef,
-  ColumnMeta,
 } from './TableOptions';
 
 // Column types
 export type {
   Column,
+  ColumnDef,
+  ColumnMeta,
   ColumnAccessor,
   ColumnAccessorFn,
   ColumnValue,
