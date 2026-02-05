@@ -1,6 +1,15 @@
 import type { RowData, RowId } from '../base';
 import type { Row } from './Row';
-import type { RowModelMeta, RowPredicate } from './Metadata';
+import type { RowModelMeta } from './Metadata';
+
+/**
+ * Predicate function for row filtering.
+ */
+type RowPredicate<TData> = (
+  row: Row<TData>,
+  index: number,
+  array: readonly Row<TData>[]
+) => boolean;
 
 /**
  * Collection of rows with efficient access patterns.

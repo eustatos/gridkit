@@ -1,4 +1,52 @@
 /**
+ * Cache statistics.
+ */
+export interface CacheStats {
+  /** Hit ratio */
+  readonly hitRatio: number;
+
+  /** Number of cache hits */
+  readonly hits: number;
+
+  /** Number of cache misses */
+  readonly misses: number;
+
+  /** Cache size */
+  readonly size: number;
+}
+
+/**
+ * Cell formatting options.
+ */
+export interface CellFormat {
+  /** Number of decimal places */
+  readonly decimals?: number;
+
+  /** Date format string */
+  readonly dateFormat?: string;
+
+  /** Currency code */
+  readonly currency?: string;
+
+  /** Custom formatter function */
+  readonly formatter?: (value: unknown) => string;
+}
+
+/**
+ * Validation error.
+ */
+export interface ValidationError {
+  /** Error code */
+  readonly code: string;
+
+  /** Error message */
+  readonly message: string;
+
+  /** Error details */
+  readonly details?: Record<string, unknown>;
+}
+
+/**
  * Row-level metadata.
  */
 export interface RowMeta {
@@ -104,3 +152,12 @@ export interface CellPosition {
   readonly width: number;
   readonly height: number;
 }
+
+/**
+ * Predicate function for row filtering.
+ */
+export type RowPredicate<TData> = (
+  row: any,
+  index: number,
+  array: readonly any[]
+) => boolean;
