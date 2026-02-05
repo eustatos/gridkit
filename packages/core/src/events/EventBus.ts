@@ -337,9 +337,17 @@ export class EventBus {
       });
     } else if (priority === EventPriority.LOW) {
       // Use requestIdleCallback if available
-      const globalObj = typeof globalThis !== 'undefined' ? globalThis : 
-                       typeof window !== 'undefined' ? window : 
-                       typeof global !== 'undefined' ? global : {} as any;
+      // Получаем глобальный объект в зависимости от окружения
+      let globalObj: any;
+      if (typeof globalThis !== 'undefined') {
+        globalObj = globalThis;
+      } else if (typeof window !== 'undefined') {
+        globalObj = window;
+      } else if (typeof global !== 'undefined') {
+        globalObj = global;
+      } else {
+        globalObj = {};
+      }
       
       if (typeof globalObj.requestIdleCallback !== 'undefined') {
         globalObj.requestIdleCallback(() => {
