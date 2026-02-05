@@ -1,12 +1,12 @@
 // Composite EventRegistry type
 // Implements CORE-005B requirement for modular type architecture
 
-import type { GridEventType } from './grid';
-import type { ColumnEventType } from './column';
-import type { RowEventType } from './row';
-import type { CellEventType } from './cell';
-import type { StateEventType } from './state';
-import type { TableEventType } from './table';
+import type { GridEventType, GridEventPayloadMap } from './grid';
+import type { ColumnEventType, ColumnEventPayloadMap } from './column';
+import type { RowEventType, RowEventPayloadMap } from './row';
+import type { CellEventType, CellEventPayloadMap } from './cell';
+import type { StateEventType, StateEventPayloadMap } from './state';
+import type { TableEventType, TableEventPayloadMap } from './table';
 
 // Composite event registry type
 // Combines all event types from different modules
