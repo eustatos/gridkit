@@ -11,9 +11,6 @@ type HandlerEntry<T extends CoreEventType> = {
   once: boolean;
 };
 
-// Type for event handler that can handle any event type
-type GenericEventHandler = EventHandler<CoreEventType>;
-
 export class EventBus {
   private handlers = new Map<string, Set<HandlerEntry<CoreEventType>>>();
   private wildcardHandlers = new Set<HandlerEntry<CoreEventType>>();

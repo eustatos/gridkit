@@ -153,6 +153,14 @@ export interface CellPosition {
   readonly height: number;
 }
 
+// Placeholder types since the actual types are not yet implemented
+export type RowData = Record<string, unknown>;
+export type Row<TData extends RowData = RowData> = {
+  readonly id: string;
+  readonly data: TData;
+  readonly meta?: RowMeta;
+};
+
 /**
  * Predicate function for row filtering.
  */
