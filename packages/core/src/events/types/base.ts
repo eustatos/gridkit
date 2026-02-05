@@ -17,12 +17,14 @@ export interface GridEvent<T = unknown> {
   readonly type: string;
   readonly payload: T;
   readonly timestamp: number;
+  readonly source?: string;
+  readonly metadata?: Record<string, unknown>;
 }
 
 /**
  * Event handler function type
  */
-export type EventHandler<T extends GridEvent = GridEvent<unknown>> = (event: T) => void;
+export type EventHandler<T extends GridEvent = GridEvent<unknown>> = (event: T) => void | Promise<void>;
 
 /**
  * Event subscription with cleanup function

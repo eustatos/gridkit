@@ -4,19 +4,19 @@ import type {
   EventHandlerOptions,
   GridEvent,
   EventMiddleware,
+  EventHandler,
 } from './types';
 import {
   EventPriority,
 } from './types/base';
 import { createPriorityQueue, type PriorityQueue } from './utils/priority';
 import { createCleanupManager, type CleanupManager } from './utils/cleanup';
-import { extractNamespace } from './utils/namespace';
 
 /**
  * Handler entry with metadata
  */
 interface HandlerEntry<T extends EventType> {
-  handler: EventHandler<EventPayload<T>>;
+  handler: EventHandler<GridEvent<EventPayload<T>>>;
   options: EventHandlerOptions;
   id: symbol;
   addedAt: number;
@@ -74,7 +74,7 @@ export class EventBus {
    */
   on<T extends EventType>(
     event: T,
-    handler: EventHandler<EventPayload<T>>,
+    handler: EventHandler<GridEvent<EventPayload<T>>>,
     options: EventHandlerOptions = {}
   ): () => void {
     const entry: HandlerEntry<T> = {
@@ -109,7 +109,7 @@ export class EventBus {
    */
   once<T extends EventType>(
     event: T,
-    handler: EventHandler<EventPayload<T>>
+    handler: EventHandler<GridEvent<EventPayload<T>>>
   ): () => void {
     return this.on(event, handler, { once: true });
   }
@@ -119,7 +119,7 @@ export class EventBus {
    */
   off<T extends EventType>(
     event: T,
-    handler: EventHandler<EventPayload<T>>
+    handler: EventHandler<GridEvent<EventPayload<T>>>
   ): void {
     const handlers = this.handlers.get(event);
     if (!handlers) return;
@@ -164,7 +164,7 @@ export class EventBus {
       timestamp: performance.now(),
       source: options?.source,
       metadata: options?.metadata,
-    };
+    } as GridEvent<EventPayload<T>>;
 
     // Update statistics
     this.stats.totalEvents++;
@@ -312,7 +312,7 @@ export class EventBus {
   }
 
   private applyMiddleware<T extends EventType>(event: GridEvent<EventPayload<T>>): GridEvent<EventPayload<T>> | null {
-    let currentEvent = event;
+    let currentEvent: any = event;
 
     for (const middleware of this.middlewares) {
       const result = middleware(currentEvent);
@@ -322,7 +322,7 @@ export class EventBus {
       currentEvent = result;
     }
 
-    return currentEvent;
+    return currentEvent as GridEvent<EventPayload<T>>;
   }
 
   private scheduleProcessing(priority: EventPriority): void {
@@ -337,8 +337,12 @@ export class EventBus {
       });
     } else if (priority === EventPriority.LOW) {
       // Use requestIdleCallback if available
-      if (typeof requestIdleCallback !== 'undefined') {
-        requestIdleCallback(() => {
+      const globalObj = typeof globalThis !== 'undefined' ? globalThis : 
+                       typeof window !== 'undefined' ? window : 
+                       typeof global !== 'undefined' ? global : {} as any;
+      
+      if (typeof globalObj.requestIdleCallback !== 'undefined') {
+        globalObj.requestIdleCallback(() => {
           this.priorityQueue.process();
           this.isProcessing = false;
         });

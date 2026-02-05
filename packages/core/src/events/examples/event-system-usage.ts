@@ -250,6 +250,10 @@ export {
 };
 
 // Run if this file is executed directly
-if (typeof global === 'undefined' && typeof window !== 'undefined' && typeof require !== 'undefined' && require.main === module) {
+// Проверяем, что мы в Node.js окружении
+const isNodeEnvironment = typeof process !== 'undefined' && process.versions && process.versions.node;
+
+// Альтернативная проверка для запуска в Node.js
+if (isNodeEnvironment && typeof require !== 'undefined' && require.main === module) {
   runAllExamples();
 }
