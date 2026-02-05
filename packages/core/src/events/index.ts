@@ -1,6 +1,32 @@
-// Public API exports for GridKit Event System
+// Types
+export type {
+  EventType,
+  EventPayload,
+  EventHandler,
+  EventHandlerOptions,
+  EventRegistry,
+  GridEvent,
+  EventNamespace,
+  EventMiddleware,
+  EventSubscription,
+} from './types';
 
-export * from './types';
-export * from './EventBus';
-export * from './utils/namespace';
-export * from './utils/cleanup';
+export { EventPriority } from './types';
+
+// Core
+export {
+  EventBus,
+  getEventBus,
+  resetEventBus,
+  createEventBus,
+} from './EventBus';
+
+// Middleware
+export { createBatchMiddleware } from './middleware/batch';
+export { createDebounceMiddleware } from './middleware/debounce';
+
+// Utilities
+export { extractNamespace } from './utils/namespace';
+
+// Augmentation helper for custom events
+export type { EventRegistry as ExtendEventRegistry } from './types';

@@ -1,31 +1,38 @@
-// Namespace extraction utilities for GridKit Event System
+import type { EventNamespace } from '../types';
 
 /**
- * Extracts the namespace from an event type string
- * @param eventType - The full event type string (e.g., "grid.created")
- * @returns The namespace part (e.g., "grid") or empty string if no namespace
+ * Extract namespace from event name
+ *
+ * @example
+ * extractNamespace('row:add') // 'row'
+ * extractNamespace('column-group:toggle') // 'column-group'
  */
-export function extractNamespace(eventType: string): string {
-  const parts = eventType.split('.');
-  return parts.length > 1 ? parts[0] ?? '' : '';
-}
+export function extractNamespace(event: string): EventNamespace {
+  const [namespace] = event.split(':');
 
-/**
- * Checks if an event type belongs to a specific namespace
- * @param eventType - The full event type string
- * @param namespace - The namespace to check against
- * @returns True if the event belongs to the namespace
- */
-export function isInNamespace(eventType: string, namespace: string): boolean {
-  return eventType.startsWith(`${namespace}.`);
-}
+  // Validate known namespaces
+  const validNamespaces: EventNamespace[] = [
+    'grid',
+    'column',
+    'column-group',
+    'row',
+    'cell',
+    'selection',
+    'virtualization',
+    'sorting',
+    'filtering',
+    'validation',
+    'config',
+    'plugin',
+    'state',
+    'data',
+    'custom',
+  ];
 
-/**
- * Removes the namespace from an event type string
- * @param eventType - The full event type string
- * @returns The event name without namespace
- */
-export function removeNamespace(eventType: string): string {
-  const parts = eventType.split('.');
-  return parts.length > 1 ? parts.slice(1).join('.') : eventType;
+  if (validNamespaces.includes(namespace as EventNamespace)) {
+    return namespace as EventNamespace;
+  }
+
+  // Default to custom for unknown namespaces
+  return 'custom';
 }

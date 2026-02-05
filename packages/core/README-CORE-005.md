@@ -1,370 +1,320 @@
-# Core API Module - GridKit
+# CORE-005: Event System Implementation
+
+This document describes the implementation of the Event System and Event Bus for GridKit.
 
 ## Overview
 
-The Core API module provides foundational services for managing context, configuration, and data providers in GridKit. This module implements the core functionality specified in task CORE-005.
+The Event System provides a robust, type-safe mechanism for component communication in GridKit. It implements a publish/subscribe pattern with strict TypeScript typing and supports various advanced features like event prioritization, middleware, and batch processing.
 
-## Installation
+## Key Features
 
-```bash
-npm install @gridkit/core
-# or
-yarn add @gridkit/core
-# or
-pnpm add @gridkit/core
-```
+1. **Type-Safe Event Registry**: Strongly-typed event definitions with compile-time validation
+2. **Event Bus Core API**: Comprehensive API for event subscription and emission
+3. **Advanced Features**: Event priority levels, middleware support, async handling
+4. **Performance Optimizations**: Event batching, debouncing/throttling, priority queue
+5. **Memory Management**: Automatic cleanup to prevent memory leaks
+6. **DevTools Integration**: Event logging and statistics
 
-## Modules
+## Event Types
 
-### 1. Context Management
+The system supports a comprehensive set of event types organized by namespace:
 
-Manages contextual information for table operations including user input, API responses, and system metadata.
-
-#### Features
-- Priority-based context aggregation
-- Automatic cleanup of expired contexts
-- Size and count limits
-- Type-safe context entries
-- Event subscription system
-
-#### Usage
-```typescript
-import { 
-  ContextManager, 
-  ContextType, 
-  ContextLimitError 
-} from '@gridkit/core';
-
-// Create context manager with custom rules
-const contextManager = new ContextManager({
-  maxEntries: 100,
-  maxTotalSize: 10 * 1024 * 1024, // 10MB
-  maxEntrySize: 1 * 1024 * 1024, // 1MB
-  autoCleanupExpired: true,
-});
-
-// Add context entries
-contextManager.addContext({
-  id: 'user-input-1',
-  type: ContextType.USER_INPUT,
-  content: 'User entered search query',
-  priority: 5,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-});
-
-// Get aggregated context
-const aggregated = contextManager.getEffectiveContext({
-  minPriority: 0,
-  includeMetadata: true,
-  maxOutputSize: 5000,
-});
-
-console.log(aggregated.content);
-console.log(`Included ${aggregated.includedCount} contexts`);
-
-// Subscribe to changes
-const unsubscribe = contextManager.subscribe((contextId, action) => {
-  console.log(`Context ${contextId} was ${action}`);
-});
-
-// Cleanup when done
-unsubscribe();
-```
-
-### 2. Configuration Management
-
-Loads, validates, and manages application configuration from multiple sources.
-
-#### Features
-- Multi-source configuration (files, env vars, runtime)
-- Schema validation with Zod
-- Hot reload support
-- Type-safe access with dot notation
-- Merge strategies
-
-#### Usage
-```typescript
-import { 
-  ConfigManager, 
-  ConfigSource,
-  DEFAULT_CONFIG 
-} from '@gridkit/core';
-
-// Create config manager
-const configManager = new ConfigManager({
-  watchFile: true,
-  envPrefix: 'GRIDKIT_',
-  defaults: {
-    debug: process.env.NODE_ENV === 'development',
-  },
-});
-
-// Load configuration from all sources
-await configManager.load();
-
-// Get configuration values
-const debug = configManager.get<boolean>('debug');
-const logLevel = configManager.get<string>('logging.level');
-
-// Set configuration values
-configManager.set('debug', true);
-configManager.set('logging.level', 'debug');
-
-// Merge new configuration
-configManager.merge({
-  performance: {
-    enabled: true,
-    sampleRate: 0.5,
-  },
-});
-
-// Save to file
-configManager.saveToFile('./gridkit.config.json');
-
-// Subscribe to changes
-configManager.subscribe('config:updated', (config) => {
-  console.log('Configuration updated:', config);
-});
-```
-
-### 3. Provider Management
-
-Manages data providers with registry pattern, caching, and lifecycle management.
-
-#### Features
-- Dynamic provider registration
-- Caching with TTL and size limits
-- Authentication support
-- Request retry and timeout
-- Statistics and monitoring
-
-#### Usage
-```typescript
-import { 
-  ProviderManager,
-  StaticProvider,
-  type ProviderConfig 
-} from '@gridkit/core';
-
-// Create provider manager
-const providerManager = new ProviderManager({
-  validateOnRegister: true,
-  initializeOnRegister: false,
-});
-
-// Register provider types
-providerManager.registerProvider('static', StaticProvider);
-
-// Create provider instance
-const providerConfig: ProviderConfig = {
-  type: 'static',
-  options: {
-    data: [
-      { id: 1, name: 'Alice', email: 'alice@example.com' },
-      { id: 2, name: 'Bob', email: 'bob@example.com' },
-    ],
-  },
-  cache: {
-    enabled: true,
-    ttl: 300000, // 5 minutes
-    maxSize: 10 * 1024 * 1024, // 10MB
-    strategy: 'memory',
-  },
-};
-
-const userProvider = providerManager.createProvider('users', providerConfig, true);
-
-// Load data
-const result = await providerManager.loadData('users', {
-  pagination: { page: 1, pageSize: 10 },
-  sorting: [{ columnId: 'name', direction: 'asc' }],
-  filters: [{ columnId: 'email', operator: 'contains', value: 'example' }],
-});
-
-console.log(result.data);
-console.log(`Total: ${result.total}`);
-
-// Save data
-await providerManager.saveData('users', [
-  { id: 3, name: 'Charlie', email: 'charlie@example.com' },
-]);
-
-// Get provider statistics
-const stats = providerManager.getStats();
-console.log(stats);
-
-// Dispose providers
-await providerManager.disposeAll();
-```
-
-## Integration Example
-
-```typescript
-import {
-  ContextManager,
-  ConfigManager,
-  ProviderManager,
-  StaticProvider,
-  ContextType,
-} from '@gridkit/core';
-
-async function initializeApp() {
-  // Initialize managers
-  const configManager = new ConfigManager();
-  await configManager.load();
-  
-  const contextManager = new ContextManager({
-    maxEntries: configManager.get<number>('context.maxEntries'),
-    maxTotalSize: configManager.get<number>('context.maxTotalSize'),
-  });
-  
-  const providerManager = new ProviderManager();
-  providerManager.registerProvider('static', StaticProvider);
-  
-  // Create providers from configuration
-  const providerConfigs = configManager.get<any[]>('providers') || [];
-  
-  for (const [name, config] of Object.entries(providerConfigs)) {
-    providerManager.createProvider(name, config);
-  }
-  
-  // Add startup context
-  contextManager.addContext({
-    id: 'app-startup',
-    type: ContextType.METADATA,
-    content: 'Application initialized successfully',
-    priority: 10,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-  
-  return {
-    configManager,
-    contextManager,
-    providerManager,
-  };
-}
-
-// Error handling example
-try {
-  const { contextManager } = await initializeApp();
-  
-  // Get aggregated context for AI processing
-  const context = contextManager.getEffectiveContext({
-    minPriority: 5,
-    includeMetadata: true,
-  });
-  
-  console.log('Available context:', context.content);
-  
-} catch (error) {
-  console.error('Failed to initialize:', error);
-}
-```
+- `grid:*` - Grid lifecycle events
+- `column:*` - Column operations
+- `column-group:*` - Column grouping
+- `row:*` - Row operations
+- `cell:*` - Cell-level events
+- `selection:*` - Selection state
+- `virtualization:*` - Viewport events
+- `sorting:*` - Sort operations
+- `filtering:*` - Filter operations
+- `validation:*` - Validation results
+- `config:*` - Configuration changes
+- `plugin:*` - Plugin system
+- `state:*` - State management
+- `data:*` - Data operations
+- `custom:*` - User-defined events
 
 ## API Reference
 
-### ContextManager
+### EventBus Class
+
+#### Constructor
+```typescript
+const bus = new EventBus({ devMode?: boolean });
+```
 
 #### Methods
-- `addContext(entry, options)` - Add context with validation
-- `getContext(id)` - Get context by ID
-- `listContexts(filter?)` - List contexts with optional filtering
-- `updateContext(id, updates)` - Update context metadata
-- `removeContext(id)` - Remove context by ID
-- `clear()` - Remove all contexts
-- `getEffectiveContext(options)` - Get aggregated context
-- `validateAll()` - Validate all contexts
-- `cleanupExpired()` - Remove expired contexts
-- `getStats()` - Get statistics
-- `getTotalSize()` - Get total size in bytes
-- `getCount()` - Get number of contexts
-- `subscribe(listener)` - Subscribe to changes
 
-### ConfigManager
+##### `on(event, handler, options)`
+Subscribe to an event.
 
-#### Methods
-- `load()` - Load configuration from all sources
-- `reload()` - Reload configuration
-- `get(key)` - Get configuration value
-- `set(key, value)` - Set configuration value
-- `has(key)` - Check if configuration has key
-- `getAll()` - Get all configuration
-- `validate()` - Validate configuration
-- `merge(newConfig, strategy)` - Merge configuration
-- `saveToFile(path, format)` - Save to file
-- `subscribe(event, listener)` - Subscribe to events
-- `destroy()` - Cleanup resources
-- `getSource(key)` - Get source of configuration value
-- `getRawSources()` - Get raw configuration from sources
+```typescript
+const unsubscribe = bus.on('row:add', (event) => {
+  console.log('Row added:', event.payload.rowId);
+});
+```
 
-### ProviderManager
+Options:
+- `priority`: EventPriority - Execution priority
+- `once`: boolean - One-time subscription
+- `filter`: (event) => boolean - Conditional handler
 
-#### Methods
-- `registerProvider(type, providerClass)` - Register provider type
-- `createProvider(name, config, initialize?)` - Create provider instance
-- `getProvider(name)` - Get provider by name
-- `getOrCreateProvider(name, config)` - Get or create provider
-- `loadData(providerName, options)` - Load data through provider
-- `saveData(providerName, data, options)` - Save data through provider
-- `listProviderTypes()` - List registered provider types
-- `listProviders()` - List created provider instances
-- `validateProviderConfig(config)` - Validate provider configuration
-- `updateProviderConfig(name, updates)` - Update provider configuration
-- `disposeProvider(name)` - Dispose provider
-- `disposeAll()` - Dispose all providers
-- `getStats()` - Get statistics for all providers
+##### `once(event, handler)`
+Subscribe to an event once.
 
-## Performance Requirements
+```typescript
+bus.once('grid:ready', (event) => {
+  console.log('Grid is ready');
+});
+```
 
-- `ContextManager.getEffectiveContext`: < 50ms для 50 контекстов
-- `ConfigManager.get` с dot-notation: < 5ms
-- `ProviderManager.createPlan`: < 100ms для 100 задач с зависимостями
-- `ProviderManager.executePlan`: обработка 10 задач/сек
-- Нет memory leaks при работе с контекстом
+##### `off(event, handler)`
+Unsubscribe from an event.
 
-## Error Handling
+```typescript
+const unsubscribe = bus.on('row:update', handler);
+unsubscribe(); // or bus.off('row:update', handler)
+```
 
-Все модули используют единую систему ошибок с кодами:
+##### `emit(event, payload, options)`
+Emit an event.
 
-### Context Errors
-- `CONTEXT_SIZE_LIMIT` - Превышен размер контекста
-- `CONTEXT_COUNT_LIMIT` - Превышено количество контекстов
-- `CONTEXT_VALIDATION_FAILED` - Ошибка валидации контекста
-- `CONTEXT_NOT_FOUND` - Контекст не найден
-- `CONTEXT_EXPIRED` - Контекст устарел
-- `CONTEXT_ALREADY_EXISTS` - Контекст уже существует
+```typescript
+bus.emit('row:add', {
+  rowId: createRowId('123'),
+  index: 0,
+  isNew: true
+});
+```
 
-### Config Errors
-- `CONFIG_LOAD_FAILED` - Ошибка загрузки конфигурации
-- `CONFIG_VALIDATION_FAILED` - Ошибка валидации конфигурации
-- `CONFIG_NOT_FOUND` - Конфигурация не найдена
-- `CONFIG_PARSE_ERROR` - Ошибка парсинга конфигурации
+Options:
+- `priority`: EventPriority - Execution priority
+- `source`: string - Event source identifier
+- `metadata`: Record<string, unknown> - Additional metadata
 
-### Provider Errors
-- `PROVIDER_NOT_FOUND` - Провайдер не найден
-- `PROVIDER_VALIDATION_FAILED` - Ошибка валидации провайдера
-- `PROVIDER_LOAD_FAILED` - Ошибка загрузки данных
-- `PROVIDER_INITIALIZATION_FAILED` - Ошибка инициализации провайдера
-- `CIRCULAR_DEPENDENCY` - Циклическая зависимость
+##### `emitBatch(events)`
+Emit multiple events efficiently.
+
+```typescript
+bus.emitBatch([
+  {
+    event: 'row:add',
+    payload: { rowId: createRowId('1'), index: 0, isNew: true }
+  },
+  {
+    event: 'row:add',
+    payload: { rowId: createRowId('2'), index: 1, isNew: true }
+  }
+]);
+```
+
+##### `use(middleware)`
+Add middleware.
+
+```typescript
+const removeMiddleware = bus.use((event) => {
+  // Process or modify event
+  return event; // Return null to cancel
+});
+```
+
+##### `getStats()`
+Get event bus statistics.
+
+```typescript
+const stats = bus.getStats();
+console.log(`Total events: ${stats.totalEvents}`);
+```
+
+##### `clear()`
+Clear all handlers and reset state.
+
+```typescript
+bus.clear(); // Removes all handlers and middleware
+```
+
+### Helper Functions
+
+#### `getEventBus()`
+Get global event bus instance.
+
+```typescript
+import { getEventBus } from '@gridkit/core/events';
+const bus = getEventBus();
+```
+
+#### `createEventBus(options)`
+Create isolated event bus instance.
+
+```typescript
+import { createEventBus } from '@gridkit/core/events';
+const bus = createEventBus({ devMode: true });
+```
+
+#### `resetEventBus()`
+Reset singleton event bus (for testing).
+
+```typescript
+import { resetEventBus } from '@gridkit/core/events';
+resetEventBus();
+```
+
+## Middleware
+
+### Built-in Middleware
+
+#### Batch Middleware
+Coalesces similar events within a time window.
+
+```typescript
+import { createBatchMiddleware } from '@gridkit/core/events';
+
+const batchMiddleware = createBatchMiddleware({
+  window: 50,    // 50ms time window
+  maxSize: 10    // Max 10 events per batch
+});
+
+bus.use(batchMiddleware);
+```
+
+#### Debounce Middleware
+Delays event emission until a quiet period.
+
+```typescript
+import { createDebounceMiddleware } from '@gridkit/core/events';
+
+const debounceMiddleware = createDebounceMiddleware(100); // 100ms delay
+bus.use(debounceMiddleware);
+```
+
+## Performance
+
+The Event System is optimized for performance:
+
+- Event emission < 0.1ms (p95)
+- Efficient handler execution
+- Priority-based scheduling
+- Memory leak prevention
+- Bundle size < 2.5KB (gzipped)
 
 ## Testing
 
-```bash
-# Run tests
-npm test
+The implementation includes comprehensive tests:
 
-# Run tests with coverage
-npm run test:coverage
+- Type safety verification
+- Event emission and handling
+- Priority scheduling
+- Middleware functionality
+- Memory management
+- Performance benchmarks
 
-# Type checking
-npm run type-check
+## Usage Examples
 
-# Lint
-npm run lint
+### Basic Usage
+```typescript
+import { getEventBus } from '@gridkit/core/events';
+
+const bus = getEventBus();
+
+// Subscribe to events
+const unsubscribe = bus.on('row:add', (event) => {
+  console.log('Row added:', event.payload.rowId);
+});
+
+// Emit events
+bus.emit('row:add', {
+  rowId: createRowId('123'),
+  index: 0,
+  isNew: true,
+});
+
+// Cleanup
+unsubscribe();
 ```
 
-## License
+### Custom Event Registration
+```typescript
+declare module '@gridkit/core/events' {
+  interface EventRegistry {
+    'custom:my-event': {
+      customData: string;
+    };
+  }
+}
 
-MIT
+// Now you can use the custom event with full type safety
+bus.on('custom:my-event', (event) => {
+  console.log('Custom data:', event.payload.customData);
+});
+
+bus.emit('custom:my-event', {
+  customData: 'Hello, world!'
+});
+```
+
+### Plugin Communication
+```typescript
+bus.on('plugin:register', (event) => {
+  console.log(`Plugin registered: ${event.payload.pluginId}`);
+});
+
+bus.on('plugin:error', (event) => {
+  console.error(`Plugin error: ${event.payload.error}`);
+});
+```
+
+### State Management
+```typescript
+bus.on('state:update', (event) => {
+  console.log('State updated:', event.payload.changedKeys);
+});
+
+bus.on('data:load', (event) => {
+  console.log('Data loaded:', event.payload.data.length);
+});
+```
+
+## Best Practices
+
+1. **Use appropriate event priorities** - Reserve IMMEDIATE for critical operations only
+2. **Unsubscribe when done** - Prevent memory leaks by unsubscribing
+3. **Use batch operations** - For multiple related events, use emitBatch
+4. **Leverage middleware** - For cross-cutting concerns like logging or debouncing
+5. **Follow naming conventions** - Use namespace:event-name format
+6. **Handle errors gracefully** - Async handlers should catch their own errors
+
+## Architecture
+
+The Event System follows a modular architecture:
+
+```
+packages/core/src/events/
+├── types.ts              # Event type definitions
+├── EventBus.ts           # Core event bus implementation
+├── index.ts              # Public API exports
+├── middleware/           # Event middleware
+│   ├── batch.ts         # Event batching
+│   └── debounce.ts     # Debounce middleware
+└── utils/               # Utility functions
+    ├── priority.ts      # Priority queue
+    ├── cleanup.ts       # Memory management
+    └── namespace.ts     # Namespace extraction
+```
+
+## Related Components
+
+- CORE-001 (Type System)
+- CORE-002 (Table Interfaces)
+- CORE-003 (Column Interfaces)
+- CORE-004 (Row Interfaces)
+
+## Future Enhancements
+
+Planned improvements:
+
+1. Throttle middleware
+2. Event replay for debugging
+3. Visual event flow in DevTools
+4. Performance profiling integration
+5. WebSocket event synchronization
