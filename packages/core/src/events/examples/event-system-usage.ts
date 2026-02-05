@@ -42,8 +42,7 @@ function basicUsageExample() {
   // Unsubscribe when done
   unsubscribe();
   
-  console.log('Basic usage example completed
-');
+  console.log('Basic usage example completed');
 }
 
 // Example 2: Priority-Based Handling
@@ -76,8 +75,7 @@ function priorityExample() {
   // Wait for processing
   setTimeout(() => {
     console.log('Execution order:', executionOrder);
-    console.log('Priority example completed
-');
+    console.log('Priority example completed');
   }, 10);
 }
 
@@ -111,8 +109,7 @@ function middlewareExample() {
     });
   }
   
-  console.log('Middleware example completed (check console for batched output)
-');
+  console.log('Middleware example completed (check console for batched output)');
 }
 
 // Example 4: Custom Events
@@ -144,8 +141,7 @@ function customEventsExample() {
     timestamp: Date.now()
   });
   
-  console.log('Custom events example completed
-');
+  console.log('Custom events example completed');
 }
 
 // Example 5: Error Handling
@@ -186,8 +182,7 @@ function errorHandlingExample() {
     oldWidth: 150
   });
   
-  console.log('Error handling example completed
-');
+  console.log('Error handling example completed');
 }
 
 // Example 6: Memory Management
@@ -220,14 +215,12 @@ function memoryManagementExample() {
   
   console.log(`Handlers after full cleanup: ${bus.getStats().totalHandlers}`);
   
-  console.log('Memory management example completed
-');
+  console.log('Memory management example completed');
 }
 
 // Run all examples
 function runAllExamples() {
-  console.log('GridKit Event System Usage Examples
-');
+  console.log('GridKit Event System Usage Examples');
   
   basicUsageExample();
   priorityExample();
