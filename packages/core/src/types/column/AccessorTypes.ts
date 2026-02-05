@@ -44,11 +44,11 @@ export type AccessorFn<TData extends RowData, TValue = unknown> = (
  * @template TDef - ColumnDef type
  */
 export type ColumnValue<TDef> =
-  TDef extends ColumnDef<infer TData, infer TValue>
+  TDef extends ColumnDef<infer TData extends RowData, infer TValue>
     ? TValue
     : TDef extends { accessorKey: infer TKey }
       ? TKey extends string
-        ? AccessorValue<TData, TKey>
+        ? AccessorValue<unknown, TKey>
         : unknown
       : unknown;
 
