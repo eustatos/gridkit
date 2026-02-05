@@ -14,8 +14,8 @@ declare global {
   }
 
   // Fallback for environments without requestIdleCallback
-  function requestIdleCallback?(callback: (deadline: IdleDeadline) => void, options?: { timeout: number }): number;
-  function cancelIdleCallback?(handle: number): void;
+  function requestIdleCallback(callback: (deadline: IdleDeadline) => void, options?: { timeout: number }): number;
+  function cancelIdleCallback(handle: number): void;
 
   // Make globalThis available
   var globalThis: typeof globalThis;
