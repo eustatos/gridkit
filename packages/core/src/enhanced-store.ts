@@ -2,6 +2,7 @@
 
 import type { Store, Plugin } from './types';
 import { createStore } from './store';
+import { atomRegistry } from './atom-registry';
 
 /**
  * Represents an enhanced store with additional capabilities.
@@ -24,6 +25,7 @@ import { createStore } from './store';
  * @typedef {Object} StoreEnhancementOptions
  * @property {boolean} [enableDevTools] - Whether to enable DevTools integration
  * @property {string} [devToolsName] - Name to display in DevTools
+ * @property {string} [registryMode] - Registry mode: 'global' or 'isolated'
  */
 
 /**
@@ -41,6 +43,12 @@ import { createStore } from './store';
 export function createEnhancedStore(plugins: Plugin[] = [], options: StoreEnhancementOptions = {}): EnhancedStore {
   // Create a basic store
   const store = createStore(plugins) as EnhancedStore;
+  
+  // Auto-attach to registry with specified mode (CORE-001 requirement)
+  if (typeof atomRegistry.attachStore === "function") {
+    const mode = options.registryMode || "global";
+    atomRegistry.attachStore(store, mode);
+  }
   
   // Add DevTools connection if enabled
   if (options.enableDevTools) {

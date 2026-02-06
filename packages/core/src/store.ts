@@ -2,6 +2,7 @@
 
 import type { Atom, Store, Subscriber, Getter, Setter, Plugin, ActionMetadata } from './types';
 import { serializeState as serializeStoreState } from './utils/serialization';
+import { atomRegistry } from './atom-registry';
 
 type AtomState<Value> = {
   value: Value;
@@ -30,6 +31,11 @@ export function createStore(plugins: Plugin[] = []): Store {
   let pendingStateUpdates: Array<{ atom: Atom<any>, value: any }> = [];
   let debounceTimer: NodeJS.Timeout | null = null;
   const debounceDelay = 100;
+
+  // Auto-attach to registry in global mode (CORE-001 requirement)
+  if (typeof atomRegistry.attachStore === "function") {
+    atomRegistry.attachStore(store, "global");
+  }
 
   const get: Getter = <Value>(atom: Atom<Value>): Value => {
     // Get or create atom state

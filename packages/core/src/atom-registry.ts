@@ -7,7 +7,10 @@
  * - Thread-safe for SSR environments
  * - O(1) lookup performance
  * - Automatic registration of all created atoms
+ * - Store-aware registry for DevTools integration
  */
+
+import type { Store, StoreRegistry } from './types';
 
 type AtomType = 'primitive' | 'computed' | 'writable';
 
@@ -22,6 +25,9 @@ export class AtomRegistry {
   private registry: Map<symbol, any>;
   private metadata: Map<symbol, AtomMetadata>;
   private counter: number;
+  // Store tracking for CORE-001
+  private stores: WeakMap<Store, StoreRegistry> = new WeakMap();
+  private globalRegistry: Map<symbol, any> = new Map();
 
   private constructor() {
     this.registry = new Map();
@@ -120,6 +126,8 @@ export class AtomRegistry {
     this.registry.clear();
     this.metadata.clear();
     this.counter = 0;
+    this.stores = new WeakMap();
+    this.globalRegistry.clear();
   }
 
   /**
@@ -128,6 +136,83 @@ export class AtomRegistry {
    */
   size(): number {
     return this.registry.size;
+  }
+
+  // New methods for CORE-001 implementation
+
+  /**
+   * Attach a store to the registry with specified mode
+   * @param store The store to attach
+   * @param mode Registry mode - 'global' or 'isolated'
+   */
+  attachStore(store: Store, mode: "global" | "isolated" = "global"): void {
+    if (!this.stores.has(store)) {
+      this.stores.set(store, {
+        store,
+        atoms: new Set()
+      });
+    }
+    
+    // For global mode, register the store but keep global registry behavior
+    // For isolated mode, atoms will be tracked per store
+  }
+
+  /**
+   * Get the store that owns the specified atom
+   * @param atomId Symbol ID of the atom
+   * @returns The store that owns the atom, or undefined if not found
+   */
+  getStoreForAtom(atomId: symbol): Store | undefined {
+    // Check isolated registries first
+    for (const [store, registry] of this.stores) {
+      if (registry.atoms.has(atomId)) {
+        return store;
+      }
+    }
+    
+    // If not found in isolated registries, atom belongs to global registry
+    if (this.globalRegistry.has(atomId)) {
+      return undefined; // Global registry has no specific store owner
+    }
+    
+    return undefined;
+  }
+
+  /**
+   * Get all atoms associated with a specific store
+   * @param store The store
+   * @returns Array of atom IDs associated with the store
+   */
+  getAtomsForStore(store: Store): symbol[] {
+    const registry = this.stores.get(store);
+    if (registry) {
+      return Array.from(registry.atoms);
+    }
+    return [];
+  }
+
+  /**
+   * Get atom value through store reference
+   * @param atomId Symbol ID of the atom
+   * @returns The atom value or undefined if not found
+   */
+  getAtomValue(atomId: symbol): any | undefined {
+    const atom = this.registry.get(atomId);
+    if (!atom) return undefined;
+    
+    // Find which store owns this atom and get its value
+    const store = this.getStoreForAtom(atomId);
+    if (store) {
+      try {
+        return store.get(atom);
+      } catch (error) {
+        // If we can't get the value through the store, return the atom itself
+        return atom;
+      }
+    }
+    
+    // If no store owns this atom, return the atom itself
+    return atom;
   }
 }
 

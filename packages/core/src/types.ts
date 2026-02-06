@@ -2,10 +2,7 @@
 
 export type Getter = <Value>(atom: Atom<Value>) => Value;
 
-export type Setter = <Value>(
-  atom: Atom<Value>,
-  update: Value | ((prev: Value) => Value)
-) => void;
+export type Setter = <Value>(atom: Atom<Value>, update: Value | ((prev: Value) => Value)) => void;
 
 export type Subscriber<Value> = (value: Value) => void;
 
@@ -19,16 +16,13 @@ export type ActionMetadata = {
   stackTrace?: string;
 };
 
+// Store registry modes
+export type RegistryMode = 'global' | 'isolated';
+
 export interface Store {
   get: <Value>(atom: Atom<Value>) => Value;
-  set: <Value>(
-    atom: Atom<Value>,
-    update: Value | ((prev: Value) => Value)
-  ) => void;
-  subscribe: <Value>(
-    atom: Atom<Value>,
-    subscriber: Subscriber<Value>
-  ) => () => void;
+  set: <Value>(atom: Atom<Value>, update: Value | ((prev: Value) => Value)) => void;
+  subscribe: <Value>(atom: Atom<Value>, subscriber: Subscriber<Value>) => () => void;
   getState: () => Record<string, unknown>;
   
   // Enhanced methods for DevTools integration (backward compatible)
@@ -53,6 +47,12 @@ export interface Atom<Value> {
   write?: (get: Getter, set: Setter, value: Value) => void;
 }
 
+// Store registry interface for tracking atom ownership
+export interface StoreRegistry {
+  store: Store;
+  atoms: Set<symbol>;
+}
+
 // Enhanced store types
 export interface EnhancedStore extends Store {
   connectDevTools?: () => void;
@@ -61,4 +61,5 @@ export interface EnhancedStore extends Store {
 export type StoreEnhancementOptions = {
   enableDevTools?: boolean;
   devToolsName?: string;
+  registryMode?: RegistryMode;
 };
