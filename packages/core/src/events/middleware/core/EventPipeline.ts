@@ -46,9 +46,9 @@ export class EventPipeline {
           // Continue with next middleware
           return next(result);
         } catch (error) {
-          // Log error but continue processing with original event
+          // Log error but continue processing with the same event
           console.error('Middleware error:', error);
-          // Continue with next middleware using the same event
+          // Continue with next middleware using the same event that was passed to this middleware
           return next(e);
         }
       },
