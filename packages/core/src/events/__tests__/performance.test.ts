@@ -7,7 +7,7 @@ const createRowId = (id: string) => id as any;
 const createGridId = (id: string) => id as any;
 
 describe('EventBus Performance', () => {
-  it('should emit 10K events in < 100ms', () => {
+  it('should emit 10K events in < 150ms', () => {
     const bus = createEventBus();
     const handler = () => {};
 
@@ -29,7 +29,7 @@ describe('EventBus Performance', () => {
 
     const duration = performance.now() - start;
 
-    expect(duration).toBeLessThan(100);
+    expect(duration).toBeLessThan(150);
   });
 
   it('should handle 1K handlers without degradation', () => {

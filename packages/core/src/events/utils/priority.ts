@@ -44,9 +44,15 @@ export function createPriorityQueue(): PriorityQueue {
     for (const priority of priorityOrder) {
       const queue = queues.get(priority);
       if (queue && queue.length > 0) {
-        // Sort by sequence number to maintain insertion order within same priority
-        const sorted = [...queue].sort((a, b) => a.sequence - b.sequence);
-        allTasks.push(...sorted);
+        // For immediate priority, we don't need to sort by sequence number
+        // as the order of execution is less critical for performance
+        if (priority === EventPriority.IMMEDIATE) {
+          allTasks.push(...queue);
+        } else {
+          // Sort by sequence number to maintain insertion order within same priority
+          const sorted = [...queue].sort((a, b) => a.sequence - b.sequence);
+          allTasks.push(...sorted);
+        }
       }
     }
 
@@ -154,9 +160,14 @@ export function createMockPriorityQueue(): PriorityQueue & {
 
       for (const priority of priorityOrder) {
         const queue = queues.get(priority)!;
-        // Sort by sequence number
-        const sorted = [...queue].sort((a, b) => a.sequence - b.sequence);
-        tasksToProcess.push(...sorted);
+        // For immediate priority, we don't need to sort by sequence number
+        if (priority === EventPriority.IMMEDIATE) {
+          tasksToProcess.push(...queue);
+        } else {
+          // Sort by sequence number
+          const sorted = [...queue].sort((a, b) => a.sequence - b.sequence);
+          tasksToProcess.push(...sorted);
+        }
         queue.length = 0;
       }
 
