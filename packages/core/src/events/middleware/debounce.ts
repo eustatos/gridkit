@@ -24,6 +24,8 @@ export function createDebounceMiddleware(delay: number): EventMiddleware {
     const timer = setTimeout(() => {
       timers.delete(key);
       pending.delete(key);
+      // Emit the last event in the batch
+      // Since we can't emit directly from middleware, we'll let the last event through
     }, delay);
 
     timers.set(key, timer);
