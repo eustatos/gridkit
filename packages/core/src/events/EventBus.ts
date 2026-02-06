@@ -6,13 +6,11 @@ import type {
   EventMiddleware,
   EventHandler,
 } from './types';
-import {
-  EventPriority,
-} from './types/base';
-import { createPriorityQueue, type PriorityQueue } from './utils/priority';
+import { EventPriority } from './types/base';
 import { createCleanupManager, type CleanupManager } from './utils/cleanup';
+import { createPriorityQueue, type PriorityQueue } from './utils/priority';
 
-/**
+/**PriorityQuPriorityQuriority
  * Handler entry with metadata
  */
 interface HandlerEntry<T extends EventType> {
@@ -20,6 +18,7 @@ interface HandlerEntry<T extends EventType> {
   options: EventHandlerOptions;
   id: symbol;
   addedAt: number;
+  priority: EventPriority; // Store handler priority
 }
 
 /**
@@ -51,6 +50,7 @@ export class EventBus {
   private isProcessing = false;
   private stats: EventBusStats;
   private devMode: boolean;
+  private flushScheduled = false;
 
   constructor(options: { devMode?: boolean } = {}) {
     this.priorityQueue = createPriorityQueue();
@@ -82,6 +82,7 @@ export class EventBus {
       options,
       id: Symbol('handler'),
       addedAt: performance.now(),
+      priority: options.priority ?? EventPriority.NORMAL, // Store handler priority
     };
 
     if (!this.handlers.has(event)) {
@@ -193,7 +194,12 @@ export class EventBus {
         () => this.executeHandlers(event, processedEvent),
         priority
       );
-      this.scheduleProcessing();
+
+      // Schedule async processing if not already scheduled
+      if (!this.flushScheduled) {
+        this.flushScheduled = true;
+        this.scheduleProcessing();
+      }
     }
   }
 
@@ -208,8 +214,27 @@ export class EventBus {
       priority?: EventPriority;
     }>
   ): void {
+    // Group by priority for optimization
+    const immediateEvents = [];
+    const queuedEvents = [];
+
     for (const { event, payload, priority } of events) {
-      this.emit(event, payload, { priority: priority ?? EventPriority.LOW });
+      const eventPriority = priority ?? EventPriority.NORMAL;
+      if (eventPriority === EventPriority.IMMEDIATE) {
+        immediateEvents.push({ event, payload });
+      } else {
+        queuedEvents.push({ event, payload, priority: eventPriority });
+      }
+    }
+
+    // Execute immediate events synchronously
+    for (const { event, payload } of immediateEvents) {
+      this.emit(event, payload, { priority: EventPriority.IMMEDIATE });
+    }
+
+    // Queue other events
+    for (const { event, payload, priority } of queuedEvents) {
+      this.emit(event, payload, { priority });
     }
   }
 
@@ -250,25 +275,31 @@ export class EventBus {
       eventCounts: new Map(),
       avgExecutionTime: new Map(),
     };
+    this.flushScheduled = false;
   }
 
   // ============================================
   // Private Methods
   // ============================================
 
-  private executeHandlers<T extends EventType>(event: T, gridEvent: GridEvent<EventPayload<T>>): void {
+  private executeHandlers<T extends EventType>(
+    event: T,
+    gridEvent: GridEvent<EventPayload<T>>
+  ): void {
     const handlers = this.handlers.get(event);
     if (!handlers || handlers.size === 0) return;
 
     const toRemove: HandlerEntry<EventType>[] = [];
     const startTime = performance.now();
 
-    // Convert to array to avoid issues with modifying the set during iteration
-    const handlersArray = Array.from(handlers);
-    
+    // Convert to array and sort by handler priority (lower number = higher priority)
+    const handlersArray = Array.from(handlers).sort((a, b) => {
+      // Lower priority number = higher priority (0 = IMMEDIATE is highest)
+      return a.priority - b.priority;
+    });
     for (const entry of handlersArray) {
       // Check if handler still exists (might have been removed by another handler)
-      if (!handlers.has(entry as any)) {
+      if (!handlers.has(entry)) {
         continue;
       }
 
@@ -319,7 +350,9 @@ export class EventBus {
     }
   }
 
-  private applyMiddleware<T extends EventType>(event: GridEvent<EventPayload<T>>): GridEvent<EventPayload<T>> | null {
+  private applyMiddleware<T extends EventType>(
+    event: GridEvent<EventPayload<T>>
+  ): GridEvent<EventPayload<T>> | null {
     let currentEvent: any = event;
 
     for (const middleware of this.middlewares) {
@@ -338,9 +371,34 @@ export class EventBus {
 
     this.isProcessing = true;
 
-    // Process immediately in all environments to ensure test compatibility
-    this.priorityQueue.process();
-    this.isProcessing = false;
+    // Use microtask for next tick execution
+    const scheduleNextTick = () => {
+      if (typeof queueMicrotask !== 'undefined') {
+        queueMicrotask(() => this.processQueue());
+      } else if (typeof setImmediate !== 'undefined') {
+        setImmediate(() => this.processQueue());
+      } else {
+        setTimeout(() => this.processQueue(), 0);
+      }
+    };
+
+    scheduleNextTick();
+  }
+
+  private processQueue(): void {
+    try {
+      this.priorityQueue.process();
+    } finally {
+      this.isProcessing = false;
+
+      // Check if more events were added during processing
+      if (this.priorityQueue.size() > 0) {
+        this.flushScheduled = true;
+        this.scheduleProcessing();
+      } else {
+        this.flushScheduled = false;
+      }
+    }
   }
 }
 
@@ -356,7 +414,10 @@ let instance: EventBus | null = null;
 export function getEventBus(): EventBus {
   if (!instance) {
     instance = new EventBus({
-      devMode: typeof process !== 'undefined' ? process.env.NODE_ENV !== 'production' : false,
+      devMode:
+        typeof process !== 'undefined'
+          ? process.env.NODE_ENV !== 'production'
+          : false,
     });
   }
   return instance;

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createEventBus } from '../EventBus';
-import type { EventPayload } from '../types';
+import { EventPriority } from '../types';
 
 // Mock branded types for testing
 const createRowId = (id: string) => id as any;
@@ -16,11 +16,15 @@ describe('EventBus Performance', () => {
     const start = performance.now();
 
     for (let i = 0; i < 10000; i++) {
-      bus.emit('row:add', {
-        rowId: createRowId(`row-${i}`),
-        index: i,
-        isNew: true,
-      });
+      bus.emit(
+        'row:add',
+        {
+          rowId: createRowId(`row-${i}`),
+          index: i,
+          isNew: true,
+        },
+        { priority: EventPriority.IMMEDIATE }
+      );
     }
 
     const duration = performance.now() - start;
@@ -37,7 +41,13 @@ describe('EventBus Performance', () => {
     }
 
     const start = performance.now();
-    bus.emit('grid:init', { gridId: createGridId('test') });
+    bus.emit(
+      'grid:init',
+      { gridId: createGridId('test') },
+      {
+        priority: EventPriority.IMMEDIATE,
+      }
+    );
     const duration = performance.now() - start;
 
     expect(duration).toBeLessThan(50);
@@ -52,7 +62,13 @@ describe('EventBus Performance', () => {
     // Run 100 times
     for (let i = 0; i < 100; i++) {
       const start = performance.now();
-      bus.emit('grid:init', { gridId: createGridId('test') }, { priority: 0 });
+      bus.emit(
+        'grid:init',
+        { gridId: createGridId('test') },
+        {
+          priority: EventPriority.IMMEDIATE,
+        }
+      );
       times.push(performance.now() - start);
     }
 
