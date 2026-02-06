@@ -34,11 +34,23 @@ export class EventPipeline {
   }
 
   private compile(): void {
-    // Compile middleware chain into single function
+    // Compile middleware chain into single function with error handling
     const chain = this.middlewares.reduceRight(
       (next, middleware) => (e: GridEvent) => {
-        const result = middleware(e);
-        return result === null ? null : next(result);
+        try {
+          const result = middleware(e);
+          // If middleware cancels the event, stop processing
+          if (result === null) {
+            return null;
+          }
+          // Continue with next middleware
+          return next(result);
+        } catch (error) {
+          // Log error but continue processing with original event
+          console.error('Middleware error:', error);
+          // Continue with next middleware using the same event
+          return next(e);
+        }
       },
       (e: GridEvent) => e
     );
