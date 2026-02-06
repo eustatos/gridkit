@@ -9,3 +9,6 @@ export * from './events';
 
 // Plugin system exports
 export * from './plugin';
+
+// Column system exports
+export * from './column';

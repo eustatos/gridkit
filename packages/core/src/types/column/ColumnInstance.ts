@@ -5,6 +5,39 @@ import type { RowData } from '../base'
 import type { ColumnDef } from './ColumnDef'
 import type { Table } from '../table/Table'
 import type { ColumnId, ColumnMeta, ColumnUtils } from './SupportingTypes'
+import type { ColumnAccessor } from '../../column/factory/accessor-system'
+
+/**
+ * Internal feature flags for column.
+ */
+interface ColumnFeatureFlags {
+  hasSorting: boolean;
+  hasFiltering: boolean;
+  hasPinning: boolean;
+  hasResizing: boolean;
+  hasHiding: boolean;
+  hasReordering: boolean;
+}
+
+/**
+ * Internal column properties for performance optimization.
+ */
+interface ColumnInternal<TData extends RowData, TValue> {
+  /**
+   * Type-safe accessor for extracting cell values.
+   */
+  accessor: ColumnAccessor<TData, TValue>;
+
+  /**
+   * Feature flags for conditional method availability.
+   */
+  featureFlags: ColumnFeatureFlags;
+
+  /**
+   * State watchers for reactive updates.
+   */
+  stateWatchers: Set<Function>;
+}
 
 /**
  * Runtime column instance with state and methods.
@@ -80,4 +113,12 @@ export interface Column<TData extends RowData, TValue = unknown> {
 
   /** Custom utilities */
   readonly utils: ColumnUtils<TData, TValue>;
+
+  // === Internal (Performance) ===
+
+  /**
+   * Internal properties for performance optimization.
+   * Not part of public API - for internal use only.
+   */
+  readonly _internal: ColumnInternal<TData, TValue>;
 }

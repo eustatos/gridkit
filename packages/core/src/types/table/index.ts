@@ -23,7 +23,7 @@ export type {
   TableOptions,
 } from './TableOptions';
 
-// Column types
+// Column types (re-export from main column module)
 export type {
   Column,
   ColumnDef,
@@ -31,7 +31,26 @@ export type {
   ColumnAccessor,
   ColumnAccessorFn,
   ColumnValue,
-} from './Column';
+  AccessorKey,
+  AccessorFn,
+  AccessorValue,
+  HeaderContext,
+  CellContext,
+  FooterContext,
+  HeaderRenderer,
+  CellRenderer,
+  FooterRenderer,
+  ColumnId,
+  ColumnGroupId,
+  Comparator as ColumnComparator,
+  FilterFn,
+  AggregationFn,
+  ColumnFormat,
+  CellMeta,
+  CellValidation,
+  ValidationResult,
+  ColumnUtils,
+} from '@/types/column';
 
 // Row types
 export type { Row, RowModel } from './Row';

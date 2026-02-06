@@ -140,6 +140,14 @@ export type AccessorValue<
     ? TData[TPath]
     : never;
 
+/**
+ * RequireKeys that makes specific keys required.
+ *
+ * @template T - The object type
+ * @template K - The keys to make required
+ */
+export type RequireKeys<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
+
 // ===================================================================
 // Error Codes
 // ===================================================================
