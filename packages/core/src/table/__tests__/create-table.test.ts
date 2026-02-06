@@ -40,7 +40,7 @@ describe('createTable', () => {
 
       const start = performance.now();
       const table = createTable({
-        columns: [{ accessorKey: 'name' },
+        columns: [{ accessorKey: 'name' }],
         data: largeData,
       });
       const duration = performance.now() - start;

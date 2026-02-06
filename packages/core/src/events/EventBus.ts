@@ -10,7 +10,7 @@ import { EventPriority } from './types/base';
 import { createCleanupManager, type CleanupManager } from './utils/cleanup';
 import { createPriorityQueue, type PriorityQueue } from './utils/priority';
 
-/**PriorityQuPriorityQuriority
+/**
  * Handler entry with metadata
  */
 interface HandlerEntry<T extends EventType> {
@@ -293,10 +293,29 @@ export class EventBus {
     const startTime = performance.now();
 
     // Convert to array and sort by handler priority (lower number = higher priority)
-    const handlersArray = Array.from(handlers).sort((a, b) => {
-      // Lower priority number = higher priority (0 = IMMEDIATE is highest)
-      return a.priority - b.priority;
-    });
+    // OPTIMIZATION: Only sort if there are multiple handlers with different priorities
+    const handlersArray = Array.from(handlers);
+    if (handlersArray.length > 1) {
+      // Check if all handlers have the same priority (common case)
+      const firstPriority = handlersArray[0].priority;
+      let allSamePriority = true;
+      
+      for (let i = 1; i < handlersArray.length; i++) {
+        if (handlersArray[i].priority !== firstPriority) {
+          allSamePriority = false;
+          break;
+        }
+      }
+      
+      // Only sort if priorities differ
+      if (!allSamePriority) {
+        handlersArray.sort((a, b) => {
+          // Lower priority number = higher priority (0 = IMMEDIATE is highest)
+          return a.priority - b.priority;
+        });
+      }
+    }
+    
     for (const entry of handlersArray) {
       // Check if handler still exists (might have been removed by another handler)
       if (!handlers.has(entry)) {

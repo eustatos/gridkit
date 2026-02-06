@@ -10,7 +10,7 @@
 **Current Task:** CORE-010 - Table Factory Implementation
 **Status:** 🟢 ACTIVE
 **Started:** 2024-03-06 17:05
-**Last Updated:** 2024-03-06 18:30
+**Last Updated:** 2024-03-06 19:15
 **Context Version:** 1.0
 
 ## 📍 CURRENT FOCUS
@@ -21,9 +21,9 @@
 - [x] File and line: `packages/core/src/table/factory/create-table.ts:1-100`
 - [x] Goal: Create the core table factory with validation and initialization
 
-**Progress in current task:** ~70% complete
-**Estimated tokens remaining:** 7500 tokens
-**Context usage:** ~15% of limit
+**Progress in current task:** ~85% complete
+**Estimated tokens remaining:** 5000 tokens
+**Context usage:** ~20% of limit
 
 ## ✅ RECENTLY COMPLETED (This Session)
 
@@ -71,6 +71,7 @@
 - ✅ Decision: Separate factory, instance, and builder concerns for better modularity
 - ✅ Decision: Use dependency injection pattern for better testability
 - ✅ Decision: Implement lazy evaluation for performance optimization
+- ✅ Decision: Optimize EventBus by avoiding unnecessary sorting when all handlers have same priority
 
 ## 📁 ACTIVE FILES & CODE CONTEXT
 
@@ -157,12 +158,14 @@
 - The factory function needs to be the single entry point with comprehensive validation
 - Performance monitoring is critical for large datasets
 - Memory safety is non-negotiable - must implement proper cleanup
+- EventBus optimization: Avoid sorting handlers when all have the same priority
 
 **Lessons:**
 
 - Validation should be isolated for better error reporting
 - Separate validation from normalization for clarity
 - Error handling with context is essential for developer experience
+- Performance optimizations should be targeted and measured
 
 ---
 
