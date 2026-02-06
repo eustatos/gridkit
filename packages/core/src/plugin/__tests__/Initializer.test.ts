@@ -125,7 +125,7 @@ describe('Initializer', () => {
       expect(initializeMock2).toHaveBeenCalledWith({ id: 'plugin-2' }, contexts.get('plugin-2'));
     });
     
-    it('should handle initialization failures with failFast=true', async () => {
+    it('should handle initialization failures with failFast=true in sequential mode', async () => {
       const plugin1: Plugin = {
         metadata: {
           id: 'failing-plugin',
@@ -161,7 +161,7 @@ describe('Initializer', () => {
         }]
       ]);
       
-      await expect(initializePlugins([plugin1, plugin2], contexts, { failFast: true }))
+      await expect(initializePlugins([plugin1, plugin2], contexts, { failFast: true, parallel: false }))
         .rejects.toThrow(PluginInitializationError);
     });
     

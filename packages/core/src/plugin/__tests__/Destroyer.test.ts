@@ -125,7 +125,7 @@ describe('Destroyer', () => {
       expect(destroyMock2).toHaveBeenCalled();
     });
     
-    it('should handle destruction failures with failFast=true', async () => {
+    it('should handle destruction failures with failFast=true in sequential mode', async () => {
       const plugin1: Plugin = {
         metadata: {
           id: 'failing-plugin',
@@ -161,7 +161,7 @@ describe('Destroyer', () => {
         }]
       ]);
       
-      await expect(destroyPlugins([plugin1, plugin2], contexts, { failFast: true }))
+      await expect(destroyPlugins([plugin1, plugin2], contexts, { failFast: true, parallel: false }))
         .rejects.toThrow(PluginDestructionError);
     });
     
