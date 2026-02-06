@@ -193,7 +193,7 @@ export class EventBus {
         () => this.executeHandlers(event, processedEvent),
         priority
       );
-      this.scheduleProcessing(priority);
+      this.scheduleProcessing();
     }
   }
 
@@ -333,7 +333,7 @@ export class EventBus {
     return currentEvent as GridEvent<EventPayload<T>>;
   }
 
-  private scheduleProcessing(priority: EventPriority): void {
+  private scheduleProcessing(): void {
     if (this.isProcessing) return;
 
     this.isProcessing = true;
