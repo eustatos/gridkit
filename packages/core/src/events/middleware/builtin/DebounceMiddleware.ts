@@ -12,15 +12,30 @@ export function createDebounceMiddleware(
   return (event: GridEvent) => {
     const key = event.type;
 
+    // Handle leading edge
     if (options?.leading && !leadingExecuted.has(key)) {
       leadingExecuted.add(key);
+      
+      // Set up timer to clear the leading flag after delay
+      timers.set(
+        key,
+        setTimeout(() => {
+          timers.delete(key);
+          if (options?.leading) {
+            leadingExecuted.delete(key);
+          }
+        }, delay)
+      );
+      
       return event;
     }
 
+    // Clear existing timer if any
     if (timers.has(key)) {
       clearTimeout(timers.get(key)!);
     }
 
+    // Set up new timer
     timers.set(
       key,
       setTimeout(() => {
