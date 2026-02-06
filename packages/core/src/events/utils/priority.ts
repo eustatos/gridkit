@@ -1,4 +1,4 @@
-import type { EventPriority } from '../types';
+import type { EventPriority } from '../types/base';
 
 type Task = () => void;
 
