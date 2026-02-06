@@ -32,22 +32,10 @@ function wrapCreationError(error: unknown, options: TableOptions<unknown>): Grid
 /**
  * Logs creation metrics for performance monitoring.
  */
-function logCreationMetrics(startTime: number, memoryBefore: number): void {
+function logCreationMetrics(startTime: number): void {
   const duration = performance.now() - startTime;
-  const memoryAfter = measureMemory();
-  const memoryUsed = memoryAfter - memoryBefore;
 
   console.debug('[GridKit] Table creation metrics', {
     duration: `${duration.toFixed(2)}ms`,
-    memory: `${(memoryUsed / 1024 / 1024).toFixed(2)}MB`,
   });
-}
-
-/**
- * Measures memory usage (simplified version).
- */
-function measureMemory(): number {
-  // In a real implementation, this would use performance.memory or similar APIs
-  // For now, we'll return 0 as a placeholder
-  return 0;
 }

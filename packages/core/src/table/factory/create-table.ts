@@ -21,7 +21,6 @@ export function createTable<TData extends RowData>(
 ): Table<TData> {
   // 1. Performance tracking (debug mode)
   const perfStart = performance.now();
-  const memoryBefore = measureMemory();
 
   try {
     // 2. Phase 1: Validation & Normalization
@@ -35,7 +34,7 @@ export function createTable<TData extends RowData>(
 
     // 5. Performance logging
     if (validated.debug?.performance) {
-      logCreationMetrics(perfStart, memoryBefore);
+      logCreationMetrics(perfStart);
     }
 
     return instance;
