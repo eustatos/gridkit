@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createEventBus } from '../EventBus';
 import type { EventPayload } from '../types';
+import { EventPriority } from '../types';
 
 // Mock branded types for testing
 const createRowId = (id: string) => id as any;
@@ -48,6 +49,7 @@ describe('EventBus', () => {
         index: 0,
       });
 
+      expect(handler).toHaveBeenCalled();
       const event = handler.mock.calls[0][0];
       expect(event.payload.columnId).toBe('col-1');
     });
@@ -101,22 +103,21 @@ describe('EventBus', () => {
     it('should respect priority order', async () => {
       const order: number[] = [];
 
-      bus.on('grid:init', () => order.push(2), { priority: 2 }); // NORMAL
-      bus.on('grid:init', () => order.push(1), { priority: 1 }); // HIGH
-      bus.on('grid:init', () => order.push(3), { priority: 3 }); // LOW
+      bus.on('grid:init', () => order.push(2), { priority: EventPriority.NORMAL });
+      bus.on('grid:init', () => order.push(1), { priority: EventPriority.HIGH });
+      bus.on('grid:init', () => order.push(3), { priority: EventPriority.LOW });
 
       bus.emit('grid:init', { gridId: createGridId('test') });
 
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
+      // Events should be processed immediately
       expect(order).toEqual([1, 2, 3]);
     });
 
     it('should execute IMMEDIATE priority synchronously', () => {
       const order: string[] = [];
 
-      bus.on('grid:init', () => order.push('handler'), { priority: 0 });
-      bus.emit('grid:init', { gridId: createGridId('test') }, { priority: 0 });
+      bus.on('grid:init', () => order.push('handler'), { priority: EventPriority.IMMEDIATE });
+      bus.emit('grid:init', { gridId: createGridId('test') }, { priority: EventPriority.IMMEDIATE });
       order.push('after-emit');
 
       expect(order).toEqual(['handler', 'after-emit']);
@@ -200,9 +201,9 @@ describe('EventBus', () => {
     it('should support data load events', () => {
       const handler = vi.fn();
 
-      bus.on('data:load', handler);
+      bus.on('table:data', handler);
 
-      bus.emit('data:load', {
+      bus.emit('table:data', {
         data: [],
         source: 'initial',
       });

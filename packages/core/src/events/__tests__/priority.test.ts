@@ -23,10 +23,7 @@ describe('Event Priority', () => {
     // Emit event
     bus.emit('grid:init', { gridId: createGridId('test') });
     
-    // Wait for all events to process
-    await new Promise(resolve => setTimeout(resolve, 10));
-    
-    // Events should be processed in priority order
+    // Events should be processed immediately
     expect(order).toEqual([1, 2, 3]);
   });
   
@@ -64,9 +61,6 @@ describe('Event Priority', () => {
     }, { priority: EventPriority.LOW });
     
     bus.emit('grid:init', { gridId: createGridId('test') });
-    
-    // Wait for all events to process
-    await new Promise(resolve => setTimeout(resolve, 20));
     
     // Check that timestamps are in correct order
     expect(timestamps.immediate).toBeLessThan(timestamps.high);

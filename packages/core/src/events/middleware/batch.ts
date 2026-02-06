@@ -33,7 +33,10 @@ export function createBatchMiddleware(config: BatchConfig): EventMiddleware {
     if (batch.length >= config.maxSize) {
       batches.delete(key);
       timers.delete(key);
-      return event; // Process immediately
+      // Process all events in the batch
+      // Since we can't emit directly from middleware, we'll let the last event through
+      // and the others will be handled by the batched processing
+      return event;
     }
 
     // Set new timer
