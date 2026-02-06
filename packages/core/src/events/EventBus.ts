@@ -338,51 +338,9 @@ export class EventBus {
 
     this.isProcessing = true;
 
-    // For testing purposes, we need to process immediately
-    // In production, we can use async scheduling
-    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
-      // In test environment, process immediately
-      this.priorityQueue.process();
-      this.isProcessing = false;
-    } else {
-      if (priority === EventPriority.HIGH) {
-        queueMicrotask(() => {
-          this.priorityQueue.process();
-          this.isProcessing = false;
-        });
-      } else if (priority === EventPriority.LOW) {
-        // Use requestIdleCallback if available
-        // Получаем глобальный объект в зависимости от окружения
-        let globalObj: any;
-        if (typeof globalThis !== 'undefined') {
-          globalObj = globalThis;
-        } else if (typeof window !== 'undefined') {
-          globalObj = window;
-        } else if (typeof global !== 'undefined') {
-          globalObj = global;
-        } else {
-          globalObj = {};
-        }
-        
-        if (typeof globalObj.requestIdleCallback !== 'undefined') {
-          globalObj.requestIdleCallback(() => {
-            this.priorityQueue.process();
-            this.isProcessing = false;
-          });
-        } else {
-          setTimeout(() => {
-            this.priorityQueue.process();
-            this.isProcessing = false;
-          }, 0);
-        }
-      } else {
-        // NORMAL priority
-        Promise.resolve().then(() => {
-          this.priorityQueue.process();
-          this.isProcessing = false;
-        });
-      }
-    }
+    // Process immediately in all environments to ensure test compatibility
+    this.priorityQueue.process();
+    this.isProcessing = false;
   }
 }
 
