@@ -26,7 +26,7 @@ export class AtomRegistry {
   private metadata: Map<symbol, AtomMetadata>;
   private counter: number;
   // Store tracking for CORE-001
-  private stores: WeakMap<Store, StoreRegistry> = new WeakMap();
+  private stores: Map<Store, StoreRegistry> = new Map();
   private globalRegistry: Map<symbol, any> = new Map();
 
   private constructor() {
@@ -126,7 +126,7 @@ export class AtomRegistry {
     this.registry.clear();
     this.metadata.clear();
     this.counter = 0;
-    this.stores = new WeakMap();
+    this.stores = new Map();
     this.globalRegistry.clear();
   }
 
