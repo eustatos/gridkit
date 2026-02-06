@@ -30,6 +30,21 @@ export function createDebounceMiddleware(
       return event;
     }
 
+    // If there's no active timer, this event should pass through
+    // This handles the case after debounce delay has expired
+    if (!timers.has(key)) {
+      timers.set(
+        key,
+        setTimeout(() => {
+          timers.delete(key);
+          if (options?.leading) {
+            leadingExecuted.delete(key);
+          }
+        }, delay)
+      );
+      return null;
+    }
+
     // Clear existing timer if any
     if (timers.has(key)) {
       clearTimeout(timers.get(key)!);
