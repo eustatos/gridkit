@@ -3,7 +3,7 @@
 import { createDebounceMiddleware } from '../builtin/DebounceMiddleware';
 import { GridEvent } from '../core/EventPipeline';
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 describe('DebounceMiddleware', () => {
   test('should cancel events within debounce delay', () => {
@@ -11,7 +11,7 @@ describe('DebounceMiddleware', () => {
     const event: GridEvent = { type: 'test' };
 
     const result1 = middleware(event);
-    jest.advanceTimersByTime(50);
+    vi.advanceTimersByTime(50);
     const result2 = middleware(event);
 
     expect(result1).toBeNull();
@@ -23,7 +23,7 @@ describe('DebounceMiddleware', () => {
     const event: GridEvent = { type: 'test' };
 
     const result1 = middleware(event);
-    jest.advanceTimersByTime(150);
+    vi.advanceTimersByTime(150);
     const result2 = middleware(event);
 
     expect(result1).toBeNull();
@@ -46,7 +46,7 @@ describe('DebounceMiddleware', () => {
     const event: GridEvent = { type: 'test' };
 
     const result1 = middleware(event);
-    jest.advanceTimersByTime(150);
+    vi.advanceTimersByTime(150);
     const result2 = middleware(event);
 
     expect(result1).toEqual(event);

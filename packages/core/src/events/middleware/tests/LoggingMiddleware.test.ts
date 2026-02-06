@@ -5,7 +5,7 @@ import { GridEvent } from '../core/EventPipeline';
 
 describe('LoggingMiddleware', () => {
   test('should log event type', () => {
-    const logger = jest.fn();
+    const logger = vi.fn();
     const middleware = createLoggingMiddleware(logger);
     const event: GridEvent = { type: 'test' };
 
@@ -16,7 +16,7 @@ describe('LoggingMiddleware', () => {
   });
 
   test('should pass through the event unchanged', () => {
-    const logger = jest.fn();
+    const logger = vi.fn();
     const middleware = createLoggingMiddleware(logger);
     const event: GridEvent = { type: 'test', payload: { data: 'test' } };
 

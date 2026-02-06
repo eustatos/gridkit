@@ -7,7 +7,7 @@ describe('helpers', () => {
   describe('createConditionalMiddleware', () => {
     test('should apply middleware when condition is true', () => {
       const condition = (event: GridEvent) => event.type === 'allowed';
-      const middleware = jest.fn((event: GridEvent) => {
+      const middleware = vi.fn((event: GridEvent) => {
         return { ...event, processed: true };
       });
 
@@ -22,7 +22,7 @@ describe('helpers', () => {
 
     test('should skip middleware when condition is false', () => {
       const condition = (event: GridEvent) => event.type === 'allowed';
-      const middleware = jest.fn((event: GridEvent) => {
+      const middleware = vi.fn((event: GridEvent) => {
         return { ...event, processed: true };
       });
 
@@ -50,7 +50,7 @@ describe('helpers', () => {
     test('should handle complex conditions', () => {
       const condition = (event: GridEvent) =>
         event.payload?.priority === 'high';
-      const middleware = jest.fn((event: GridEvent) => {
+      const middleware = vi.fn((event: GridEvent) => {
         return { ...event, processed: true };
       });
 

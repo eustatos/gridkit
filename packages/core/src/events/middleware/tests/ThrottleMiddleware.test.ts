@@ -3,7 +3,7 @@
 import { createThrottleMiddleware } from '../builtin/ThrottleMiddleware';
 import { GridEvent } from '../core/EventPipeline';
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 describe('ThrottleMiddleware', () => {
   test('should allow first event', () => {
@@ -30,7 +30,7 @@ describe('ThrottleMiddleware', () => {
     const event: GridEvent = { type: 'test' };
 
     middleware(event); // First event allowed
-    jest.advanceTimersByTime(150);
+    vi.advanceTimersByTime(150);
     const result = middleware(event); // Event after delay
 
     expect(result).toEqual(event);

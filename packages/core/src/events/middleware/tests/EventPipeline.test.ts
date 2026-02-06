@@ -12,12 +12,12 @@ describe('EventPipeline', () => {
   });
 
   test('Middleware chain: Execution in correct order', () => {
-    const middleware1 = jest.fn((event: GridEvent) => {
+    const middleware1 = vi.fn((event: GridEvent) => {
       events.push({ ...event, type: 'middleware1' });
       return event;
     });
 
-    const middleware2 = jest.fn((event: GridEvent) => {
+    const middleware2 = vi.fn((event: GridEvent) => {
       events.push({ ...event, type: 'middleware2' });
       return event;
     });
@@ -58,7 +58,7 @@ describe('EventPipeline', () => {
   });
 
   test('Pipeline compilation: No runtime overhead after compilation', () => {
-    const middleware = jest.fn((event: GridEvent) => event);
+    const middleware = vi.fn((event: GridEvent) => event);
 
     pipeline.use(middleware);
 
@@ -70,8 +70,8 @@ describe('EventPipeline', () => {
   });
 
   test('Dynamic middleware: Add/remove at runtime works', () => {
-    const middleware1 = jest.fn((event: GridEvent) => event);
-    const middleware2 = jest.fn((event: GridEvent) => event);
+    const middleware1 = vi.fn((event: GridEvent) => event);
+    const middleware2 = vi.fn((event: GridEvent) => event);
 
     const remove1 = pipeline.use(middleware1);
     pipeline.use(middleware2);
@@ -97,7 +97,7 @@ describe('EventPipeline', () => {
       throw new Error('Test error');
     };
 
-    const nextMiddleware = jest.fn((event: GridEvent) => event);
+    const nextMiddleware = vi.fn((event: GridEvent) => event);
 
     pipeline.use(errorMiddleware);
     pipeline.use(nextMiddleware);

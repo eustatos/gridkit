@@ -5,11 +5,11 @@ import { GridEvent } from '../core/EventPipeline';
 
 describe('MiddlewareEventBus', () => {
   let eventBus: MiddlewareEventBus;
-  let consoleSpy: jest.SpyInstance;
+  let consoleSpy: any;
 
   beforeEach(() => {
     eventBus = new MiddlewareEventBus();
-    consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation();
   });
 
   afterEach(() => {
@@ -17,7 +17,7 @@ describe('MiddlewareEventBus', () => {
   });
 
   test('should process event through middleware pipeline', () => {
-    const middleware = jest.fn((event: GridEvent) => event);
+    const middleware = vi.fn((event: GridEvent) => event);
     eventBus.use(middleware);
 
     const event: GridEvent = { type: 'test' };
@@ -54,11 +54,11 @@ describe('MiddlewareEventBus', () => {
   });
 
   test('should handle multiple middleware in order', () => {
-    const middleware1 = jest.fn((event: GridEvent) => {
+    const middleware1 = vi.fn((event: GridEvent) => {
       return { ...event, type: 'modified1' };
     });
 
-    const middleware2 = jest.fn((event: GridEvent) => {
+    const middleware2 = vi.fn((event: GridEvent) => {
       return { ...event, type: 'modified2' };
     });
 
@@ -77,8 +77,8 @@ describe('MiddlewareEventBus', () => {
   });
 
   test('should allow dynamic middleware removal', () => {
-    const middleware1 = jest.fn((event: GridEvent) => event);
-    const middleware2 = jest.fn((event: GridEvent) => event);
+    const middleware1 = vi.fn((event: GridEvent) => event);
+    const middleware2 = vi.fn((event: GridEvent) => event);
 
     const remove1 = eventBus.use(middleware1);
     eventBus.use(middleware2);

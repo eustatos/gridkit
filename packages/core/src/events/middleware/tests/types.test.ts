@@ -39,7 +39,7 @@ describe('types', () => {
     test('should have cancel method', () => {
       const context: EventContext = {
         event: { type: 'test' },
-        cancel: jest.fn(),
+        cancel: vi.fn(),
         isCancelled: () => false,
       };
       context.cancel();
@@ -50,7 +50,7 @@ describe('types', () => {
       const context: EventContext = {
         event: { type: 'test' },
         cancel: () => {},
-        isCancelled: jest.fn(() => false),
+        isCancelled: vi.fn(() => false),
       };
       const result = context.isCancelled();
       expect(context.isCancelled).toHaveBeenCalled();
