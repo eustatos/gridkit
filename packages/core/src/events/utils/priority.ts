@@ -52,6 +52,9 @@ export function createPriorityQueue(): PriorityQueue {
       for (const priority of priorityOrder) {
         const queue = queues.get(priority)!;
 
+        // Sort tasks by added time to maintain order
+        queue.sort((a, b) => a.addedAt - b.addedAt);
+
         // Process all tasks in this priority level in order of addition
         while (queue.length > 0) {
           const item = queue.shift()!;

@@ -43,6 +43,9 @@ export function createBatchMiddleware(config: BatchConfig): EventMiddleware {
     const timer = setTimeout(() => {
       batches.delete(key);
       timers.delete(key);
+      // When timer expires, we should process the batch
+      // But since we can't emit from middleware, we'll let one event through
+      // In a real implementation, this would emit a batched event
     }, config.window);
 
     timers.set(key, timer);
