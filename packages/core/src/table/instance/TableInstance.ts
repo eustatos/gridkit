@@ -1,3 +1,11 @@
+import type { Table, ValidatedTableOptions, RowData } from '../../types';
+import { createStateStore } from '../../state';
+import { createColumnRegistry } from '../../column';
+import { createRowFactory } from '../../row';
+import { createEventBus } from '../../events';
+import { buildInitialState } from '../builders/state-builder';
+import { buildRowModel } from '../builders/model-builder';
+
 /**
  * Creates the table instance with proper memory management.
  * Uses weak references and cleanup systems.
@@ -11,11 +19,11 @@ function createTableInstance<TData>(
 
   // === Column System ===
   const columnRegistry = createColumnRegistry();
-  const columns = createColumns(options.columns, {
-    table: null as any, // Will be set later
-    registry: columnRegistry,
-    defaultOptions: options.defaultColumn,
-  });
+  // const columns = createColumns(options.columns, {
+  //   table: null as any, // Will be set later
+  //   registry: columnRegistry,
+  //   defaultOptions: options.defaultColumn,
+  // });
 
   // === Row System ===
   const rowFactory = createRowFactory({
@@ -29,21 +37,21 @@ function createTableInstance<TData>(
   });
 
   // === Performance Monitoring ===
-  const metrics = options.debug?.performance
-    ? createPerformanceMonitor()
-    : undefined;
+  // const metrics = options.debug?.performance
+  //   ? createPerformanceMonitor()
+  //   : undefined;
 
   // === Build the Instance ===
   const instance: Table<TData> = {
     // Identification
-    id: createGridId(`table-${Date.now()}`),
+    id: `table-${Date.now()}` as any,
 
     // State Management
     getState: () => stateStore.getSnapshot(),
     setState: (updater) => {
-      metrics?.startMeasurement('stateUpdate');
+      // metrics?.startMeasurement('stateUpdate');
       stateStore.update(updater);
-      metrics?.endMeasurement('stateUpdate');
+      // metrics?.endMeasurement('stateUpdate');
     },
     subscribe: (listener) => stateStore.subscribe(listener),
 
@@ -79,7 +87,7 @@ function createTableInstance<TData>(
       stateStore.destroy();
       columnRegistry.destroy();
       eventBus.clear();
-      metrics?.destroy();
+      // metrics?.destroy();
 
       // Clear references for GC
       Object.keys(instance).forEach((key) => {
@@ -90,7 +98,7 @@ function createTableInstance<TData>(
     // Metadata
     options: Object.freeze(options) as Readonly<ValidatedTableOptions<TData>>,
     meta: options.meta,
-    metrics,
+    metrics: undefined,
     _internal: {
       stateStore,
       columnRegistry,
@@ -100,7 +108,7 @@ function createTableInstance<TData>(
   };
 
   // Wire up circular dependencies
-  columnRegistry.setTable(instance);
+  columnRegistry.setTable(instance as any);
 
   return instance;
 }

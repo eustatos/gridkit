@@ -1,3 +1,5 @@
+import type { ValidatedTableOptions, TableState, ValidatedColumnDef } from '../../types';
+
 /**
  * Builds the initial table state from options.
  */
@@ -50,7 +52,7 @@ function buildInitialState<TData>(
       top: [],
       bottom: [],
     },
-  };
+  } as TableState<TData>;
 }
 
 /**
@@ -68,3 +70,5 @@ function buildInitialColumnVisibility<TData>(
 
   return visibility;
 }
+
+export { buildInitialState };

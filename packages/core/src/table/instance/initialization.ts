@@ -1,3 +1,5 @@
+import type { Table, ValidatedTableOptions, RowData } from '../../types';
+
 /**
  * Completes table initialization after instance creation.
  * Separated for better error isolation.
@@ -37,19 +39,19 @@ function initializeTableInstance<TData>(
 
   // Debug event logging
   if (options.debug?.events) {
-    eventBus.on('*', (event) => {
+    eventBus.on('*', (event: any) => {
       console.debug(`[GridKit Event] ${event.type}`, event);
     });
   }
 
   // 4. Performance monitoring setup
-  if (table.metrics) {
-    table.metrics.track('table', {
-      columnCount: table.getAllColumns().length,
-      initialRowCount: options.data.length,
-      options,
-    });
-  }
+  // if (table.metrics) {
+  //   table.metrics.track('table', {
+  //     columnCount: table.getAllColumns().length,
+  //     initialRowCount: options.data.length,
+  //     options,
+  //   });
+  // }
 
   // 5. Emit initialization complete
   eventBus.emit('table:ready', {

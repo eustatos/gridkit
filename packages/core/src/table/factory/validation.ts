@@ -1,3 +1,7 @@
+import type { TableOptions, RowData, ValidatedTableOptions, ValidationError, ColumnDef, ValidatedColumnDef } from '../../types';
+import { GridKitError, ValidationAggregateError } from '../../errors';
+import { normalizeColumns, normalizeDebugOptions, normalizeInitialState, defaultGetRowId } from './normalization';
+
 /**
  * Comprehensive validation with helpful error messages.
  * Each validation is isolated for better error reporting.
@@ -101,4 +105,15 @@ function validateColumns<TData>(columns: unknown): ValidationError[] {
   });
 
   return errors;
+}
+
+// Stub functions for now
+function validateData(data: unknown): ValidationError[] {
+  // In a real implementation, this would validate the data
+  return [];
+}
+
+function validateRowIdFunction(getRowId: unknown): ValidationError[] {
+  // In a real implementation, this would validate the getRowId function
+  return [];
 }

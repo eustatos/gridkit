@@ -5,7 +5,7 @@
  */
 
 // Main factory function
-export { createTable } from './factory/create-table';
+export { createTable } from './factory';
 
 // Types
 export type {
