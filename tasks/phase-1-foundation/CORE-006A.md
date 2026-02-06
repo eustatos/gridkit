@@ -131,3 +131,7 @@ export class PluginManager {
 - < 1ms overhead for plugin event forwarding
 - 100% test coverage for core lifecycle
 - Memory-safe plugin isolation
+
+## 🔄 Prerequisites
+
+This task requires the completion of CORE-005B (Complete Event Registry) as it depends on the comprehensive event registry for plugin event communication. Make sure to implement CORE-005B before starting this task.

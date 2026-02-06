@@ -50,7 +50,7 @@ Implement event persistence system with circular buffer storage, time-travel cap
 - Background indexing for fast search
 - Memory usage monitoring with automatic cleanup
 
-## 🚫 What NOT to Implement
+## 🚫 What NOT to do
 
 - ❌ NO real-time synchronization across multiple tabs
 - ❌ NO encryption/security for persisted events
@@ -73,7 +73,7 @@ packages/core/src/events/persistence/
 ├── filtering/
 │   ├── EventFilter.ts         # Filter predicates
 │   ├── EventSearcher.ts       # Fast event search
-│   └── EventIndex.ts          # Search indexes
+│   └── EventIndex.ts         # Search indexes
 └── EventHistory.ts           # Main API class
 ```
 
@@ -203,3 +203,7 @@ interface EventHistoryConfig {
   excludeSensitive: boolean; // Don't record sensitive payloads
 }
 ```
+
+## 🔄 Prerequisites
+
+This task requires the completion of CORE-005D (Middleware System & Event Pipeline) as it depends on the middleware system for event interception and recording. The event persistence system will use middleware to capture events before they are processed by the EventBus.
