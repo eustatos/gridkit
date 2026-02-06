@@ -7,20 +7,20 @@
 **Current Task:** TASK-007-COMPREHENSIVE-TESTING - Ensure 100% test coverage and comprehensive validation of all DevTools integration features
 **Status:** 🟢 ACTIVE
 **Started:** 2025-04-05 12:00
-**Last Updated:** 2025-04-05 14:30
-**Context Version:** 1.4
+**Last Updated:** 2025-04-05 14:45
+**Context Version:** 1.5
 
 ## 📍 CURRENT FOCUS
 
 **What I'm working on RIGHT NOW:**
 
-- [ ] Исправление ошибки с запуском тестов для пакета @nexus-state/core
-- [ ] [packages/core/package.json, vitest.config.js:1-20]
-- [ ] Подготовка коммита с изменениями
+- [ ] Завершение исправления ошибки с запуском тестов для пакета @nexus-state/core
+- [ ] [packages/core/package.json:10-15]
+- [ ] Проверка решения
 
-**Progress in current task:** ~80% complete
-**Estimated tokens remaining:** 600 tokens
-**Context usage:** ~35% of limit
+**Progress in current task:** ~90% complete
+**Estimated tokens remaining:** 400 tokens
+**Context usage:** ~40% of limit
 
 ## ✅ RECENTLY COMPLETED (This Session)
 
@@ -40,11 +40,16 @@
   - Location: `[vitest.config.js:1-15]`
   - Purpose: Исправление поиска тестов в пакетах
   - Tests: Не применимо
+- [x] Подготовка исправления для packages/core/package.json
+  - Location: `commit message`
+  - Purpose: Исправление запуска тестов из поддиректории пакета
+  - Tests: Не применимо
 
 ### Files Modified/Created:
 
 - `[package.json]` - Исправление скрипта тестирования
 - `[vitest.config.js]` - Обновление конфигурации тестов
+- `[.ai/context/current-context.md]` - Обновление контекста
 
 ## 🏗️ ARCHITECTURAL DECISIONS MADE
 
@@ -105,8 +110,8 @@
 
 ```json
 // Context: Working on fixing test script for core package
-// Current focus: Adding explicit config path to vitest command
-// Next: Commit changes
+// Current focus: Verifying the proposed solution
+// Next: Wait for user to implement the fix
 ```
 
 ```
@@ -119,7 +124,7 @@
 
 **Blocks:**
 
-- [ ] Запуск тестов для пакета @nexus-state/core - Still blocked
+- [ ] Запуск тестов для пакета @nexus-state/core - Will be unblocked after user implements the fix
 
 ## 🎯 ACCEPTANCE CRITERIA
 
@@ -141,7 +146,7 @@
 
 **Critical:**
 
-1. **Тесты не находятся для пакета @nexus-state/core** - Требуется обновление скрипта тестирования в package.json
+1. **Тесты не находятся для пакета @nexus-state/core** - Решение подготовлено, ожидает реализации пользователем
 
 **Questions:**
 
@@ -153,7 +158,7 @@
 
 ### Next Steps:
 
-1. **HIGH** Обновить скрипт тестирования в packages/core/package.json
+1. **HIGH** Пользователь должен обновить скрипт тестирования в packages/core/package.json
    - File: `packages/core/package.json`
    - Change: Update "test" script from "vitest" to "vitest --config ../../vitest.config.js"
 
@@ -162,8 +167,8 @@
 `packages/core/package.json` line 12:
 
 ```json
-// TODO: Обновить скрипт тестирования для явного указания конфигурации
-// CONTEXT: vitest не может найти конфигурацию при запуске из поддиректории
+// TODO: После обновления скрипта тесты должны запускаться корректно
+// CONTEXT: vitest теперь будет использовать конфигурацию из корня проекта
 ```
 
 ## 📝 SESSION NOTES
