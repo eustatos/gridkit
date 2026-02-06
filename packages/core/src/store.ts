@@ -1,6 +1,7 @@
 // Implementation of createStore function
 
-import type { Atom, Store, Subscriber, Getter, Setter, Plugin, ActionMetadata, PrimitiveAtom, ComputedAtom, isPrimitiveAtom, isComputedAtom } from './types';
+import type { Atom, Store, Subscriber, Getter, Setter, Plugin, ActionMetadata, PrimitiveAtom, ComputedAtom } from './types';
+import { isPrimitiveAtom, isComputedAtom } from './types';
 import { serializeState as serializeStoreState } from './utils/serialization';
 import { atomRegistry } from './atom-registry';
 
