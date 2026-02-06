@@ -12,3 +12,6 @@ export * from './plugin';
 
 // Column system exports
 export * from './column';
+
+// Table system exports
+export * from './table';
