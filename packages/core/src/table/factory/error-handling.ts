@@ -1,7 +1,10 @@
+import type { TableOptions } from '../../types';
+import { GridKitError, ValidationAggregateError } from '../../errors';
+
 /**
  * Wraps creation errors with additional context for better debugging.
  */
-function wrapCreationError(error: unknown, options: TableOptions<unknown>): GridError {
+export function wrapCreationError(error: unknown, options: TableOptions<unknown>): GridKitError {
   // If it's already a GridKit error, just rethrow
   if (error instanceof GridKitError) {
     return error;
@@ -32,7 +35,7 @@ function wrapCreationError(error: unknown, options: TableOptions<unknown>): Grid
 /**
  * Logs creation metrics for performance monitoring.
  */
-function logCreationMetrics(startTime: number): void {
+export function logCreationMetrics(startTime: number): void {
   const duration = performance.now() - startTime;
 
   console.debug('[GridKit] Table creation metrics', {
