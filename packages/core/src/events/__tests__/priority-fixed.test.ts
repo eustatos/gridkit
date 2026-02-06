@@ -1,0 +1,43 @@
+import { describe, it, expect, vi } from 'vitest';
+import { createEventBus } from '../EventBus';
+import { EventPriority } from '../types';
+
+// Mock branded types for testing
+const createGridId = (id: string) => id as any;
+
+describe('Event Priority Fixed Tests', () => {
+  let bus: ReturnType<typeof createEventBus>;
+
+  beforeEach(() => {
+    bus = createEventBus({ devMode: false });
+  });
+
+  it('should process events in priority order', async () => {
+    const order: number[] = [];
+
+    // Subscribe handlers with different priorities
+    bus.on('grid:init', () => order.push(3), { priority: EventPriority.LOW });
+    bus.on('grid:init', () => order.push(1), { priority: EventPriority.HIGH });
+    bus.on('grid:init', () => order.push(2), { priority: EventPriority.NORMAL });
+
+    // Emit event
+    bus.emit('grid:init', { gridId: createGridId('test') });
+
+    // In our fixed version, processing should happen synchronously in test mode
+    expect(order).toEqual([1, 2, 3]);
+  });
+
+  it('should execute IMMEDIATE priority synchronously', () => {
+    const order: string[] = [];
+
+    bus.on('grid:init', () => order.push('low'), { priority: EventPriority.LOW });
+    bus.on('grid:init', () => order.push('handler'), { priority: EventPriority.IMMEDIATE });
+    bus.on('grid:init', () => order.push('normal'), { priority: EventPriority.NORMAL });
+
+    bus.emit('grid:init', { gridId: createGridId('test') });
+    order.push('after-emit');
+
+    // IMMEDIATE priority should execute synchronously before anything else
+    expect(order).toEqual(['handler', 'after-emit', 'normal', 'low']);
+  });
+});

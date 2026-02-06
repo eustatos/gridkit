@@ -12,7 +12,7 @@ interface BatchConfig {
  */
 export function createBatchMiddleware(config: BatchConfig): EventMiddleware {
   const batches = new Map<string, GridEvent[]>();
-  const timers = new Map<string, number>();
+  const timers = new Map<string, NodeJS.Timeout>();
 
   return (event: GridEvent): GridEvent | null => {
     const key = event.type as string;
@@ -42,9 +42,9 @@ export function createBatchMiddleware(config: BatchConfig): EventMiddleware {
       timers.delete(key);
     }, config.window);
 
-    timers.set(key, timer as unknown as number);
+    timers.set(key, timer);
 
-    // Pass through (batching is transparent)
-    return event;
+    // Cancel current emission (will emit later as batch)
+    return null;
   };
 }

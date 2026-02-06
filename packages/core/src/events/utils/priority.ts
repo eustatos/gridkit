@@ -20,10 +20,10 @@ export interface PriorityQueue {
  */
 export function createPriorityQueue(): PriorityQueue {
   const queues = new Map<EventPriority, QueuedTask[]>([
-    [0, []], // IMMEDIATE
-    [1, []], // HIGH
-    [2, []], // NORMAL
-    [3, []], // LOW
+    [EventPriority.IMMEDIATE, []],
+    [EventPriority.HIGH, []],
+    [EventPriority.NORMAL, []],
+    [EventPriority.LOW, []],
   ]);
 
   return {
@@ -41,10 +41,18 @@ export function createPriorityQueue(): PriorityQueue {
     },
 
     process(): void {
-      // Process in priority order
-      for (const priority of [0, 1, 2, 3] as EventPriority[]) {
+      // Process in priority order: IMMEDIATE, HIGH, NORMAL, LOW
+      const priorityOrder: EventPriority[] = [
+        EventPriority.IMMEDIATE,
+        EventPriority.HIGH,
+        EventPriority.NORMAL,
+        EventPriority.LOW
+      ];
+
+      for (const priority of priorityOrder) {
         const queue = queues.get(priority)!;
 
+        // Process all tasks in this priority level in order of addition
         while (queue.length > 0) {
           const item = queue.shift()!;
           try {
