@@ -1,5 +1,5 @@
 // DevTools plugin for nexus-state
-import { Store } from "@nexus-state/core";
+import type { Store } from "@nexus-state/core";
 
 // Declare global types for Redux DevTools
 declare global {
@@ -17,9 +17,13 @@ declare global {
  * Configuration options for the devTools plugin.
  * @typedef {Object} DevToolsConfig
  * @property {string} [name] - The name to use for the DevTools instance (defaults to 'nexus-state')
+ * @property {boolean} [enableStackTrace] - Whether to capture stack traces for actions (defaults to false)
+ * @property {number} [debounceDelay] - Delay in ms for debouncing state updates (defaults to 100)
  */
 type DevToolsConfig = {
   name?: string;
+  enableStackTrace?: boolean;
+  debounceDelay?: number;
 };
 
 /**
@@ -39,40 +43,83 @@ export function devTools(config: DevToolsConfig = {}): (store: Store) => void {
       return;
     }
 
-    const { name = "nexus-state" } = config;
+    const { name = "nexus-state", enableStackTrace = false, debounceDelay = 100 } = config;
 
     // Create a connection to DevTools
     const devTools = window.__REDUX_DEVTOOLS_EXTENSION__.connect({ name });
 
-    // Create a dummy atom for subscription
-    // This is a workaround since we can't subscribe to the entire store
+    // State tracking
     let lastState: unknown = null;
+    let isTracking = true;
 
-    // We need to find a way to track state changes
-    // Since we can't directly subscribe to all atoms, we'll use a polling approach
-    const interval = setInterval(() => {
-      try {
-        const currentState = store.getState();
-        if (JSON.stringify(currentState) !== JSON.stringify(lastState)) {
-          lastState = currentState;
-          devTools.send("STATE_UPDATE", currentState);
+    // Enhanced store features
+    if (store.applyPlugin && store.setWithMetadata && store.serializeState) {
+      // Use enhanced store features if available
+      
+      // Track actions with metadata
+      const originalSet = store.set;
+      store.set = ((atom: any, update: any) => {
+        // Create action metadata
+        const metadata = {
+          type: 'SET',
+          timestamp: Date.now(),
+          source: 'Unknown', // In a real implementation, this would be determined from context
+        };
+        
+        // Capture stack trace if enabled
+        if (enableStackTrace) {
+          metadata.source = 'Unknown with Stack Trace'; // Placeholder
         }
-      } catch (error) {
-        console.warn("Failed to send state update to DevTools:", error);
-      }
-    }, 100);
+        
+        // Use setWithMetadata if available
+        if (store.setWithMetadata) {
+          store.setWithMetadata(atom, update, metadata);
+        } else {
+          originalSet(atom, update);
+        }
+        
+        // Send state update to DevTools
+        if (isTracking) {
+          try {
+            const currentState = store.serializeState?.() || store.getState();
+            if (JSON.stringify(currentState) !== JSON.stringify(lastState)) {
+              lastState = currentState;
+              devTools.send(`SET ${atom.toString()}`, currentState);
+            }
+          } catch (error) {
+            console.warn("Failed to send state update to DevTools:", error);
+          }
+        }
+      }) as any;
+      
+      // Track computed updates
+      // This would require deeper integration with the core
+    } else {
+      // Fallback to polling approach for basic stores
+      const interval = setInterval(() => {
+        try {
+          const currentState = store.getState();
+          if (JSON.stringify(currentState) !== JSON.stringify(lastState)) {
+            lastState = currentState;
+            devTools.send("STATE_UPDATE", currentState);
+          }
+        } catch (error) {
+          console.warn("Failed to send state update to DevTools:", error);
+        }
+      }, debounceDelay);
 
-    // Clean up interval when window is unloaded
-    if (typeof window !== "undefined") {
-      window.addEventListener("beforeunload", () => {
-        clearInterval(interval);
-      });
+      // Clean up interval when window is unloaded
+      if (typeof window !== "undefined") {
+        window.addEventListener("beforeunload", () => {
+          clearInterval(interval);
+        });
+      }
     }
 
     // Send initial state
     setTimeout(() => {
       try {
-        const state = store.getState();
+        const state = store.serializeState?.() || store.getState();
         lastState = state;
         devTools.send("INITIAL_STATE", state);
       } catch (error) {
@@ -94,6 +141,25 @@ export function devTools(config: DevToolsConfig = {}): (store: Store) => void {
         console.warn(
           "Time travel is not fully supported without core modifications",
         );
+      }
+      
+      // Handle pause/resume
+      if (
+        typeof message === "object" &&
+        message !== null &&
+        (message as { type?: string }).type === "DISPATCH" &&
+        (message as { payload?: { type?: string } }).payload?.type === "START"
+      ) {
+        isTracking = true;
+      }
+      
+      if (
+        typeof message === "object" &&
+        message !== null &&
+        (message as { type?: string }).type === "DISPATCH" &&
+        (message as { payload?: { type?: string } }).payload?.type === "STOP"
+      ) {
+        isTracking = false;
       }
     });
   };

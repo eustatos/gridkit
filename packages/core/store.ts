@@ -1,6 +1,7 @@
 // Implementation of createStore function
 
-import type { Atom, Store, Subscriber, Getter, Setter } from './types';
+import type { Atom, Store, Subscriber, Getter, Setter, Plugin, ActionMetadata } from './types';
+import { serializeState as serializeStoreState } from './utils/serialization';
 
 type AtomState<Value> = {
   value: Value;
@@ -8,7 +9,12 @@ type AtomState<Value> = {
   dependents: Set<Atom<any>>; // eslint-disable-line @typescript-eslint/no-explicit-any
 };
 
-type Plugin = (store: Store) => void;
+// Store enhancement options
+type StoreEnhancementOptions = {
+  enableDevTools?: boolean;
+  enableStackTrace?: boolean;
+  debounceDelay?: number;
+};
 
 export function createStore(plugins: Plugin[] = []): Store {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,6 +22,14 @@ export function createStore(plugins: Plugin[] = []): Store {
   
   // Track the current atom being evaluated for dependency tracking
   let currentAtom: Atom<any> | null = null;
+  
+  // Store enhancement state
+  const appliedPlugins: Plugin[] = [];
+  let isDevToolsEnabled = false;
+  let isStackTraceEnabled = false;
+  let pendingStateUpdates: Array<{ atom: Atom<any>, value: any }> = [];
+  let debounceTimer: NodeJS.Timeout | null = null;
+  const debounceDelay = 100;
 
   const get: Getter = <Value>(atom: Atom<Value>): Value => {
     // Get or create atom state
@@ -84,6 +98,31 @@ export function createStore(plugins: Plugin[] = []): Store {
         }
       }
     });
+
+    // Track state change for DevTools
+    if (isDevToolsEnabled) {
+      pendingStateUpdates.push({ atom, value: newValue });
+      scheduleStateUpdate();
+    }
+  };
+
+  // Schedule state update for DevTools with debounce
+  const scheduleStateUpdate = () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    
+    debounceTimer = setTimeout(() => {
+      flushStateUpdates();
+    }, debounceDelay);
+  };
+
+  // Flush pending state updates to DevTools
+  const flushStateUpdates = () => {
+    if (pendingStateUpdates.length > 0) {
+      // In a real implementation, this would send updates to DevTools
+      pendingStateUpdates = [];
+    }
   };
 
   const subscribe = <Value>(
@@ -123,11 +162,81 @@ export function createStore(plugins: Plugin[] = []): Store {
     return state;
   };
 
+  // Enhanced methods for DevTools integration
+  const applyPlugin = (plugin: Plugin) => {
+    appliedPlugins.push(plugin);
+    plugin(store);
+  };
+
+  const setWithMetadata = <Value>(
+    atom: Atom<Value>,
+    update: Value | ((prev: Value) => Value),
+    metadata?: ActionMetadata
+  ): void => {
+    // Add stack trace if enabled
+    if (isStackTraceEnabled && metadata) {
+      const stack = new Error().stack;
+      if (stack) {
+        metadata.stackTrace = stack;
+      }
+    }
+    
+    // Set the value
+    set(atom, update);
+    
+    // In a real implementation, this would track the action metadata
+    // for DevTools integration
+  };
+
+  // Serialize state for DevTools
+  const serializeState = (): Record<string, unknown> => {
+    return serializeStoreState(store);
+  };
+
+  // Intercepted getter for DevTools tracking
+  const getIntercepted = <Value>(atom: Atom<Value>): Value => {
+    // In a real implementation, this would track the get operation
+    return get(atom);
+  };
+
+  // Intercepted setter for DevTools tracking
+  const setIntercepted = <Value>(
+    atom: Atom<Value>,
+    update: Value | ((prev: Value) => Value)
+  ): void => {
+    // Track the action for DevTools
+    const metadata: ActionMetadata = {
+      type: 'SET',
+      timestamp: Date.now(),
+    };
+    
+    setWithMetadata(atom, update, metadata);
+  };
+
+  // Get applied plugins
+  const getPlugins = (): Plugin[] => {
+    return [...appliedPlugins];
+  };
+
+  // Enable DevTools integration
+  const enableDevTools = (options: StoreEnhancementOptions = {}) => {
+    isDevToolsEnabled = options.enableDevTools ?? true;
+    isStackTraceEnabled = options.enableStackTrace ?? false;
+    // Set other options as needed
+  };
+
   const store: Store = {
     get,
     set,
     subscribe,
     getState,
+    // Enhanced methods (optional for backward compatibility)
+    applyPlugin,
+    setWithMetadata,
+    serializeState,
+    getIntercepted,
+    setIntercepted,
+    getPlugins,
   };
 
   // Apply plugins

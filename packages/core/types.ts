@@ -11,6 +11,14 @@ export type Subscriber<Value> = (value: Value) => void;
 
 export type Plugin = (store: Store) => void;
 
+// Action metadata for DevTools integration
+export type ActionMetadata = {
+  type: string;
+  source?: string;
+  timestamp: number;
+  stackTrace?: string;
+};
+
 export interface Store {
   get: <Value>(atom: Atom<Value>) => Value;
   set: <Value>(
@@ -22,6 +30,21 @@ export interface Store {
     subscriber: Subscriber<Value>
   ) => () => void;
   getState: () => Record<string, unknown>;
+  
+  // Enhanced methods for DevTools integration (backward compatible)
+  applyPlugin?: (plugin: Plugin) => void;
+  setWithMetadata?: <Value>(
+    atom: Atom<Value>,
+    update: Value | ((prev: Value) => Value),
+    metadata?: ActionMetadata
+  ) => void;
+  serializeState?: () => Record<string, unknown>;
+  getIntercepted?: <Value>(atom: Atom<Value>) => Value;
+  setIntercepted?: <Value>(
+    atom: Atom<Value>,
+    update: Value | ((prev: Value) => Value)
+  ) => void;
+  getPlugins?: () => Plugin[];
 }
 
 export interface Atom<Value> {
