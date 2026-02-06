@@ -40,4 +40,35 @@ export type DevToolsConfig = {
    * @param state The state to sanitize
    */
   stateSanitizer?: (state: unknown) => unknown;
+
+  /**
+   * Enable stack trace capture for debugging.
+   * Only works in development mode.
+   * @default false
+   */
+  enableStackTrace?: boolean;
+
+  /**
+   * Maximum number of stack frames to capture.
+   * @default 10
+   */
+  traceLimit?: number;
+
+  /**
+   * Action naming strategy.
+   * @default 'auto'
+   */
+  actionNaming?: 'auto' | 'custom' | ((atom: any, value: any) => string);
+
+  /**
+   * Enable action grouping for related updates.
+   * @default true
+   */
+  enableGrouping?: boolean;
+
+  /**
+   * Maximum number of actions in a group.
+   * @default 100
+   */
+  maxGroupSize?: number;
 };

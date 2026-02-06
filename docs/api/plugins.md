@@ -27,6 +27,8 @@ const store = createStore([
 ]);
 ```
 
+Для получения информации о расширенных возможностях DevTools, включая настраиваемое именование действий и захват стек-трейсов, см. [Расширенные возможности DevTools](./devtools-advanced.md).
+
 ## middleware
 
 Adds middleware to atoms.
@@ -45,4 +47,3 @@ const store = createStore([
     }
   })
 ]);
-```
