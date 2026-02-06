@@ -1,4 +1,4 @@
-# CORE-005: Implement Event System & Event Bus with Extended Event Types
+# CORE-005C: Implement Event System & Event Bus with Extended Event Types
 
 ## Metadata
 
@@ -2511,4 +2511,3 @@ Blocks:
 ---
 
 **File path**: `tasks/phase-1-foundation/CORE-005-event-system.md`
-</execute_current_step>
