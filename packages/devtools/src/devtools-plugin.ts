@@ -4,8 +4,116 @@ import type {
   DevToolsMessage,
   EnhancedStore,
   BasicAtom,
+  DevToolsMode,
+  DevToolsFeatureDetectionResult,
 } from "./types";
 import { atomRegistry } from "@nexus-state/core";
+
+/**
+ * Feature detection for DevTools extension
+ * @returns Object containing feature detection results
+ */
+export function detectDevToolsFeatures(): DevToolsFeatureDetectionResult {
+  try {
+    // Check for SSR environment (no window object)
+    if (typeof window === "undefined") {
+      return {
+        isAvailable: false,
+        isSSR: true,
+        mode: "disabled",
+        error: null,
+      };
+    }
+
+    // Check for DevTools extension
+    const devToolsExtension = window.__REDUX_DEVTOOLS_EXTENSION__;
+    const isAvailable = !!devToolsExtension;
+
+    return {
+      isAvailable,
+      isSSR: false,
+      mode: isAvailable ? "active" : "fallback",
+      error: isAvailable
+        ? null
+        : new Error("Redux DevTools extension not found"),
+    };
+  } catch (error) {
+    return {
+      isAvailable: false,
+      isSSR: false,
+      mode: "disabled",
+      error:
+        error instanceof Error
+          ? error
+          : new Error("Unknown error during feature detection"),
+    };
+  }
+}
+
+/**
+ * Check if current environment is SSR
+ * @returns True if SSR environment
+ */
+export function isSSREnvironment(): boolean {
+  return typeof window === "undefined";
+}
+/**
+ * Check if DevTools extension is available
+ * @returns True if DevTools is available
+ */
+export function isDevToolsAvailable(): boolean {
+  if (isSSREnvironment()) {
+    return false;
+  }
+  return !!window.__REDUX_DEVTOOLS_EXTENSION__;
+}
+
+/**
+ * Create a fallback connection that does nothing (no-op)
+ * @returns DevToolsConnection implementation with no-op behavior
+ */
+function createFallbackConnection(): DevToolsConnection {
+  return {
+    send: (): void => {
+      // No-op: silently ignore send attempts
+    },
+    subscribe: (): (() => void) => {
+      // No-op: return no-op unsubscribe function
+      return (): void => {};
+    },
+    init: (): void => {
+      // No-op: silently ignore init attempts
+    },
+    unsubscribe: (): void => {
+      // No-op: silently ignore unsubscribe attempts
+    },
+  };
+}
+
+/**
+ * Determine the appropriate DevTools mode based on environment and availability
+ * @param forceDisable - Optional flag to force disabled mode
+ * @returns DevToolsMode enum value
+ */
+export function getDevToolsMode(forceDisable?: boolean): DevToolsMode {
+  // Check for forced disabled mode
+  if (forceDisable) {
+    return "disabled";
+  }
+
+  // Check for SSR environment
+  if (isSSREnvironment()) {
+    return "disabled";
+  }
+
+  // Check for DevTools extension
+  if (isDevToolsAvailable()) {
+    return "active";
+  }
+
+  // Fall back to fallback mode
+  return "fallback";
+}
 
 // Declare global types for Redux DevTools
 declare global {
@@ -27,6 +135,7 @@ declare global {
 export class DevToolsPlugin {
   private config: Required<DevToolsConfig>;
   private connection: DevToolsConnection | null = null;
+  private mode: DevToolsMode = "disabled";
   private isTracking = true;
   private lastState: unknown = null;
   private debounceTimer: NodeJS.Timeout | null = null;
@@ -51,10 +160,36 @@ export class DevToolsPlugin {
    * @param store The store to apply the plugin to
    */
   apply(store: EnhancedStore): void {
-    // Check if Redux DevTools are available
-    if (typeof window === "undefined" || !window.__REDUX_DEVTOOLS_EXTENSION__) {
+    // Detect DevTools features
+    const features = detectDevToolsFeatures();
+    this.mode = features.mode;
+
+    // Handle SSR environment - no-op
+    if (features.isSSR) {
+      return;
+    }
+
+    // Handle disabled mode - no-op (e.g., forced disabled)
+    if (features.mode === "disabled") {
+      return;
+    }
+
+    // Handle fallback mode - use no-op connection
+    if (features.mode === "fallback") {
       if (process.env.NODE_ENV !== "production") {
-        console.warn("Redux DevTools extension is not available");
+        console.warn(
+          "Redux DevTools extension is not available, using fallback mode",
+        );
+      }
+      this.connection = createFallbackConnection();
+      this.sendInitialState(store);
+      return;
+    }
+
+    // Active mode - connect to real DevTools extension
+    if (!features.isAvailable || !window.__REDUX_DEVTOOLS_EXTENSION__) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("DevTools extension not available");
       }
       return;
     }
@@ -81,7 +216,6 @@ export class DevToolsPlugin {
       this.setupPolling(store);
     }
   }
-
   /**
    * Get display name for an atom
    * @param atom The atom to get name for

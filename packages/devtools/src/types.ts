@@ -45,6 +45,31 @@ export interface DevToolsConnection {
 }
 
 /**
+ * Fallback connection interface for when DevTools is unavailable
+ * Implements no-op behavior for graceful degradation
+ */
+export interface DevToolsConnectionFallback {
+  send: (action: string | { type: string }, state: unknown) => void;
+  subscribe: (listener: (message: DevToolsMessage) => void) => () => void;
+  init: (state: unknown) => void;
+  unsubscribe: () => void;
+}
+
+/**
+ * Result of DevTools feature detection
+ */
+export interface DevToolsFeatureDetectionResult {
+  /** Whether DevTools extension is available */
+  isAvailable: boolean;
+  /** Whether current environment is SSR */
+  isSSR: boolean;
+  /** Current mode: active, fallback, or disabled */
+  mode: "active" | "fallback" | "disabled";
+  /** Error message if any, null if none */
+  error: Error | null;
+}
+
+/**
  * Message interface from DevTools
  */
 export interface DevToolsMessage {
@@ -93,3 +118,8 @@ export interface EnhancedStore {
   /** Serialize the state of all atoms in the store */
   serializeState?: () => Record<string, unknown>;
 }
+
+/**
+ * DevTools mode for current environment
+ */
+export type DevToolsMode = "active" | "fallback" | "disabled";
