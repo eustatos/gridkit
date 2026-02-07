@@ -35,6 +35,15 @@ export {
   resetPluginEventBus
 } from './events/PluginEventBus';
 
+// Plugin isolation exports
+export { EventSandbox } from './isolation/EventSandbox';
+
+// Plugin event forwarding exports
+export { PluginEventForwarder } from './events/PluginEventForwarder';
+
+// Cross-plugin communication exports
+export { CrossPluginBridge } from './events/CrossPluginBridge';
+
 // Plugin lifecycle exports
 export type {
   InitializationOptions,

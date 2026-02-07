@@ -20,7 +20,7 @@ describe('EventSandbox', () => {
       const handler = vi.fn();
       baseBus.on('test-event', handler);
 
-      const localBus = sandbox.getLocalBus();
+      const localBus = sandbox.getBus();
       localBus.emit('test-event', { data: 'test' });
 
       expect(handler).toHaveBeenCalledWith(
@@ -38,7 +38,7 @@ describe('EventSandbox', () => {
 
     it('should set up event forwarding from base to local bus', () => {
       const handler = vi.fn();
-      const localBus = sandbox.getLocalBus();
+      const localBus = sandbox.getBus();
       localBus.on('external-event', handler);
 
       baseBus.emit('external-event', { data: 'external' });
@@ -59,7 +59,7 @@ describe('EventSandbox', () => {
       const handler = vi.fn();
       baseBus.on('allowed-event', handler);
 
-      const localBus = sandbox.getLocalBus();
+      const localBus = sandbox.getBus();
       localBus.emit('allowed-event', { data: 'test' });
 
       expect(handler).toHaveBeenCalled();
@@ -69,16 +69,16 @@ describe('EventSandbox', () => {
       const handler = vi.fn();
       baseBus.on('denied-event', handler);
 
-      const localBus = sandbox.getLocalBus();
+      const localBus = sandbox.getBus();
       localBus.emit('denied-event', { data: 'test' });
 
       expect(handler).not.toHaveBeenCalled();
     });
   });
 
-  describe('getLocalBus', () => {
+  describe('getBus', () => {
     it('should return the local event bus', () => {
-      const localBus = sandbox.getLocalBus();
+      const localBus = sandbox.getBus();
       expect(localBus).toBeDefined();
       expect(typeof localBus.on).toBe('function');
       expect(typeof localBus.emit).toBe('function');
@@ -88,7 +88,7 @@ describe('EventSandbox', () => {
   describe('destroy', () => {
     it('should clean up event listeners', () => {
       const handler = vi.fn();
-      const localBus = sandbox.getLocalBus();
+      const localBus = sandbox.getBus();
       localBus.on('cleanup-test', handler);
 
       sandbox.destroy();
@@ -105,7 +105,7 @@ describe('EventSandbox', () => {
       const handler = vi.fn();
       baseBus.on('metadata-test', handler);
 
-      const localBus = sandbox.getLocalBus();
+      const localBus = sandbox.getBus();
       localBus.emit('metadata-test', { testData: 'value' });
 
       expect(handler).toHaveBeenCalledWith(

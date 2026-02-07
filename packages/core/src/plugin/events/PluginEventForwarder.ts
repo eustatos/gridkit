@@ -1,99 +1,64 @@
 import type { EventBus } from './PluginEventBus';
 import type { GridEvent } from './PluginEvents';
+import { EventSandbox } from '../isolation/EventSandbox';
 
 /**
- * PluginEventForwarder handles controlled event forwarding between plugins
- * and between plugins and the core system.
+ * PluginEventForwarder manages event sandboxes for plugins.
+ * It creates isolated event buses with automatic cleanup and permission checks.
  */
 export class PluginEventForwarder {
-  private sourceBus: EventBus;
-  private targetBus: EventBus;
-  private allowedEvents: Set<string> | null;
-  private eventTransformers: Map<string, (event: GridEvent) => GridEvent>;
+  private sandboxes = new Map<string, EventSandbox>();
+  private baseBus: EventBus;
 
-  /**
-   * Creates a new event forwarder between two event buses.
-   * @param sourceBus - The source event bus
-   * @param targetBus - The target event bus
-   * @param allowedEvents - Optional set of allowed event types (null for all)
-   */
-  constructor(
-    sourceBus: EventBus,
-    targetBus: EventBus,
-    allowedEvents: string[] | null = null
-  ) {
-    this.sourceBus = sourceBus;
-    this.targetBus = targetBus;
-    this.allowedEvents = allowedEvents ? new Set(allowedEvents) : null;
-    this.eventTransformers = new Map();
-
-    // Set up forwarding
-    this.setupForwarding();
+  constructor(baseBus: EventBus) {
+    this.baseBus = baseBus;
   }
 
   /**
-   * Adds an event transformer for a specific event type.
-   * @param eventType - The event type to transform
-   * @param transformer - The transformation function
+   * Creates a new event sandbox for a plugin.
+   * @param pluginId - The unique identifier for the plugin
+   * @param permissions - The permissions granted to this plugin
+   * @returns The local event bus for the plugin
+   * 
+   * @example
+   * ```typescript
+   * const pluginBus = forwarder.createSandbox('plugin-1', ['emit:test']);
+   * ```
    */
-  public addTransformer(
-    eventType: string,
-    transformer: (event: GridEvent) => GridEvent
-  ): void {
-    this.eventTransformers.set(eventType, transformer);
+  createSandbox(pluginId: string, permissions: string[]): EventBus {
+    const sandbox = new EventSandbox(pluginId, this.baseBus, permissions);
+    this.sandboxes.set(pluginId, sandbox);
+    return sandbox.getBus();
   }
 
   /**
-   * Removes an event transformer.
-   * @param eventType - The event type to remove transformer for
+   * Destroys a plugin's event sandbox and cleans up resources.
+   * @param pluginId - The unique identifier for the plugin
+   * 
+   * @example
+   * ```typescript
+   * forwarder.destroySandbox('plugin-1');
+   * ```
    */
-  public removeTransformer(eventType: string): void {
-    this.eventTransformers.delete(eventType);
-  }
-
-  /**
-   * Sets the allowed events for forwarding.
-   * @param allowedEvents - Array of allowed event types (null for all)
-   */
-  public setAllowedEvents(allowedEvents: string[] | null): void {
-    this.allowedEvents = allowedEvents ? new Set(allowedEvents) : null;
-  }
-
-  /**
-   * Sets up event forwarding between the buses.
-   */
-  private setupForwarding(): void {
-    // Forward events from source to target
-    this.sourceBus.on('*', (event) => {
-      if (this.isEventAllowed(event.type)) {
-        const transformedEvent = this.transformEvent(event);
-        this.targetBus.emit(transformedEvent.type, transformedEvent.payload);
-      }
-    });
-  }
-
-  /**
-   * Checks if an event type is allowed for forwarding.
-   * @param eventType - The event type to check
-   * @returns true if the event is allowed, false otherwise
-   */
-  private isEventAllowed(eventType: string): boolean {
-    if (this.allowedEvents === null) {
-      return true; // All events allowed
+  destroySandbox(pluginId: string): void {
+    const sandbox = this.sandboxes.get(pluginId);
+    if (sandbox) {
+      sandbox.destroy();
+      this.sandboxes.delete(pluginId);
     }
-    return this.allowedEvents.has(eventType);
   }
 
   /**
-   * Transforms an event using registered transformers.
-   * @param event - The event to transform
-   * @returns The transformed event
+   * Gets the event bus for a plugin's sandbox.
+   * @param pluginId - The unique identifier for the plugin
+   * @returns The local event bus for the plugin, or undefined if not found
+   * 
+   * @example
+   * ```typescript
+   * const pluginBus = forwarder.getSandbox('plugin-1');
+   * ```
    */
-  private transformEvent(event: GridEvent): GridEvent {
-    const transformer = this.eventTransformers.get(event.type);
-    if (transformer) {
-      return transformer(event);
-    }
-    return event;
+  getSandbox(pluginId: string): EventBus | undefined {
+    return this.sandboxes.get(pluginId)?.getBus();
   }
 }

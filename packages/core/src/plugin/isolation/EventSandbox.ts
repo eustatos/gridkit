@@ -8,7 +8,7 @@ import type { GridEvent } from '../../events/PluginEvents';
  * @example
  * ```typescript
  * const sandbox = new EventSandbox('my-plugin', baseBus, ['read:data', 'emit:events']);
- * const localBus = sandbox.getLocalBus();
+ * const localBus = sandbox.getBus();
  * localBus.on('my-event', (event) => {
  *   console.log('Received event:', event);
  * });
@@ -109,11 +109,11 @@ export class EventSandbox {
    * 
    * @example
    * ```typescript
-   * const localBus = sandbox.getLocalBus();
+   * const localBus = sandbox.getBus();
    * localBus.on('my-event', handler);
    * ```
    */
-  public getLocalBus(): EventBus {
+  public getBus(): EventBus {
     return this.localBus;
   }
 
