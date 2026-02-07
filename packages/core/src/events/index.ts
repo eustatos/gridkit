@@ -19,7 +19,7 @@ export {
 
 // Middleware
 export { createSimpleBatchMiddleware as createBatchMiddleware } from './middleware/simple-batch';
-export { createDebounceMiddleware } from './middleware/debounce';
+export { createSimpleDebounceMiddleware as createDebounceMiddleware } from './middleware/simple-debounce';
 
 // Utilities
 export { extractNamespace } from './utils/namespace';
