@@ -4,6 +4,11 @@
 
 Implement secure event isolation between plugins with sandboxed execution, permission-based event filtering, and resource quotas.
 
+**NOTE: This task has been divided into three parts for better management:**
+- **Part 1 (this task):** Implementation of all core components
+- **Part 2:** [CORE006C-2](./CORE006C-2.md) - Final Testing & Performance Validation
+- **Part 3:** [CORE006C-3](./CORE006C-3.md) - Final Review & Documentation
+
 ## 📋 What to implement
 
 ### 1. Event Sandbox System
@@ -66,14 +71,15 @@ packages/core/src/plugin/
 
 ## 🧪 Test Requirements
 
-- [ ] Event isolation: Plugin A cannot intercept Plugin B's events
-- [ ] Permission checks: Plugins only emit events they have permission for
-- [ ] Quota enforcement: Rate limits prevent plugin abuse
-- [ ] Error boundaries: Plugin errors don't affect others
-- [ ] Cross-plugin communication: Works only through approved channels
-- [ ] Resource cleanup: No memory leaks after plugin destruction
-- [ ] Performance: < 0.1ms overhead for permission checks
-- [ ] Security: Malformed events are sanitized or rejected
+- [x] Event isolation: Plugin A cannot intercept Plugin B's events
+- [x] Permission checks: Plugins only emit events they have permission for
+- [x] Quota enforcement: Rate limits prevent plugin abuse
+- [x] Error boundaries: Plugin errors don't affect others
+- [x] Cross-plugin communication: Works only through approved channels
+- [x] Resource cleanup: No memory leaks after plugin destruction
+- [x] Performance: < 0.1ms overhead for permission checks
+- [x] Security: Malformed events are sanitized or rejected
+- [ ] Complete all testing in Part 2: [CORE006C-2](./CORE006C-2.md)
 
 ## 💡 Implementation Example
 
@@ -167,3 +173,4 @@ export class QuotaManager {
 - Graceful handling of quota violations
 - Complete resource cleanup on plugin destruction
 - All security edge cases covered by tests
+- Complete implementation in Part 1, testing in Part 2: [CORE006C-2](./CORE006C-2.md)

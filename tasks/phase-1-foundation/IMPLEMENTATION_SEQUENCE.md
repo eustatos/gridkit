@@ -24,25 +24,43 @@ This document outlines the recommended implementation sequence for Phase 1 found
 
 ### Phase 1A: Critical Plugin & Data Model Completion (P0 - Must Have)
 
-1. **CORE006C** - Plugin Lifecycle & State Management
-2. **CORE-013** - Row System Implementation
-3. **CORE-014** - Cell System Implementation
+1. **CORE006C** - Plugin Event Isolation & Sandboxing (Part 1 - Implementation)
+2. **CORE006C-2** - Plugin Event Isolation - Final Testing & Performance Validation (Part 2 - Testing)
+3. **CORE006C-3** - Plugin Event Isolation - Final Review & Documentation (Part 3 - Documentation)
+4. **CORE-013** - Row System Implementation
+5. **CORE-014** - Cell System Implementation
 
 ### Phase 1B: Virtualization & Data Providers (P1 - Should Have)
 
-4. **CORE-015** - Data Virtualization Foundation
-5. **DATA-001** - Data Provider Interface
-6. **DATA-002** - Static Data Provider
+6. **CORE-015** - Data Virtualization Foundation
+7. **DATA-001** - Data Provider Interface
+8. **DATA-002** - Static Data Provider
 
 ### Phase 1C: Performance & Utilities (P2 - Nice to Have)
 
-7. **CORE-16** - Performance Monitoring & Metrics
-8. **COLUMN-001** - Column Helper Utilities
+9. **CORE-16** - Performance Monitoring & Metrics
+10. **COLUMN-001** - Column Helper Utilities
 
 ### Phase 1D: Optional Enhancements (P3 - Could Have)
 
-9. **CORE-006X** - Event Persistence & Time-Travel Debugging
-10. **CORE-006F** - Plugin Marketplace & Dynamic Loading
-11. **CORE-006G** - Plugin Testing Utilities & Development Kit
+11. **CORE-006X** - Event Persistence & Time-Travel Debugging
+12. **CORE-006F** - Plugin Marketplace & Dynamic Loading
+13. **CORE-006G** - Plugin Testing Utilities & Development Kit
 
 ## Updated Critical Path Dependencies
+
+The CORE006C task has been divided into three sequential parts:
+
+1. **CORE006C** (Part 1) - Implementation of all core components
+   - Depends on: CORE-006A, CORE-005C, CORE-005D
+   - Enables: Secure plugin event isolation
+
+2. **CORE006C-2** (Part 2) - Final Testing & Performance Validation
+   - Depends on: CORE006C (Part 1)
+   - Ensures: All security, performance, and reliability requirements are met
+
+3. **CORE006C-3** (Part 3) - Final Review & Documentation
+   - Depends on: CORE006C-2 (Part 2)
+   - Delivers: Production-ready implementation with complete documentation
+
+This division allows for better progress tracking and ensures each aspect of the implementation receives proper attention.
