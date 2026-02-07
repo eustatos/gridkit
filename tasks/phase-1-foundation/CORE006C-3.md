@@ -86,7 +86,7 @@ packages/core/src/plugin/
 
 ## 💡 Implementation Example
 
-```typescript
+````typescript
 // docs/api/EventSandbox.md
 # EventSandbox
 
@@ -98,14 +98,17 @@ EventSandbox provides isolated event handling for plugins. Each plugin gets its 
 
 ```typescript
 import { EventSandbox } from '@gridkit/plugin/isolation/EventSandbox';
-```
+````
 
 ## Usage
 
 ### Creating a Sandbox
 
 ```typescript
-const sandbox = new EventSandbox('my-plugin', baseBus, ['read:data', 'emit:events']);
+const sandbox = new EventSandbox('my-plugin', baseBus, [
+  'read:data',
+  'emit:events',
+]);
 const localBus = sandbox.getLocalBus();
 
 localBus.on('my-event', (event) => {
@@ -122,6 +125,7 @@ localBus.on('my-event', (event) => {
 Creates a new event sandbox for a plugin.
 
 Parameters:
+
 - `pluginId`: The unique identifier for the plugin
 - `baseBus`: The base event bus to forward approved events to
 - `permissions`: The permissions granted to this plugin
@@ -135,6 +139,7 @@ Returns the local event bus for this plugin.
 #### destroy()
 
 Cleans up the event sandbox, removing all event listeners.
+
 ```
 
 ## 🔗 Dependencies
@@ -151,3 +156,4 @@ Cleans up the event sandbox, removing all event listeners.
 - Performance targets met
 - Security requirements satisfied
 - Ready for production release
+```

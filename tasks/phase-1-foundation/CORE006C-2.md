@@ -89,11 +89,11 @@ describe('Permission Performance', () => {
   it('should check permissions in < 0.1ms', async () => {
     const permissionManager = new PermissionManager();
     permissionManager.grantCapabilities('test-plugin', ['read:data']);
-    
+
     const start = performance.now();
     const result = permissionManager.hasPermission('test-plugin', 'read:data');
     const duration = performance.now() - start;
-    
+
     expect(result).toBe(true);
     expect(duration).toBeLessThan(0.1);
   });
@@ -105,16 +105,16 @@ describe('Event Isolation Security', () => {
     const baseBus = createEventBus();
     const sandboxA = new EventSandbox('plugin-a', baseBus, []);
     const sandboxB = new EventSandbox('plugin-b', baseBus, []);
-    
+
     const handlerA = vi.fn();
     const handlerB = vi.fn();
-    
+
     // Plugin A tries to listen for plugin B's events
     sandboxA.getLocalBus().on('plugin-b-event', handlerA);
-    
+
     // Plugin B emits an event
     sandboxB.getLocalBus().emit('plugin-b-event', { data: 'secret' });
-    
+
     // Plugin A should not receive the event
     expect(handlerA).not.toHaveBeenCalled();
     // Plugin B's own handlers would be tested separately
