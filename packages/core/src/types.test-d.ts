@@ -2,32 +2,35 @@
 // This file is used to verify type inference and type safety
 
 import { atom, createStore } from './index';
-import type { Atom, PrimitiveAtom, ComputedAtom, WritableAtom, AtomValue } from './types';
+import type { Atom, PrimitiveAtom, ComputedAtom, WritableAtom, AtomValue, Getter } from './types';
 
 // Test type inference for primitive atoms
 const primitiveAtom = atom(0);
+// This should cause a type error - we're assigning a PrimitiveAtom<number> to PrimitiveAtom<string>
 // @ts-expect-error This should be a PrimitiveAtom<number>
-const primitiveAtomTest: PrimitiveAtom<number> = primitiveAtom;
+const primitiveAtomTest: PrimitiveAtom<string> = primitiveAtom;
 
 // Test type inference for computed atoms
-const computedAtom = atom((get) => get(primitiveAtom) * 2);
+const computedAtom = atom((get: Getter) => get(primitiveAtom) * 2);
+// This should cause a type error - we're assigning a ComputedAtom<number> to ComputedAtom<string>
 // @ts-expect-error This should be a ComputedAtom<number>
-const computedAtomTest: ComputedAtom<number> = computedAtom;
+const computedAtomTest: ComputedAtom<string> = computedAtom;
 
 // Test type inference for writable atoms
 const writableAtom = atom(
-  (get) => get(primitiveAtom),
-  (get, set, value: number) => set(primitiveAtom, value)
+  (get: Getter) => get(primitiveAtom),
+  (get: Getter, set, value: number) => set(primitiveAtom, value)
 );
+// This should cause a type error - we're assigning a WritableAtom<number> to WritableAtom<string>
 // @ts-expect-error This should be a WritableAtom<number>
-const writableAtomTest: WritableAtom<number> = writableAtom;
+const writableAtomTest: WritableAtom<string> = writableAtom;
 
 // Test type inference with names
 const namedPrimitiveAtom = atom(0, 'count');
-const namedComputedAtom = atom((get) => get(namedPrimitiveAtom) * 2, 'doubleCount');
+const namedComputedAtom = atom((get: Getter) => get(namedPrimitiveAtom) * 2, 'doubleCount');
 const namedWritableAtom = atom(
-  (get) => get(namedPrimitiveAtom),
-  (get, set, value: number) => set(namedPrimitiveAtom, value),
+  (get: Getter) => get(namedPrimitiveAtom),
+  (get: Getter, set, value: number) => set(namedPrimitiveAtom, value),
   'writableCount'
 );
 
