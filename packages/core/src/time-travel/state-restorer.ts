@@ -86,7 +86,7 @@ export class StateRestorer {
    */
   private restoreAtomValues(state: Record<string, any>): void {
     for (const [atomId, value] of Object.entries(state)) {
-      const atom = this.atomRegistry.getAtom(atomId);
+      const atom = this.atomRegistry.getAtom(Symbol.for(atomId));
       if (atom) {
         // Десериализуем значение перед восстановлением
         const deserializedValue = this.deserializeValue(value);
