@@ -78,8 +78,8 @@ export function atom<Value>(...args: any[]): Atom<Value> {
         read: arg1,
         write: arg2,
       } as WritableAtom<Value>;
-    } else if (typeof arg1 === 'function') {
-      // Computed atom: first argument is a function, second is not a function
+    } else if (typeof arg1 === 'function' && typeof arg2 !== 'function') {
+      // Computed atom: first argument is a function, second is name (or undefined)
       atomInstance = {
         id: Symbol('atom'),
         type: 'computed',
