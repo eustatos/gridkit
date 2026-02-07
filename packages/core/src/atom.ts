@@ -1,7 +1,14 @@
 // Implementation of atom function
 
-import type { Atom, Getter, Setter, PrimitiveAtom, ComputedAtom, WritableAtom } from './types';
-import { atomRegistry } from './atom-registry';
+import type {
+  Atom,
+  Getter,
+  Setter,
+  PrimitiveAtom,
+  ComputedAtom,
+  WritableAtom,
+} from "./types";
+import { atomRegistry } from "./atom-registry";
 
 /**
  * Create a primitive atom with an initial value
@@ -13,7 +20,10 @@ import { atomRegistry } from './atom-registry';
  * const countAtom = atom(0);
  * const nameAtom = atom("John", "user-name");
  */
-export function atom<Value>(initialValue: Value, name?: string): PrimitiveAtom<Value>;
+export function atom<Value>(
+  initialValue: Value,
+  name?: string,
+): PrimitiveAtom<Value>;
 
 /**
  * Create a computed atom that derives its value from other atoms
@@ -25,7 +35,10 @@ export function atom<Value>(initialValue: Value, name?: string): PrimitiveAtom<V
  * const doubleCountAtom = atom((get) => get(countAtom) * 2);
  * const displayNameAtom = atom((get) => `Hello, ${get(nameAtom)}!`, "display-name");
  */
-export function atom<Value>(read: (get: Getter) => Value, name?: string): ComputedAtom<Value>;
+export function atom<Value>(
+  read: (get: Getter) => Value,
+  name?: string,
+): ComputedAtom<Value>;
 
 /**
  * Create a writable atom that can both read and write values
@@ -44,14 +57,14 @@ export function atom<Value>(read: (get: Getter) => Value, name?: string): Comput
 export function atom<Value>(
   read: (get: Getter) => Value,
   write: (get: Getter, set: Setter, value: Value) => void,
-  name?: string
+  name?: string,
 ): WritableAtom<Value>;
 
 // Implementation with optional name parameter for DevTools
 export function atom<Value>(...args: any[]): Atom<Value> {
   // Extract optional name parameter if provided
   let name: string | undefined;
-  if (args.length > 0 && typeof args[args.length - 1] === 'string') {
+  if (args.length > 0 && typeof args[args.length - 1] === "string") {
     name = args.pop() as string;
   }
 
@@ -59,44 +72,55 @@ export function atom<Value>(...args: any[]): Atom<Value> {
 
   // Check the number of arguments to determine the type
   if (args.length === 1) {
-    const [initialValue] = args;
-    // Primitive atom
-    atomInstance = {
-      id: Symbol('atom'),
-      type: 'primitive',
-      name,
-      read: () => initialValue,
-    } as PrimitiveAtom<Value>;
+    const [arg] = args;
+    if (typeof arg === "function") {
+      // Computed atom: single function argument
+      atomInstance = {
+        id: Symbol("atom"),
+        type: "computed",
+        name,
+        read: arg,
+      } as ComputedAtom<Value>;
+    } else {
+      // Primitive atom: single non-function argument
+      atomInstance = {
+        id: Symbol("atom"),
+        type: "primitive",
+        name,
+        read: () => arg,
+      } as PrimitiveAtom<Value>;
+    }
   } else if (args.length === 2) {
     const [arg1, arg2] = args;
-    if (typeof arg1 === 'function' && typeof arg2 === 'function') {
+    if (typeof arg1 === "function" && typeof arg2 === "function") {
       // Writable atom: both arguments are functions
       atomInstance = {
-        id: Symbol('atom'),
-        type: 'writable',
+        id: Symbol("atom"),
+        type: "writable",
         name,
         read: arg1,
         write: arg2,
       } as WritableAtom<Value>;
-    } else if (typeof arg1 === 'function' && typeof arg2 !== 'function') {
-      // Computed atom: first argument is a function, second is name (or undefined)
+    } else if (typeof arg1 === "function" && typeof arg2 !== "function") {
+      // Computed atom with name provided as second argument
+      // This case shouldn't happen since name is already extracted
       atomInstance = {
-        id: Symbol('atom'),
-        type: 'computed',
+        id: Symbol("atom"),
+        type: "computed",
         name,
         read: arg1,
       } as ComputedAtom<Value>;
     } else {
-      // Primitive atom with non-function value
+      // Primitive atom with value and name (name already extracted)
       atomInstance = {
-        id: Symbol('atom'),
-        type: 'primitive',
+        id: Symbol("atom"),
+        type: "primitive",
         name,
         read: () => arg1,
       } as PrimitiveAtom<Value>;
     }
   } else {
-    throw new Error('Invalid arguments for atom function');
+    throw new Error("Invalid arguments for atom function");
   }
 
   // Register atom with the global registry
