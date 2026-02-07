@@ -81,6 +81,11 @@ export class DevToolsPlugin {
    */
   private getAtomName(atom: any): string {
     try {
+      // If showAtomNames is disabled, use atom's toString method
+      if (!this.config.showAtomNames) {
+        return atom.toString();
+      }
+      
       // Use custom formatter if provided
       if (this.config.atomNameFormatter) {
         const defaultName = atomRegistry.getName(atom);
@@ -88,8 +93,9 @@ export class DevToolsPlugin {
       }
       
       // Use registry name if available
-      if (this.config.showAtomNames) {
-        return atomRegistry.getName(atom);
+      const registryName = atomRegistry.getName(atom);
+      if (registryName) {
+        return registryName;
       }
       
       // Fallback to atom's toString method
@@ -132,7 +138,7 @@ export class DevToolsPlugin {
     });
 
     // Clean up on window unload
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.addEventListener) {
       window.addEventListener('beforeunload', () => {
         unsubscribe?.();
         this.connection?.unsubscribe();
@@ -242,7 +248,7 @@ export class DevToolsPlugin {
     }, this.config.latency);
 
     // Clean up interval on window unload
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.addEventListener) {
       window.addEventListener('beforeunload', () => {
         clearInterval(interval);
       });
