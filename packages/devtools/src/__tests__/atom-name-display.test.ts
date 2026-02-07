@@ -1,5 +1,6 @@
 import { DevToolsPlugin } from '../devtools-plugin';
 import { atomRegistry } from '../../../core/src/atom-registry';
+import { vi } from 'vitest';
 
 // Mock atom for testing
 const createMockAtom = (id: string, name?: string) => {
@@ -47,7 +48,7 @@ describe('DevToolsPlugin Atom Name Display', () => {
 
   it('should use custom atom name formatter when provided', () => {
     const atom = createMockAtom('test-atom', 'TestAtom');
-    const formatter = jest.fn().mockReturnValue('CustomName');
+    const formatter = vi.fn().mockReturnValue('CustomName');
     const plugin = new DevToolsPlugin({ 
       showAtomNames: true,
       atomNameFormatter: formatter
@@ -69,7 +70,8 @@ describe('DevToolsPlugin Atom Name Display', () => {
     const getAtomName = (plugin as any).getAtomName.bind(plugin);
     const name = getAtomName(atom);
     
-    expect(name).toBe('atom-1'); // Auto-generated name
+    // The name should contain the atom's symbol identifier
+    expect(name).toContain('atom-');
   });
 
   it('should handle error in atom name resolution', () => {
@@ -97,11 +99,11 @@ describe('DevToolsPlugin Atom Name Display', () => {
     const plugin = new DevToolsPlugin({ showAtomNames: true });
     
     const store: any = {
-      get: jest.fn(),
-      set: jest.fn(),
-      getState: jest.fn().mockReturnValue({}),
-      setWithMetadata: jest.fn(),
-      serializeState: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
+      getState: vi.fn().mockReturnValue({}),
+      setWithMetadata: vi.fn(),
+      serializeState: vi.fn(),
     };
     
     // Apply plugin

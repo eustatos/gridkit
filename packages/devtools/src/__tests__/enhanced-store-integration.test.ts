@@ -1,14 +1,15 @@
 import { DevToolsPlugin } from '../devtools-plugin';
+import { vi } from 'vitest';
 
 describe('DevToolsPlugin Enhanced Store Integration', () => {
   it('should integrate with enhanced store API', () => {
     const plugin = new DevToolsPlugin();
     const store = {
-      get: jest.fn(),
-      set: jest.fn(),
-      getState: jest.fn().mockReturnValue({}),
-      setWithMetadata: jest.fn(),
-      serializeState: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
+      getState: vi.fn().mockReturnValue({}),
+      setWithMetadata: vi.fn(),
+      serializeState: vi.fn(),
     };
 
     expect(() => {
@@ -19,11 +20,11 @@ describe('DevToolsPlugin Enhanced Store Integration', () => {
   it('should use setWithMetadata when available', () => {
     const plugin = new DevToolsPlugin();
     const store = {
-      get: jest.fn(),
-      set: jest.fn(),
-      getState: jest.fn().mockReturnValue({}),
-      setWithMetadata: jest.fn(),
-      serializeState: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
+      getState: vi.fn().mockReturnValue({}),
+      setWithMetadata: vi.fn(),
+      serializeState: vi.fn(),
     };
 
     plugin.apply(store as any);
@@ -35,10 +36,10 @@ describe('DevToolsPlugin Enhanced Store Integration', () => {
   it('should fall back to polling when setWithMetadata is not available', () => {
     const plugin = new DevToolsPlugin();
     const store = {
-      get: jest.fn(),
-      set: jest.fn(),
-      getState: jest.fn().mockReturnValue({}),
-      serializeState: jest.fn(),
+      get: vi.fn(),
+      set: vi.fn(),
+      getState: vi.fn().mockReturnValue({}),
+      serializeState: vi.fn(),
     };
 
     expect(() => {
@@ -49,10 +50,10 @@ describe('DevToolsPlugin Enhanced Store Integration', () => {
   it('should handle serializeState method', () => {
     const plugin = new DevToolsPlugin();
     const store = {
-      get: jest.fn(),
-      set: jest.fn(),
-      getState: jest.fn().mockReturnValue({}),
-      serializeState: jest.fn().mockReturnValue({ serialized: true }),
+      get: vi.fn(),
+      set: vi.fn(),
+      getState: vi.fn().mockReturnValue({}),
+      serializeState: vi.fn().mockReturnValue({ serialized: true }),
     };
 
     expect(() => {
