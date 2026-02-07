@@ -7,3 +7,4 @@
  */
 
 export { GridKitError } from './grid-kit-error';
+export { ValidationAggregateError } from './validation-aggregate-error';
