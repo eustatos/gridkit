@@ -36,7 +36,7 @@ describe('DevToolsPlugin Atom Name Display', () => {
   });
 
   it('should use atom toString method when showAtomNames is disabled', () => {
-    const atom = createMockAtom('test-atom', 'TestAtom');
+    const atom = createMockAtom('test-atom'); // No name registered
     const plugin = new DevToolsPlugin({ showAtomNames: false });
     
     // Access private method through reflection for testing
@@ -98,9 +98,26 @@ describe('DevToolsPlugin Atom Name Display', () => {
     const atom = createMockAtom('test-atom', 'TestAtom');
     const plugin = new DevToolsPlugin({ showAtomNames: true });
     
+    // Mock DevTools connection
+    const mockConnection = {
+      send: vi.fn(),
+      subscribe: vi.fn().mockReturnValue(vi.fn()),
+      init: vi.fn(),
+      unsubscribe: vi.fn()
+    };
+    
+    // Mock window with DevTools extension
+    const originalWindow = global.window;
+    global.window = {
+      ...global.window,
+      __REDUX_DEVTOOLS_EXTENSION__: {
+        connect: vi.fn().mockReturnValue(mockConnection)
+      }
+    } as any;
+    
     const store: any = {
       get: vi.fn(),
-      set: vi.fn(),
+      set: null, // Will be overridden by plugin
       getState: vi.fn().mockReturnValue({}),
       setWithMetadata: vi.fn(),
       serializeState: vi.fn(),
@@ -108,6 +125,9 @@ describe('DevToolsPlugin Atom Name Display', () => {
     
     // Apply plugin
     plugin.apply(store);
+    
+    // Store the original set method
+    const originalSet = store.set;
     
     // Call set method which should use setWithMetadata
     store.set(atom, 'test-value');
@@ -121,5 +141,8 @@ describe('DevToolsPlugin Atom Name Display', () => {
         atomName: 'TestAtom'
       })
     );
+    
+    // Restore original window
+    global.window = originalWindow;
   });
 });
