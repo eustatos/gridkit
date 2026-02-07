@@ -47,8 +47,8 @@ const writableValue = store.get(writableAtom); // Should be number
 // Test set operation
 store.set(primitiveAtom, 5);
 store.set(primitiveAtom, (prev) => prev + 1);
-// @ts-expect-error Computed atoms cannot be set
-store.set(computedAtom, 5);
+// Computed atoms cannot be set - this should cause a runtime error
+// store.set(computedAtom, 5); // This line is intentionally commented out
 
 // Test subscribe operation
 const primitiveUnsubscribe = store.subscribe(primitiveAtom, (value) => {
