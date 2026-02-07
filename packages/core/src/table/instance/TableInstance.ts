@@ -1,5 +1,5 @@
 import type { Table, ValidatedTableOptions, RowData } from '../../types';
-import { createStateStore } from '../../state';
+import { createStore } from '../../state';
 import { createColumnRegistry } from '../../column';
 import { createEventBus } from '../../events';
 import { buildInitialState } from '../builders/state-builder';
@@ -15,7 +15,7 @@ function createTableInstance<TData>(
 ): Table<TData> {
   // === State Management ===
   const initialState = buildInitialState(options);
-  const stateStore = createStateStore(initialState);
+  const stateStore = createStore(initialState);
 
   // === Column System ===
   const columnRegistry = createColumnRegistry();
@@ -47,10 +47,10 @@ function createTableInstance<TData>(
     id: `table-${Date.now()}` as any,
 
     // State Management
-    getState: () => stateStore.getSnapshot(),
+    getState: () => stateStore.getState(),
     setState: (updater) => {
       // metrics?.startMeasurement('stateUpdate');
-      stateStore.update(updater);
+      stateStore.setState(updater);
       // metrics?.endMeasurement('stateUpdate');
     },
     subscribe: (listener) => stateStore.subscribe(listener),
@@ -58,7 +58,7 @@ function createTableInstance<TData>(
     // Data Access
     getRowModel: () =>
       buildRowModel({
-        data: stateStore.getSnapshot().data,
+        data: stateStore.getState().data,
         rowFactory,
         columnRegistry,
         table: instance,
@@ -71,14 +71,14 @@ function createTableInstance<TData>(
     // Column Access
     getAllColumns: () => columnRegistry.getAll(),
     getVisibleColumns: () => {
-      const state = stateStore.getSnapshot();
+      const state = stateStore.getState();
       return columnRegistry.getVisible(state.columnVisibility);
     },
     getColumn: (id) => columnRegistry.get(id),
 
     // Lifecycle
     reset: () => {
-      stateStore.reset(initialState);
+      stateStore.reset();
       eventBus.emit('table:reset', { tableId: instance.id });
     },
     destroy: () => {

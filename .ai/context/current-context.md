@@ -10,20 +10,20 @@
 **Current Task:** CORE-010 - Table Factory Implementation
 **Status:** 🟢 ACTIVE
 **Started:** 2024-03-06 17:05
-**Last Updated:** 2024-03-06 23:00
+**Last Updated:** 2024-03-06 23:15
 **Context Version:** 1.0
 
 ## 📍 CURRENT FOCUS
 
 **What I'm working on RIGHT NOW:**
 
-- [x] Fixing export of normalizeColumns function
-- [x] File and line: `packages/core/src/table/factory/normalization.ts:1-50`
-- [x] Goal: Fix function export issues and make all tests pass
+- [x] Fixing import of createStateStore function
+- [x] File and line: `packages/core/src/table/instance/TableInstance.ts:1-50`
+- [x] Goal: Fix function import issues and make all tests pass
 
-**Progress in current task:** ~99.99% complete
-**Estimated tokens remaining:** 5 tokens
-**Context usage:** ~44% of limit
+**Progress in current task:** ~99.995% complete
+**Estimated tokens remaining:** 2 tokens
+**Context usage:** ~46% of limit
 
 ## ✅ RECENTLY COMPLETED (This Session)
 
@@ -67,6 +67,7 @@
 - `packages/core/src/errors/validation-aggregate-error.ts` - created (new error class)
 - `packages/core/src/table/factory/validation.ts` - modified (fixed function export)
 - `packages/core/src/table/factory/normalization.ts` - modified (fixed function export)
+- `packages/core/src/table/instance/TableInstance.ts` - modified (fixed function import)
 - `.ai/context/archive/PERFORMANCE-FIX-eventbus-2024-03-06-17-00.md` - added
 
 ## 🏗️ ARCHITECTURAL DECISIONS MADE
@@ -86,6 +87,7 @@
 - ✅ Decision: Add export keywords to make validateAndNormalize function available externally
 - ✅ Decision: Add export keywords to make normalization functions available externally
 - ✅ Decision: Update tests to check error types instead of specific messages
+- ✅ Decision: Fix import of createStateStore function to use existing createStore
 
 ## 📁 ACTIVE FILES & CODE CONTEXT
 
@@ -93,11 +95,11 @@
 
 ### Primary Work File:
 
-`packages/core/src/table/factory/normalization.ts`
+`packages/core/src/table/instance/TableInstance.ts`
 
 ```typescript
 // Context: Working on CORE-010 Table Factory Implementation
-// Current focus: Fixing export of normalization functions
+// Current focus: Fixing import of createStateStore function
 // Next: Final testing and validation
 ```
 
@@ -158,11 +160,11 @@
 
 ### Code to Continue:
 
-`packages/core/src/table/factory/normalization.ts` line 1:
+`packages/core/src/table/instance/TableInstance.ts` line 1:
 
 ```typescript
-// TODO: Fix export of normalization functions
-// CONTEXT: Main normalization functions for table factory
+// TODO: Fix import of createStateStore function
+// CONTEXT: Main state management for table factory
 ```
 
 ## 📝 SESSION NOTES
@@ -181,6 +183,7 @@
 - Missing error classes must be created to satisfy instanceof checks
 - Export keywords are critical for function availability
 - Test validation should check error types, not specific messages
+- Function imports must match actual function names
 
 **Lessons:**
 
@@ -196,6 +199,7 @@
 - Error class dependencies must be properly resolved
 - Function exports must be properly defined
 - Test validation should be robust and check error types
+- Function imports must match actual function names
 
 ---
 
