@@ -6,7 +6,7 @@ import { normalizeColumns, normalizeDebugOptions, normalizeInitialState, default
  * Comprehensive validation with helpful error messages.
  * Each validation is isolated for better error reporting.
  */
-function validateAndNormalize<TData extends RowData>(
+export function validateAndNormalize<TData extends RowData>(
   options: TableOptions<TData>
 ): ValidatedTableOptions<TData> {
   const errors: ValidationError[] = [];
