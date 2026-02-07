@@ -4,22 +4,27 @@
 
 **Project:** nexus-state
 **Phase:** 1 - Core Refactoring
-**Current Task:** Fix Test Failures in Core and React Packages
+**Current Task:** CORE-003 - Implement Simple Time Travel Core
 **Status:** 🟢 ACTIVE
-**Started:** 2024-01-15 10:25
-**Last Updated:** 2024-01-15 10:28
-**Context Version:** 1.0
+**Started:** 2024-01-15 10:30
+**Last Updated:** 2024-01-15 10:40
+**Context Version:** 1.3
 
 ## 📍 CURRENT FOCUS
 
 **What I'm working on RIGHT NOW:**
 
-- [ ] Fixing React test environment configuration
-- [ ] File: `vitest.config.js` - configuring jsdom for React tests
-- [ ] Goal: Get all tests passing in both core and react packages
-      **Progress in current task:** ~60% complete
-      **Estimated tokens remaining:** 2000 tokens
-      **Context usage:** ~40% of limit
+- [x] Plan created for CORE-003 implementation
+- [x] Step 1: Create Time Travel types in `packages/core/src/types.ts`
+- [x] Step 2: Create `packages/core/src/time-travel/simple-time-travel.ts` class
+- [x] Step 3: Integrate with `packages/core/src/enhanced-store.ts`
+- [x] Step 4: Create exports and API - ✅ BUILD SUCCESSFUL
+- [ ] Step 5: Write comprehensive tests
+- [x] Run TypeScript compiler to verify no errors - ✅ PASSES
+
+**Progress in current task:** 80% complete (implementation done, tests pending)
+**Estimated tokens remaining:** ~1800 tokens
+**Context usage:** ~55% of limit
 
 ## ✅ RECENTLY COMPLETED (This Session)
 
@@ -41,6 +46,11 @@
   - Location: `packages/react/index.test.ts`
   - Purpose: Remove complex mocking, use real React hooks
   - Tests: Ready to run with proper environment
+
+- [x] Fixed React test environment configuration
+  - Location: `vitest.config.js`
+  - Purpose: Get all tests passing in both core and react packages
+  - Tests: All tests now passing
 
 ### Files Modified/Created:
 
@@ -94,4 +104,10 @@
 
 ### Primary Work File:
 
-`vitest.config.js`
+`packages/core/src/types.ts` - Adding time travel types
+
+### Supporting Files:
+
+- `packages/core/src/time-travel/simple-time-travel.ts` (to be created)
+- `packages/core/src/enhanced-store.ts` (to be modified)
+- `packages/core/src/index.ts` (exports to be updated)

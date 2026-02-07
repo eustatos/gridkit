@@ -14,7 +14,10 @@ export type Getter = <Value>(atom: Atom<Value>) => Value;
  * @param atom The atom to set the value for
  * @param update The new value or a function to compute the new value
  */
-export type Setter = <Value>(atom: Atom<Value>, update: Value | ((prev: Value) => Value)) => void;
+export type Setter = <Value>(
+  atom: Atom<Value>,
+  update: Value | ((prev: Value) => Value),
+) => void;
 
 /**
  * Function to subscribe to changes in an atom's value
@@ -46,7 +49,7 @@ export type ActionMetadata = {
 /**
  * Modes for store registry
  */
-export type RegistryMode = 'global' | 'isolated';
+export type RegistryMode = "global" | "isolated";
 
 /**
  * Interface for a store that holds atoms and provides methods to interact with them
@@ -59,15 +62,18 @@ export interface Store {
    * @returns The current value of the atom
    */
   get: <Value>(atom: Atom<Value>) => Value;
-  
+
   /**
    * Set the value of an atom
    * @template Value The type of value the atom holds
    * @param atom The atom to set the value for
    * @param update The new value or a function to compute the new value
    */
-  set: <Value>(atom: Atom<Value>, update: Value | ((prev: Value) => Value)) => void;
-  
+  set: <Value>(
+    atom: Atom<Value>,
+    update: Value | ((prev: Value) => Value),
+  ) => void;
+
   /**
    * Subscribe to changes in an atom's value
    * @template Value The type of value the atom holds
@@ -75,20 +81,23 @@ export interface Store {
    * @param subscriber The function to call when the atom's value changes
    * @returns A function to unsubscribe from the atom
    */
-  subscribe: <Value>(atom: Atom<Value>, subscriber: Subscriber<Value>) => () => void;
-  
+  subscribe: <Value>(
+    atom: Atom<Value>,
+    subscriber: Subscriber<Value>,
+  ) => () => void;
+
   /**
    * Get the state of all atoms in the store
    * @returns An object containing the state of all atoms
    */
   getState: () => Record<string, unknown>;
-  
+
   /**
    * Apply a plugin to the store
    * @param plugin The plugin to apply
    */
   applyPlugin?: (plugin: Plugin) => void;
-  
+
   /**
    * Set the value of an atom with metadata for DevTools
    * @template Value The type of value the atom holds
@@ -99,15 +108,15 @@ export interface Store {
   setWithMetadata?: <Value>(
     atom: Atom<Value>,
     update: Value | ((prev: Value) => Value),
-    metadata?: ActionMetadata
+    metadata?: ActionMetadata,
   ) => void;
-  
+
   /**
    * Serialize the state of all atoms in the store
    * @returns An object containing the serialized state of all atoms
    */
   serializeState?: () => Record<string, unknown>;
-  
+
   /**
    * Get the current value of an atom with interception for DevTools
    * @template Value The type of value the atom holds
@@ -115,7 +124,7 @@ export interface Store {
    * @returns The current value of the atom
    */
   getIntercepted?: <Value>(atom: Atom<Value>) => Value;
-  
+
   /**
    * Set the value of an atom with interception for DevTools
    * @template Value The type of value the atom holds
@@ -124,9 +133,9 @@ export interface Store {
    */
   setIntercepted?: <Value>(
     atom: Atom<Value>,
-    update: Value | ((prev: Value) => Value)
+    update: Value | ((prev: Value) => Value),
   ) => void;
-  
+
   /**
    * Get the list of applied plugins
    * @returns An array of applied plugins
@@ -205,8 +214,10 @@ export type Atom<Value> =
  * @param atom The atom to check
  * @returns True if the atom is a primitive atom
  */
-export function isPrimitiveAtom<Value>(atom: Atom<Value>): atom is PrimitiveAtom<Value> {
-  return atom.type === 'primitive';
+export function isPrimitiveAtom<Value>(
+  atom: Atom<Value>,
+): atom is PrimitiveAtom<Value> {
+  return atom.type === "primitive";
 }
 
 /**
@@ -215,8 +226,10 @@ export function isPrimitiveAtom<Value>(atom: Atom<Value>): atom is PrimitiveAtom
  * @param atom The atom to check
  * @returns True if the atom is a computed atom
  */
-export function isComputedAtom<Value>(atom: Atom<Value>): atom is ComputedAtom<Value> {
-  return atom.type === 'computed';
+export function isComputedAtom<Value>(
+  atom: Atom<Value>,
+): atom is ComputedAtom<Value> {
+  return atom.type === "computed";
 }
 
 /**
@@ -225,8 +238,10 @@ export function isComputedAtom<Value>(atom: Atom<Value>): atom is ComputedAtom<V
  * @param atom The atom to check
  * @returns True if the atom is a writable atom
  */
-export function isWritableAtom<Value>(atom: Atom<Value>): atom is WritableAtom<Value> {
-  return atom.type === 'writable';
+export function isWritableAtom<Value>(
+  atom: Atom<Value>,
+): atom is WritableAtom<Value> {
+  return atom.type === "writable";
 }
 
 // === UTILITY TYPES ===
@@ -250,8 +265,43 @@ export interface StoreRegistry {
   atoms: Set<symbol>;
 }
 
+// === TIME TRAVEL TYPES ===
+
+export interface TimeTravelOptions {
+  maxHistory?: number;
+  autoCapture?: boolean;
+}
+
+export interface SnapshotMetadata {
+  timestamp: number;
+  action?: string;
+  atomCount: number;
+}
+
+export interface SnapshotStateEntry {
+  value: any;
+  type: "primitive" | "computed" | "writable";
+}
+
+export interface Snapshot {
+  id: string;
+  state: Record<string, SnapshotStateEntry>;
+  metadata: SnapshotMetadata;
+}
+
+export interface TimeTravelAPI {
+  capture(action?: string): void;
+  undo(): boolean;
+  redo(): boolean;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  jumpTo(index: number): boolean;
+  clearHistory(): void;
+  getHistory(): Snapshot[];
+}
+
 // Enhanced store types
-export interface EnhancedStore extends Store {
+export interface EnhancedStore extends Store, TimeTravelAPI {
   /** Connect to DevTools */
   connectDevTools?: () => void;
 }
@@ -263,4 +313,10 @@ export type StoreEnhancementOptions = {
   devToolsName?: string;
   /** Registry mode for the store */
   registryMode?: RegistryMode;
+  /** Enable Time Travel functionality */
+  enableTimeTravel?: boolean;
+  /** Maximum number of snapshots to keep */
+  maxHistory?: number;
+  /** Automatically capture snapshots on store changes */
+  autoCapture?: boolean;
 };

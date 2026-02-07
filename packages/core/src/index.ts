@@ -33,17 +33,17 @@
  * @example
  * // Create an atom with an initial value
  * const countAtom = atom(0);
- * 
+ *
  * // Create an atom with a name for DevTools
  * const countAtom = atom(0, 'count');
- * 
+ *
  * // Create a computed atom
  * const doubleCountAtom = atom((get) => get(countAtom) * 2);
- * 
+ *
  * // Create a computed atom with a name
  * const doubleCountAtom = atom((get) => get(countAtom) * 2, 'doubleCount');
  */
-export { atom } from './atom';
+export { atom } from "./atom";
 
 /**
  * Global registry for atoms to support DevTools integration and time travel.
@@ -51,14 +51,14 @@ export { atom } from './atom';
  * @example
  * // Get an atom by its ID
  * const atom = atomRegistry.get(atomId);
- * 
+ *
  * // Get all registered atoms
  * const allAtoms = atomRegistry.getAll();
- * 
+ *
  * // Get the name of an atom
  * const name = atomRegistry.getName(atom);
  */
-export { atomRegistry } from './atom-registry';
+export { atomRegistry } from "./atom-registry";
 
 /**
  * Creates a store to hold atoms.
@@ -67,11 +67,11 @@ export { atomRegistry } from './atom-registry';
  * @example
  * // Create a basic store
  * const store = createStore();
- * 
+ *
  * // Create a store with plugins
  * const store = createStore([plugin1, plugin2]);
  */
-export { createStore } from './store';
+export { createStore } from "./store";
 
 /**
  * Creates an enhanced store with DevTools integration capabilities.
@@ -81,38 +81,57 @@ export { createStore } from './store';
  * @example
  * // Create an enhanced store
  * const store = createEnhancedStore();
- * 
+ *
  * // Create an enhanced store with plugins and options
  * const store = createEnhancedStore([plugin1, plugin2], { enableDevTools: true });
  */
-export { createEnhancedStore } from './enhanced-store';
+export { createEnhancedStore } from "./enhanced-store";
 
 // Time travel functionality
-export { StateSnapshotManager } from './time-travel/state-snapshot';
-export { StateRestorer } from './time-travel/state-restorer';
-export { ComputedAtomHandler } from './time-travel/computed-atom-handler';
+export { SimpleTimeTravel } from "./time-travel";
+export { StateSnapshotManager } from "./time-travel/state-snapshot";
+export { StateRestorer } from "./time-travel/state-restorer";
+export { ComputedAtomHandler } from "./time-travel/computed-atom-handler";
 
 // Export utility functions
-export { serializeState } from './utils/serialization';
-export { ActionTracker, globalActionTracker, createActionWithStackTrace } from './utils/action-tracker';
-export { snapshotSerialization } from './utils/snapshot-serialization';
+export { serializeState } from "./utils/serialization";
+export {
+  ActionTracker,
+  globalActionTracker,
+  createActionWithStackTrace,
+} from "./utils/action-tracker";
+export { snapshotSerialization } from "./utils/snapshot-serialization";
 
 // Export types
-export type { 
-  Atom, 
+export type {
+  Atom,
   BaseAtom,
-  PrimitiveAtom, 
-  ComputedAtom, 
+  PrimitiveAtom,
+  ComputedAtom,
   WritableAtom,
-  Store, 
-  Plugin, 
+  Store,
+  Plugin,
   ActionMetadata,
   AtomValue,
-  AnyAtom
-} from './types';
-export type { EnhancedStore, StoreEnhancementOptions } from './enhanced-store';
-export type { SerializationOptions } from './utils/serialization';
-export type { ActionTrackingOptions, ActionMetadata as TrackedActionMetadata } from './utils/action-tracker';
-export type { StateSnapshot, SnapshotMetadata } from './time-travel/state-snapshot';
-export type { ComputedAtomInfo } from './time-travel/computed-atom-handler';
-export type { SerializableValue, ObjectReference } from './utils/snapshot-serialization';
+  AnyAtom,
+  TimeTravelOptions,
+  Snapshot,
+  SnapshotMetadata as SnapshotMetadataType,
+  SnapshotStateEntry,
+  TimeTravelAPI,
+} from "./types";
+export type { EnhancedStore, StoreEnhancementOptions } from "./enhanced-store";
+export type { SerializationOptions } from "./utils/serialization";
+export type {
+  ActionTrackingOptions,
+  ActionMetadata as TrackedActionMetadata,
+} from "./utils/action-tracker";
+export type {
+  StateSnapshot,
+  SnapshotMetadata,
+} from "./time-travel/state-snapshot";
+export type { ComputedAtomInfo } from "./time-travel/computed-atom-handler";
+export type {
+  SerializableValue,
+  ObjectReference,
+} from "./utils/snapshot-serialization";
