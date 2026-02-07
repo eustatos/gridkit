@@ -18,7 +18,7 @@ export {
 } from './EventBus';
 
 // Middleware
-export { createBatchMiddleware } from './middleware/batch';
+export { createSimpleBatchMiddleware as createBatchMiddleware } from './middleware/simple-batch';
 export { createDebounceMiddleware } from './middleware/debounce';
 
 // Utilities
