@@ -1,10 +1,10 @@
 import type { Table, ValidatedTableOptions, RowData } from '../../types';
 import { createStateStore } from '../../state';
 import { createColumnRegistry } from '../../column';
-import { createRowFactory } from '../../row';
 import { createEventBus } from '../../events';
 import { buildInitialState } from '../builders/state-builder';
 import { buildRowModel } from '../builders/model-builder';
+import { createRowFactory } from '../../row';
 
 /**
  * Creates the table instance with proper memory management.
@@ -112,3 +112,5 @@ function createTableInstance<TData>(
 
   return instance;
 }
+
+export { createTableInstance };
