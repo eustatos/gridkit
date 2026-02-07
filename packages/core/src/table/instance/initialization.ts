@@ -4,7 +4,7 @@ import type { Table, ValidatedTableOptions, RowData } from '../../types';
  * Completes table initialization after instance creation.
  * Separated for better error isolation.
  */
-function initializeTableInstance<TData>(
+export function initializeTableInstance<TData>(
   table: Table<TData>,
   options: ValidatedTableOptions<TData>
 ): void {

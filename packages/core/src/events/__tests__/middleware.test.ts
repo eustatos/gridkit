@@ -217,13 +217,18 @@ describe('Event Middleware', () => {
 
       bus.on('test:multi', handler);
 
-      // Emit 4 events quickly
+      // Emit 4 events with small delays to ensure they're processed
       bus.emit('test:multi', { id: '1' } as any);
-      bus.emit('test:multi', { id: '2' } as any); // Batch lets this through
-      bus.emit('test:multi', { id: '3' } as any);
-      bus.emit('test:multi', { id: '4' } as any); // Batch lets this through
+      await waitForAsync(); // Wait for first event to be processed
 
-      await waitForAsync();
+      bus.emit('test:multi', { id: '2' } as any); // Batch lets this through
+      await waitForAsync(); // Wait for second event
+
+      bus.emit('test:multi', { id: '3' } as any);
+      await waitForAsync(); // Wait for third event
+
+      bus.emit('test:multi', { id: '4' } as any); // Batch lets this through
+      await waitForAsync(); // Wait for fourth event
 
       // Batch lets through events 2 and 4
       // Debounce only lets through first (event 2)

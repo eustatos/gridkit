@@ -1,8 +1,9 @@
 // Column registry for managing column instances
+import { GridKitError } from '@/errors/grid-kit-error';
 import type { RowData } from '@/types/base';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { ColumnId, ColumnGroupId } from '@/types/column/SupportingTypes';
-import { GridKitError } from '@/errors/grid-kit-error';
+import type { Table } from '@/types/table/TableInstance';
 
 /**
  * Manages all columns in a table with O(1) lookups.
@@ -11,6 +12,22 @@ export class ColumnRegistry<TData extends RowData> {
   private columns = new Map<ColumnId, Column<TData>>();
   private columnOrder: ColumnId[] = [];
   private columnGroups = new Map<ColumnGroupId, ColumnId[]>();
+  private table: Table<TData> | null = null;
+
+  /**
+   * Set the table instance for this registry.
+   * Used for circular dependencies.
+   */
+  setTable(table: Table<TData>): void {
+    this.table = table;
+  }
+
+  /**
+   * Get the table instance.
+   */
+  getTable(): Table<TData> | null {
+    return this.table;
+  }
 
   /**
    * Register a column and validate uniqueness.
@@ -40,7 +57,7 @@ export class ColumnRegistry<TData extends RowData> {
    * Get column by ID with type-safe value inference.
    */
   get<TValue = unknown>(id: ColumnId): Column<TData, TValue> | undefined {
-    return this.columns.get(id) as Column<TData, TValue> | undefined;
+    return this.columns.get(id);
   }
 
   /**
@@ -58,11 +75,23 @@ export class ColumnRegistry<TData extends RowData> {
       .filter((id) => visibilityState[id] !== false)
       .map((id) => this.columns.get(id)!);
   }
+
+  /**
+   * Destroy the registry and clean up references.
+   */
+  destroy(): void {
+    this.columns.clear();
+    this.columnOrder = [];
+    this.columnGroups.clear();
+    this.table = null;
+  }
 }
 
 /**
  * Creates a new column registry instance.
  */
-export function createColumnRegistry<TData extends RowData>(): ColumnRegistry<TData> {
+export function createColumnRegistry<
+  TData extends RowData,
+>(): ColumnRegistry<TData> {
   return new ColumnRegistry<TData>();
 }

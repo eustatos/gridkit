@@ -1,6 +1,18 @@
-import type { TableOptions, RowData, ValidatedTableOptions, ValidationError, ColumnDef, ValidatedColumnDef } from '../../types';
 import { GridKitError, ValidationAggregateError } from '../../errors';
-import { normalizeColumns, normalizeDebugOptions, normalizeInitialState, defaultGetRowId } from './normalization';
+import type {
+  RowData,
+  ValidatedTableOptions,
+  ValidationError,
+  ColumnDef,
+  ValidatedColumnDef,
+} from '../../types';
+import { GridKitError, ValidationAggregateError } from '../../errors';
+import {
+  normalizeColumns,
+  normalizeDebugOptions,
+  normalizeInitialState,
+  defaultGetRowId,
+} from './normalization';
 
 /**
  * Comprehensive validation with helpful error messages.
@@ -107,10 +119,43 @@ function validateColumns<TData>(columns: unknown): ValidationError[] {
   return errors;
 }
 
-// Stub functions for now
-function validateData(data: unknown): ValidationError[] {
-  // In a real implementation, this would validate the data
-  return [];
+/**
+ * Data validation with detailed error messages.
+ * Validates that data is an array of objects.
+ */
+function validateData<TData>(data: unknown): ValidationError[] {
+  const errors: ValidationError[] = [];
+
+  if (!Array.isArray(data)) {
+    errors.push({
+      code: 'DATA_NOT_ARRAY',
+      message: 'data must be an array',
+      field: 'data',
+      value: data,
+    });
+    return errors;
+  }
+
+  // Check each row in the data
+  data.forEach((row, index) => {
+    if (row === null || row === undefined) {
+      errors.push({
+        code: 'INVALID_ROW_DATA',
+        message: `Row at index ${index} is null or undefined`,
+        field: `data[${index}]`,
+        value: row,
+      });
+    } else if (typeof row !== 'object' || Array.isArray(row)) {
+      errors.push({
+        code: 'INVALID_ROW_TYPE',
+        message: `Row at index ${index} must be an object, got ${Array.isArray(row) ? 'array' : typeof row}`,
+        field: `data[${index}]`,
+        value: row,
+      });
+    }
+  });
+
+  return errors;
 }
 
 function validateRowIdFunction(getRowId: unknown): ValidationError[] {
