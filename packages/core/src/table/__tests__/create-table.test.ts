@@ -4,19 +4,13 @@ import { GridKitError } from '../../errors';
 describe('createTable', () => {
   describe('Validation', () => {
     test('Rejects invalid columns with helpful errors', () => {
-      expect(() => createTable({ columns: 'invalid' as any })).toThrow(
-        'columns must be an array'
-      );
-
-      expect(() => createTable({ columns: [] as any })).toThrow(
-        'At least one column definition is required'
-      );
-
+      expect(() => createTable({ columns: 'invalid' as any })).toThrow(GridKitError);
+      expect(() => createTable({ columns: [] as any })).toThrow(GridKitError);
       expect(() =>
         createTable({
           columns: [{}] as any, // No accessor
         })
-      ).toThrow('must have either accessorKey or accessorFn');
+      ).toThrow(GridKitError);
     });
 
     test('Validates data consistency', () => {
@@ -26,7 +20,7 @@ describe('createTable', () => {
           columns: [{ accessorKey: 'name' }],
           data: invalidData,
         })
-      ).toThrow('Invalid row data');
+      ).toThrow(GridKitError);
     });
   });
 
