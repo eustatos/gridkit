@@ -21,7 +21,7 @@ export interface CapturedStackTrace {
 export const DEFAULT_STACK_TRACE_CONFIG: StackTraceConfig = {
   enableStackTrace: false,
   traceLimit: 10,
-  isDevelopment: process.env.NODE_ENV === 'development'
+  isDevelopment: process.env.NODE_ENV === "development",
 };
 
 /**
@@ -29,9 +29,11 @@ export const DEFAULT_STACK_TRACE_CONFIG: StackTraceConfig = {
  * @param limit - Number of stack frames to capture
  * @returns Captured stack trace or null if not in development
  */
-export function captureStackTrace(limit: number = 10): CapturedStackTrace | null {
+export function captureStackTrace(
+  limit: number = 10,
+): CapturedStackTrace | null {
   // Only capture in development environment
-  if (process.env.NODE_ENV !== 'development') {
+  if (process.env.NODE_ENV !== "development") {
     return null;
   }
 
@@ -42,15 +44,14 @@ export function captureStackTrace(limit: number = 10): CapturedStackTrace | null
 
   // Parse stack frames (skip first frame which is this function)
   const frames = stack
-    .split('
-')
+    .split("\n")
     .slice(1, limit + 1)
-    .map(frame => frame.trim())
-    .filter(frame => frame.length > 0);
+    .map((frame) => frame.trim())
+    .filter((frame) => frame.length > 0);
 
   return {
     frames,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 }
 
@@ -59,12 +60,14 @@ export function captureStackTrace(limit: number = 10): CapturedStackTrace | null
  * @param config - Stack trace configuration
  * @returns Function that captures stack trace when called
  */
-export function createStackTraceGenerator(config: StackTraceConfig): () => CapturedStackTrace | null {
+export function createStackTraceGenerator(
+  config: StackTraceConfig,
+): () => CapturedStackTrace | null {
   return () => {
     if (!config.enableStackTrace || !config.isDevelopment) {
       return null;
     }
-    
+
     return captureStackTrace(config.traceLimit);
   };
 }
