@@ -59,3 +59,10 @@ export class ColumnRegistry<TData extends RowData> {
       .map((id) => this.columns.get(id)!);
   }
 }
+
+/**
+ * Creates a new column registry instance.
+ */
+export function createColumnRegistry<TData extends RowData>(): ColumnRegistry<TData> {
+  return new ColumnRegistry<TData>();
+}
