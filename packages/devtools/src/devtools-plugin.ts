@@ -36,10 +36,7 @@ import {
   type PatternNamingConfig,
 } from "./action-naming";
 import { createActionMetadata } from "./action-metadata";
-import {
-  createActionGrouper,
-  type ActionGrouper,
-} from "./action-grouper";
+import { createActionGrouper, type ActionGrouper } from "./action-grouper";
 import { createBatchUpdater, type BatchUpdater } from "./batch-updater";
 
 /**
@@ -207,7 +204,7 @@ export class DevToolsPlugin {
       actionNamingPattern,
       actionNamingFunction,
       defaultNamingStrategy,
-    };
+    } as Required<DevToolsConfig>;
     this.snapshotMapper = createSnapshotMapper({
       maxMappings: config.maxAge ?? 50,
       autoCleanup: true,
@@ -223,7 +220,8 @@ export class DevToolsPlugin {
       throttleByFrame: batchOpts.throttleByFrame ?? true,
       maxUpdatesPerSecond: batchOpts.maxUpdatesPerSecond ?? 0,
       onFlush: (store, action) => {
-        const targetStore = (store ?? this.currentStore) as EnhancedStore | null;
+        const targetStore = (store ??
+          this.currentStore) as EnhancedStore | null;
         if (targetStore) {
           this.doSendStateUpdate(targetStore, action);
         }
@@ -406,7 +404,10 @@ export class DevToolsPlugin {
   private sendInitialState(store: EnhancedStore): void {
     try {
       const state = store.serializeState?.() || store.getState();
-      const sanitized = this.config.stateSanitizer(state) as Record<string, unknown>;
+      const sanitized = this.config.stateSanitizer(state) as Record<
+        string,
+        unknown
+      >;
       this.lastState = sanitized;
 
       const lazyOpts = this.getLazySerializationOptions();
@@ -707,7 +708,10 @@ export class DevToolsPlugin {
     if (!this.isTracking || !this.connection) return;
     try {
       const currentState = store.serializeState?.() || store.getState();
-      const sanitizedState = this.config.stateSanitizer(currentState) as Record<string, unknown>;
+      const sanitizedState = this.config.stateSanitizer(currentState) as Record<
+        string,
+        unknown
+      >;
 
       const lazyOpts = this.getLazySerializationOptions();
       let stateToSend: unknown = sanitizedState;
@@ -715,7 +719,10 @@ export class DevToolsPlugin {
 
       if (lazyOpts) {
         const prevState = this.lastState as Record<string, unknown> | null;
-        const changedKeys = this.stateSerializer.getChangedKeys(prevState, sanitizedState);
+        const changedKeys = this.stateSerializer.getChangedKeys(
+          prevState,
+          sanitizedState,
+        );
         const result = this.stateSerializer.serializeLazy(
           sanitizedState,
           lazyOpts,
