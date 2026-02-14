@@ -54,6 +54,9 @@ export interface DevToolsConfig {
 
   /** Optional action grouping options for batched updates */
   actionGroupOptions?: ActionGroupOptions;
+
+  /** Optional batch update system config (throttling / batching latency) */
+  batchUpdate?: BatchUpdateConfig;
 }
 /**
  * Connection interface for DevTools integration
@@ -361,4 +364,18 @@ export interface ActionGroupResult {
   metadata: Record<string, unknown>;
   /** Number of actions in the batch */
   count: number;
+}
+
+/**
+ * Configuration for the batch update system (throttling and batching DevTools updates).
+ */
+export interface BatchUpdateConfig {
+  /** Delay in ms before flushing the batch (default: uses latency or 100) */
+  batchLatencyMs?: number;
+  /** Maximum number of pending updates in the queue (memory cap; default: 100) */
+  maxQueueSize?: number;
+  /** Throttle flushes to at most once per animation frame (default: true in browser) */
+  throttleByFrame?: boolean;
+  /** Maximum updates per second when not using frame throttle (0 = no limit; default: 0) */
+  maxUpdatesPerSecond?: number;
 }

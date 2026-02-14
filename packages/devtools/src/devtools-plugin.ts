@@ -29,6 +29,7 @@ import {
   createActionGrouper,
   type ActionGrouper,
 } from "./action-grouper";
+import { createBatchUpdater, type BatchUpdater } from "./batch-updater";
 
 /**
  * Feature detection for DevTools extension
@@ -160,11 +161,11 @@ export class DevToolsPlugin {
   private mode: DevToolsMode = "disabled";
   private isTracking = true;
   private lastState: unknown = null;
-  private debounceTimer: NodeJS.Timeout | null = null;
   private snapshotMapper: SnapshotMapper;
   private stateSerializer: StateSerializer;
   private actionNamingSystem: ActionNamingSystem;
   private actionGrouper: ActionGrouper;
+  private batchUpdater: BatchUpdater;
   private currentBatchId: string | null = null;
   private currentStore: EnhancedStore | null = null;
 
@@ -201,6 +202,20 @@ export class DevToolsPlugin {
     this.stateSerializer = createStateSerializer();
     this.actionNamingSystem = this.createActionNamingSystem();
     this.actionGrouper = createActionGrouper(config.actionGroupOptions);
+    const latency = config.latency ?? 100;
+    const batchOpts = config.batchUpdate ?? {};
+    this.batchUpdater = createBatchUpdater({
+      batchLatencyMs: batchOpts.batchLatencyMs ?? latency,
+      maxQueueSize: batchOpts.maxQueueSize ?? 100,
+      throttleByFrame: batchOpts.throttleByFrame ?? true,
+      maxUpdatesPerSecond: batchOpts.maxUpdatesPerSecond ?? 0,
+      onFlush: (store, action) => {
+        const targetStore = (store ?? this.currentStore) as EnhancedStore | null;
+        if (targetStore) {
+          this.doSendStateUpdate(targetStore, action);
+        }
+      },
+    });
   }
 
   /**
@@ -640,42 +655,44 @@ export class DevToolsPlugin {
   }
 
   /**
-   * Send state update to DevTools.
+   * Send state update to DevTools (called by BatchUpdater on flush).
+   * @param store The store to get state from
+   * @param action The action name
+   */
+  private doSendStateUpdate(store: EnhancedStore, action: string): void {
+    if (!this.isTracking || !this.connection) return;
+    try {
+      const currentState = store.serializeState?.() || store.getState();
+      const sanitizedState = this.config.stateSanitizer(currentState);
+
+      // Only send if state has changed
+      if (JSON.stringify(sanitizedState) !== JSON.stringify(this.lastState)) {
+        this.lastState = sanitizedState;
+
+        // Check if action should be sent
+        if (this.config.actionSanitizer(action, sanitizedState)) {
+          this.connection.send(action, sanitizedState);
+          // Map action to snapshot for time travel support
+          this.snapshotMapper.mapSnapshotToAction(
+            `snap-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
+            action,
+          );
+        }
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("Failed to send state update to DevTools:", error);
+      }
+    }
+  }
+
+  /**
+   * Schedule a state update to be sent to DevTools (batched and throttled).
    * @param store The store to get state from
    * @param action The action name
    */
   private sendStateUpdate(store: EnhancedStore, action: string): void {
-    // Debounce updates to prevent performance issues
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
-    }
-
-    this.debounceTimer = setTimeout(() => {
-      if (!this.isTracking || !this.connection) return;
-      try {
-        const currentState = store.serializeState?.() || store.getState();
-        const sanitizedState = this.config.stateSanitizer(currentState);
-
-        // Only send if state has changed
-        if (JSON.stringify(sanitizedState) !== JSON.stringify(this.lastState)) {
-          this.lastState = sanitizedState;
-
-          // Check if action should be sent
-          if (this.config.actionSanitizer(action, sanitizedState)) {
-            this.connection.send(action, sanitizedState);
-            // Map action to snapshot for time travel support
-            this.snapshotMapper.mapSnapshotToAction(
-              `snap-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
-              action,
-            );
-          }
-        }
-      } catch (error) {
-        if (process.env.NODE_ENV !== "production") {
-          console.warn("Failed to send state update to DevTools:", error);
-        }
-      }
-    }, this.config.latency);
+    this.batchUpdater.schedule(store, action);
   }
 
   /**

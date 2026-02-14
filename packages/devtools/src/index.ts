@@ -45,6 +45,7 @@ export type {
   ActionMetadataBase,
   ActionGroupOptions,
   ActionGroupResult,
+  BatchUpdateConfig,
 } from './types';
 export {
   createActionMetadata,
@@ -56,3 +57,8 @@ export {
   type ActionGrouper,
   type GroupLabelFormatter,
 } from './action-grouper';
+export {
+  createBatchUpdater,
+  type BatchUpdater,
+  type BatchUpdaterConfig,
+} from './batch-updater';
