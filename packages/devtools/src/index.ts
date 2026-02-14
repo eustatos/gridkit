@@ -41,4 +41,18 @@ export type {
   SnapshotMapping,
   ActionToSnapshotMap,
   SnapshotToActionMap,
+  ActionMetadata,
+  ActionMetadataBase,
+  ActionGroupOptions,
+  ActionGroupResult,
 } from './types';
+export {
+  createActionMetadata,
+  createMinimalActionMetadata,
+  ActionMetadataBuilder,
+} from './action-metadata';
+export {
+  createActionGrouper,
+  type ActionGrouper,
+  type GroupLabelFormatter,
+} from './action-grouper';

@@ -51,6 +51,9 @@ export interface DevToolsConfig {
 
   /** Default strategy type if using pattern or custom */
   defaultNamingStrategy?: BuiltInActionNamingStrategyType;
+
+  /** Optional action grouping options for batched updates */
+  actionGroupOptions?: ActionGroupOptions;
 }
 /**
  * Connection interface for DevTools integration
@@ -310,3 +313,52 @@ export type Command =
   | JumpToActionCommand
   | ImportStateCommand
   | { type: string; payload?: unknown };
+
+/**
+ * Base action metadata fields (standard across all actions)
+ */
+export interface ActionMetadataBase {
+  /** Action type/name displayed in DevTools */
+  type: string;
+  /** When the action occurred (ms since epoch) */
+  timestamp: number;
+  /** Source identifier (e.g. "DevToolsPlugin") */
+  source: string;
+  /** Display name of the atom being updated */
+  atomName: string;
+  /** Stack trace string when trace is enabled (dev only) */
+  stackTrace?: string;
+  /** Optional group ID for batching related updates */
+  groupId?: string;
+}
+
+/**
+ * Action metadata with type-safe custom fields.
+ * Use ActionMetadata<YourCustomFields> for typed custom metadata.
+ */
+export type ActionMetadata<T extends Record<string, unknown> = Record<string, unknown>> =
+  ActionMetadataBase & T;
+
+/**
+ * Options for action grouping (batched updates)
+ */
+export interface ActionGroupOptions {
+  /** Maximum time (ms) to wait before flushing a group */
+  flushAfterMs?: number;
+  /** Maximum number of actions in a group before auto-flush */
+  maxGroupSize?: number;
+  /** Called when a group is auto-flushed (timeout or max size); use to send to DevTools */
+  onFlush?: (result: ActionGroupResult) => void;
+}
+
+/**
+ * Result of a grouped batch (single DevTools action representing multiple updates)
+ */
+export interface ActionGroupResult {
+  /** Combined action type for DevTools */
+  type: string;
+  /** Metadata for the batch (e.g. atom names, count) */
+  metadata: Record<string, unknown>;
+  /** Number of actions in the batch */
+  count: number;
+}

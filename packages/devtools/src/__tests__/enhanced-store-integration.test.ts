@@ -95,4 +95,37 @@ describe("DevToolsPlugin Enhanced Store Integration", () => {
     expect(captureSpy).not.toHaveBeenCalled();
     captureSpy.mockRestore();
   });
+
+  it("should expose startBatch and endBatch for action grouping", () => {
+    const plugin = new DevToolsPlugin();
+    expect(typeof plugin.startBatch).toBe("function");
+    expect(typeof plugin.endBatch).toBe("function");
+    expect(() => plugin.startBatch("g1")).not.toThrow();
+    expect(() => plugin.endBatch("g1")).not.toThrow();
+  });
+
+  it("should call setWithMetadata with groupId during a batch", () => {
+    const plugin = new DevToolsPlugin();
+    const store = {
+      get: vi.fn(),
+      set: vi.fn(),
+      getState: vi.fn().mockReturnValue({}),
+      setWithMetadata: vi.fn(),
+      serializeState: vi.fn(),
+    };
+    plugin.apply(store as Parameters<DevToolsPlugin["apply"]>[0]);
+    plugin.startBatch("batch-1");
+    const atom1 = { id: { toString: () => "atom1" } };
+    const atom2 = { id: { toString: () => "atom2" } };
+    store.set(atom1 as any, 1);
+    store.set(atom2 as any, 2);
+    expect(store.setWithMetadata).toHaveBeenCalledTimes(2);
+    const [firstMeta, secondMeta] = (store.setWithMetadata as ReturnType<typeof vi.fn>).mock.calls.map(
+      (c: unknown[]) => c[2],
+    );
+    expect(firstMeta).toBeDefined();
+    expect(firstMeta?.groupId).toBe("batch-1");
+    expect(secondMeta?.groupId).toBe("batch-1");
+    plugin.endBatch("batch-1");
+  });
 });

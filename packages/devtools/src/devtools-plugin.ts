@@ -6,6 +6,7 @@ import type {
   BasicAtom,
   DevToolsMode,
   DevToolsFeatureDetectionResult,
+  ActionMetadata,
 } from "./types";
 import type { SnapshotMapper } from "./snapshot-mapper";
 import {
@@ -23,6 +24,11 @@ import {
   type ActionNamingStrategyType,
   type PatternNamingConfig,
 } from "./action-naming";
+import { createActionMetadata } from "./action-metadata";
+import {
+  createActionGrouper,
+  type ActionGrouper,
+} from "./action-grouper";
 
 /**
  * Feature detection for DevTools extension
@@ -158,6 +164,9 @@ export class DevToolsPlugin {
   private snapshotMapper: SnapshotMapper;
   private stateSerializer: StateSerializer;
   private actionNamingSystem: ActionNamingSystem;
+  private actionGrouper: ActionGrouper;
+  private currentBatchId: string | null = null;
+  private currentStore: EnhancedStore | null = null;
 
   constructor(config: DevToolsConfig = {}) {
     // Extract action naming config with defaults
@@ -191,6 +200,7 @@ export class DevToolsPlugin {
     });
     this.stateSerializer = createStateSerializer();
     this.actionNamingSystem = this.createActionNamingSystem();
+    this.actionGrouper = createActionGrouper(config.actionGroupOptions);
   }
 
   /**
@@ -253,6 +263,7 @@ export class DevToolsPlugin {
    * @param store The store to apply the plugin to
    */
   apply(store: EnhancedStore): void {
+    this.currentStore = store;
     // Detect DevTools features
     const features = detectDevToolsFeatures();
     this.mode = features.mode;
@@ -532,39 +543,60 @@ export class DevToolsPlugin {
 
     // Override set method to capture metadata
     store.set = ((atom: BasicAtom, update: unknown) => {
-      // Create action metadata with atom name
       const atomName = this.getAtomName(atom);
-
-      // Generate action name using naming system
       const actionName = this.getActionName(atom, atomName, "SET");
 
-      const metadata: {
-        type: string;
-        timestamp: number;
-        source: string;
-        atomName: string;
-        stackTrace?: string;
-      } = {
-        type: actionName,
-        timestamp: Date.now(),
-        source: "DevToolsPlugin",
-        atomName: atomName,
-      };
+      const builder = createActionMetadata()
+        .type(actionName)
+        .timestamp(Date.now())
+        .source("DevToolsPlugin")
+        .atomName(atomName);
 
-      // Capture stack trace if enabled (dev only; stack-tracer returns null in production)
+      if (this.currentBatchId) {
+        builder.groupId(this.currentBatchId);
+      }
+
       if (this.config.trace) {
         const captured = captureStackTrace(this.config.traceLimit);
         if (captured) {
-          metadata.stackTrace = formatStackTraceForDevTools(captured);
+          builder.stackTrace(formatStackTraceForDevTools(captured));
         }
       }
 
-      // Use setWithMetadata if available
+      const metadata = builder.build() as ActionMetadata;
+
       store.setWithMetadata?.(atom, update, metadata);
 
-      // Send state update to DevTools
-      this.sendStateUpdate(store, metadata.type);
+      if (this.currentBatchId) {
+        this.actionGrouper.add(metadata);
+      } else {
+        this.sendStateUpdate(store, metadata.type);
+      }
     }) as unknown as typeof store.set;
+  }
+
+  /**
+   * Start a batch so that subsequent set() calls are grouped into one DevTools action.
+   * Call endBatch with the same id to flush and send.
+   * @param groupId Unique id for this batch
+   */
+  startBatch(groupId: string): void {
+    this.currentBatchId = groupId;
+    this.actionGrouper.startGroup(groupId);
+  }
+
+  /**
+   * End a batch and send a single grouped action to DevTools.
+   * @param groupId Must match the id passed to startBatch
+   */
+  endBatch(groupId: string): void {
+    if (this.currentBatchId === groupId) {
+      this.currentBatchId = null;
+    }
+    const result = this.actionGrouper.endGroup(groupId);
+    if (result && this.currentStore) {
+      this.sendStateUpdate(this.currentStore, result.type);
+    }
   }
 
   /**
