@@ -83,19 +83,30 @@ npm install @nexus-state/web-worker
 Here's a simple example of how to use Nexus State:
 
 ```javascript
-import { atom, createStore } from '@nexus-state/core';
+import { atom, createEnhancedStore } from '@nexus-state/core';
 
 // Create an atom
-const countAtom = atom(0);
+const countAtom = atom(0, 'count');
 
-// Create a store
-const store = createStore();
+// Create an enhanced store with time travel and DevTools
+const store = createEnhancedStore([], {
+  enableTimeTravel: true,
+  enableDevTools: true
+});
 
 // Get the value of the atom
 console.log(store.get(countAtom)); // 0
 
 // Update the value of the atom
 store.set(countAtom, 1);
+
+// Functional update
+store.set(countAtom, (prev) => prev + 1);
+console.log(store.get(countAtom)); // 2
+
+// Time travel
+store.undo();
+console.log(store.get(countAtom)); // 1
 
 // Subscribe to changes
 const unsubscribe = store.subscribe(countAtom, (value) => {
@@ -174,8 +185,18 @@ store.use(persist);
 
 ## Next Steps
 
-- Learn about [core concepts](/guide/core-concepts)
+- Learn about [Core Concepts](/guide/core-concepts)
 - Explore the [API reference](/api/)
 - Check out [examples](/examples/)
 - Try [recipes](/recipes/)
 - See [package-specific examples](/recipes/package-examples)
+- Migrating from v0.x? See the [Migration Guide](/migration/v0-to-v1)
+
+## Quick Links
+
+- [Installation](/getting-started/installation) - Detailed installation instructions
+- [Core Concepts](/getting-started/core-concepts) - Understand the fundamental concepts
+- [Time Travel](/examples/time-travel) - Learn about Time Travel functionality
+- [DevTools](/guides/debugging) - Debug with DevTools
+- [Best Practices](/guides/best-practices) - Follow best practices
+- [Performance Guide](/performance/) - Optimize performance

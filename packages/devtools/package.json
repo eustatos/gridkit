@@ -16,6 +16,8 @@
     "dev": "tsc -w",
     "test": "vitest run",
     "test:production": "vitest run src/__tests__/production-noop.test.ts",
+    "test:performance": "vitest run src/__tests__/performance --reporter=verbose",
+    "test:benchmark": "vitest bench src/__tests__/performance",
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
