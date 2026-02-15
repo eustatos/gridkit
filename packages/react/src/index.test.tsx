@@ -1,5 +1,5 @@
 // Tests for React adapter
-import { atom, createStore, Getter, Setter, ComputedAtom, Atom } from "@nexus-state/core";
+import { atom, createStore, Setter, ComputedAtom, Atom } from "@nexus-state/core";
 import { useAtom } from "./index";
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
@@ -71,12 +71,12 @@ describe("useAtom - Primitive Atoms", () => {
     const { result } = renderHook(() => useAtom(countAtom, store));
 
     act(() => {
-      store.set(countAtom, (prev) => prev + 1);
+      store.set(countAtom, (prev: number) => prev + 1);
     });
     expect(result.current[0]).toBe(1);
 
     act(() => {
-      store.set(countAtom, (prev) => prev + 5);
+      store.set(countAtom, (prev: number) => prev + 5);
     });
     expect(result.current[0]).toBe(6);
   });
@@ -95,7 +95,7 @@ describe("useAtom - Computed Atoms", () => {
   it("should compute derived values from primitive atoms", () => {
     const store = createStore();
     const countAtom = atom(0);
-    const doubleAtom = atom((get: Getter) => get(countAtom) * 2);
+    const doubleAtom = atom((get: any) => get(countAtom) * 2);
     expect(doubleAtom.type).toBe("computed");
 
     const { result } = renderHook(() => useAtom(doubleAtom, store));
@@ -111,9 +111,9 @@ describe("useAtom - Computed Atoms", () => {
   it("should chain computed atoms", () => {
     const store = createStore();
     const countAtom = atom(1);
-    const doubleAtom = atom((get: Getter) => get(countAtom) * 2);
+    const doubleAtom = atom((get: any) => get(countAtom) * 2);
     expect(doubleAtom.type).toBe("computed");
-    const tripleAtom = atom((get: Getter) => ((get(doubleAtom) + get(countAtom)) as number));
+    const tripleAtom = atom((get: any) => (get(doubleAtom) + get(countAtom)) as number);
     expect(tripleAtom.type).toBe("computed");
 
     const { result } = renderHook(() => useAtom(tripleAtom, store));
@@ -130,7 +130,7 @@ describe("useAtom - Computed Atoms", () => {
     const store = createStore();
     const a = atom(5);
     const b = atom(10);
-    const sumAtom = atom((get: Getter) => (get(a) + get(b)) as number);
+    const sumAtom = atom((get: any) => (get(a) + get(b)) as number);
     expect(sumAtom.type).toBe("computed");
 
     const { result } = renderHook(() => useAtom(sumAtom, store));
@@ -151,7 +151,7 @@ describe("useAtom - Computed Atoms", () => {
     const store = createStore();
     const firstNameAtom = atom("John", "first-name");
     const lastNameAtom = atom("Doe", "last-name");
-    const fullNameAtom = atom((get: Getter) => `${get(firstNameAtom)} ${get(lastNameAtom)}`);
+    const fullNameAtom = atom((get: any) => `${get(firstNameAtom)} ${get(lastNameAtom)}`);
     expect(fullNameAtom.type).toBe("computed");
 
     const { result } = renderHook(() => useAtom(fullNameAtom, store));
@@ -166,9 +166,9 @@ describe("useAtom - Computed Atoms", () => {
   it("should work with computed atoms using complex transformations", () => {
     const store = createStore();
     const numbersAtom = atom([1, 2, 3, 4, 5]);
-    const sumAtom = atom((get: Getter) => get(numbersAtom).reduce((a, b) => a + b, 0) as number);
+    const sumAtom = atom((get: any) => get(numbersAtom).reduce((a: number, b: number) => a + b, 0) as number);
     expect(sumAtom.type).toBe("computed");
-    const averageAtom = atom((get: Getter) => ((get(sumAtom) / get(numbersAtom).length) as number));
+    const averageAtom = atom((get: any) => ((get(sumAtom) / get(numbersAtom).length) as number));
     expect(averageAtom.type).toBe("computed");
 
     const { result } = renderHook(() => useAtom(averageAtom, store));
@@ -183,7 +183,7 @@ describe("useAtom - Computed Atoms", () => {
   it("should work with symbol-named computed atoms", () => {
     const store = createStore();
     const countAtom = atom(10);
-    const doubledAtom = atom((get: Getter) => get(countAtom) * 2, "doubled-count");
+    const doubledAtom = atom((get: any) => get(countAtom) * 2, "doubled-count");
     expect(doubledAtom.type).toBe("computed");
 
     const { result } = renderHook(() => useAtom(doubledAtom, store));
@@ -193,7 +193,7 @@ describe("useAtom - Computed Atoms", () => {
   it("should handle conditional logic in computed atoms", () => {
     const store = createStore();
     const countAtom = atom(0);
-    const statusAtom = atom((get: Getter) => (get(countAtom) > 0 ? "positive" : "non-positive"));
+    const statusAtom = atom((get: any) => (get(countAtom) > 0 ? "positive" : "non-positive"));
     expect(statusAtom.type).toBe("computed");
 
     const { result } = renderHook(() => useAtom(statusAtom, store));
@@ -217,8 +217,8 @@ describe("useAtom - Writable Atoms", () => {
     const store = createStore();
     const countAtom = atom(0);
     const writableCountAtom = atom(
-      (get: Getter) => get(countAtom),
-      (get: Getter, set: Setter, value: number) => set(countAtom, value),
+      (get: any) => get(countAtom),
+      (get: any, set: Setter, value: number) => set(countAtom, value),
     );
 
     const { result } = renderHook(() => useAtom(writableCountAtom, store));
@@ -229,8 +229,8 @@ describe("useAtom - Writable Atoms", () => {
     const store = createStore();
     const countAtom = atom(0);
     const writableCountAtom = atom(
-      (get: Getter) => get(countAtom),
-      (get: Getter, set: Setter, value: number) => set(countAtom, value),
+      (get: any) => get(countAtom),
+      (get: any, set: Setter, value: number) => set(countAtom, value),
     );
 
     const { result } = renderHook(() => useAtom(writableCountAtom, store));
@@ -247,14 +247,14 @@ describe("useAtom - Writable Atoms", () => {
     const store = createStore();
     const countAtom = atom(0);
     const writableCountAtom = atom(
-      (get: Getter) => get(countAtom),
-      (get: Getter, set: Setter, value: number) => set(countAtom, value),
+      (get: any) => get(countAtom),
+      (get: any, set: Setter, value: number) => set(countAtom, value),
     );
 
     const { result } = renderHook(() => useAtom(writableCountAtom, store));
 
     act(() => {
-      store.set(countAtom, (prev) => prev + 5);
+      store.set(countAtom, (prev: number) => prev + 5);
     });
     expect(result.current[0]).toBe(5);
   });
@@ -265,8 +265,8 @@ describe("useAtom - Writable Atoms", () => {
     const derivedAtom = atom(50);
     
     const writableCombinedAtom = atom(
-      (get: Getter) => get(baseAtom) + get(derivedAtom),
-      (get: Getter, set: Setter, value: number) => {
+      (get: any) => get(baseAtom) + get(derivedAtom),
+      (get: any, set: Setter, value: number) => {
         // Simple proportional split
         const total = get(baseAtom) + get(derivedAtom);
         const baseShare = get(baseAtom) / total;
@@ -294,8 +294,8 @@ describe("useAtom - Writable Atoms", () => {
     const store = createStore();
     const baseAtom = atom(10);
     const writableAtom = atom(
-      (get: Getter) => get(baseAtom),
-      (get: Getter, set: Setter, value: number) => set(baseAtom, value),
+      (get: any) => get(baseAtom),
+      (get: any, set: Setter, value: number) => set(baseAtom, value),
       "writable-base",
     );
 
