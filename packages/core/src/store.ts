@@ -272,9 +272,10 @@ export function createStore(plugins: Plugin[] = []): Store {
     // eslint-disable-line @typescript-eslint/no-explicit-any
     const state: Record<string, any> = {};
     atomStates.forEach((atomState, atom) => {
-      // Here we use the atom's internal ID or other identification
-      // Since we don't have direct access to the atom's name, we use its index or hash
-      state[atom.toString()] = atomState.value;
+      // Use atom name from registry if available, otherwise fall back to toString
+      const atomName = atomRegistry.getName(atom);
+      const key = atomName || atom.toString();
+      state[key] = atomState.value;
     });
     return state;
   };

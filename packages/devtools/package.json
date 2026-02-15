@@ -1,18 +1,22 @@
 {
   "name": "@nexus-state/devtools",
   "version": "0.1.4",
-  "main": "index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "sideEffects": false,
   "exports": {
     ".": {
-      "production": "./src/devtools-noop.ts",
-      "development": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && tsc -p tsconfig.build.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:types": "tsc -p tsconfig.build.json",
     "dev": "tsc -w",
     "test": "vitest run",
     "test:production": "vitest run src/__tests__/production-noop.test.ts",
@@ -21,9 +25,10 @@
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
-    "@nexus-state/core": "*"
+    "@nexus-state/core": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "typescript": "^5.0.0",
     "vitest": "^0.34.0",
     "eslint": "^8.40.0"

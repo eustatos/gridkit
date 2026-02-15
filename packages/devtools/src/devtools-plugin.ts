@@ -745,7 +745,11 @@ export class DevToolsPlugin {
       }
 
       if (stateChanged && this.config.actionSanitizer(action, stateToSend)) {
-        this.connection.send(action, stateToSend);
+        console.log('[DevTools] Sending action:', action);
+        console.log('[DevTools] State type:', typeof stateToSend);
+        console.log('[DevTools] State keys:', Object.keys(stateToSend));
+        console.log('[DevTools] State:', stateToSend);
+        this.connection.send({ type: action }, stateToSend);
         this.snapshotMapper.mapSnapshotToAction(
           `snap-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
           action,

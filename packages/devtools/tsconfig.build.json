@@ -4,7 +4,9 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./dist"
+    "declarationDir": "./dist/types",
+    "outDir": "./dist",
+    "strict": false
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["**/__tests__/**/*", "**/*.test.ts", "**/*.bench.ts"]
