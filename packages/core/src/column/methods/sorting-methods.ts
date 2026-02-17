@@ -1,4 +1,5 @@
 // Sorting methods for columns
+import type { EnsureRowData } from '@/types/helpers';
 import type { ValidatedColumnDef } from '../validation/validate-column';
 import type { Table } from '@/types/table/Table';
 import type { SortingState } from '@/types/table/TableState';
@@ -7,8 +8,8 @@ import type { SortingState } from '@/types/table/TableState';
  * Builds sorting-related methods for column instance.
  */
 export function buildSortingMethods<TData, TValue>(
-  columnDef: ValidatedColumnDef<TData, TValue>,
-  table: Table<TData>
+  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
+  table: Table<EnsureRowData<TData>>
 ) {
   const tableState = () => table.getState();
 

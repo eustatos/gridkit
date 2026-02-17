@@ -1,31 +1,31 @@
 // Column registry for managing column instances
 import { GridKitError } from '@/errors/grid-kit-error';
-import type { RowData } from '@/types/base';
+import type { EnsureRowData } from '@/types/helpers';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { ColumnId, ColumnGroupId } from '@/types/column/SupportingTypes';
-import type { Table } from '@/types/table/TableInstance';
+import type { Table } from '@/types/table/Table';
 
 /**
  * Manages all columns in a table with O(1) lookups.
  */
-export class ColumnRegistry<TData extends RowData> {
+export class ColumnRegistry<TData> {
   private columns = new Map<ColumnId, Column<TData>>();
   private columnOrder: ColumnId[] = [];
   private columnGroups = new Map<ColumnGroupId, ColumnId[]>();
-  private table: Table<TData> | null = null;
+  private table: Table<EnsureRowData<TData>> | null = null;
 
   /**
    * Set the table instance for this registry.
    * Used for circular dependencies.
    */
-  setTable(table: Table<TData>): void {
+  setTable(table: Table<EnsureRowData<TData>>): void {
     this.table = table;
   }
 
   /**
    * Get the table instance.
    */
-  getTable(): Table<TData> | null {
+  getTable(): Table<EnsureRowData<TData>> | null {
     return this.table;
   }
 
@@ -91,7 +91,7 @@ export class ColumnRegistry<TData extends RowData> {
  * Creates a new column registry instance.
  */
 export function createColumnRegistry<
-  TData extends RowData,
+  TData,
 >(): ColumnRegistry<TData> {
   return new ColumnRegistry<TData>();
 }

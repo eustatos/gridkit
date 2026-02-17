@@ -1,4 +1,5 @@
 // Size management methods for columns
+import type { EnsureRowData } from '@/types/helpers';
 import type { ValidatedColumnDef } from '../validation/validate-column';
 import type { Table } from '@/types/table/Table';
 
@@ -13,8 +14,8 @@ export function clamp(value: number, min: number, max: number): number {
  * Builds size-related methods for column instance.
  */
 export function buildSizeMethods<TData, TValue>(
-  columnDef: ValidatedColumnDef<TData, TValue>,
-  table: Table<TData>
+  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
+  table: Table<EnsureRowData<TData>>
 ) {
   const tableState = () => table.getState();
 

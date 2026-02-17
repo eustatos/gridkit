@@ -1,14 +1,14 @@
 // Column definition normalization
-import type { RowData } from '@/types/base';
+import type { EnsureRowData } from '@/types/helpers';
 import type { ColumnDef } from '@/types/column/ColumnDef';
 import type { ValidatedColumnDef } from './validate-column';
 
 /**
  * Normalizes column definition with default values.
  */
-export function normalizeColumnDef<TData extends RowData, TValue>(
-  columnDef: ColumnDef<TData, TValue>
-): ValidatedColumnDef<TData, TValue> {
+export function normalizeColumnDef<TData, TValue>(
+  columnDef: ColumnDef<EnsureRowData<TData>, TValue>
+): ValidatedColumnDef<EnsureRowData<TData>, TValue> {
   return {
     ...columnDef,
     id: columnDef.id!,

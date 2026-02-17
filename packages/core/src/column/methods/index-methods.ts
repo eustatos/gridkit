@@ -1,4 +1,5 @@
 // Index methods for columns
+import type { EnsureRowData } from '@/types/helpers';
 import type { ValidatedColumnDef } from '../validation/validate-column';
 import type { Table } from '@/types/table/Table';
 
@@ -6,8 +7,8 @@ import type { Table } from '@/types/table/Table';
  * Builds index-related methods for column instance.
  */
 export function buildIndexMethods<TData, TValue>(
-  columnDef: ValidatedColumnDef<TData, TValue>,
-  table: Table<TData>
+  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
+  table: Table<EnsureRowData<TData>>
 ) {
   const tableState = () => table.getState();
 

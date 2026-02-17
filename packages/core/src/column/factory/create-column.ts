@@ -1,19 +1,18 @@
 // Main factory function for creating column instances
-import type { RowData } from '@/types/base';
+import type { EnsureRowData } from '@/types/helpers';
 import type { ColumnDef } from '@/types/column/ColumnDef';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { Table } from '@/types/table/Table';
 import { validateColumnDef, ValidatedColumnDef } from '../validation/validate-column';
 import { createAccessor, ColumnAccessor } from './accessor-system';
 import { buildColumnMethods } from './build-column-methods';
-import { GridKitError } from '@/errors/grid-kit-error';
 
 /**
  * Options for creating a column instance.
  */
-export interface CreateColumnOptions<TData extends RowData, TValue = unknown> {
-  columnDef: ColumnDef<TData, TValue>;
-  table: Table<TData>;
+export interface CreateColumnOptions<TData, TValue = unknown> {
+  columnDef: ColumnDef<EnsureRowData<TData>, TValue>;
+  table: Table<EnsureRowData<TData>>;
 }
 
 /**
@@ -61,27 +60,27 @@ function extractColumnMetadata<TData, TValue>(
  * Creates a runtime column instance from definition.
  * Handles type inference, validation, and feature enablement.
  */
-export function createColumn<TData extends RowData, TValue = unknown>(
+export function createColumn<TData, TValue = unknown>(
   options: CreateColumnOptions<TData, TValue>
 ): Column<TData, TValue> {
   // 1. Validate and normalize definition
   const validatedDef = validateColumnDef(options.columnDef, options.table);
 
   // 2. Extract column metadata
-  const metadata = extractColumnMetadata(validatedDef);
+  const metadata = extractColumnMetadata(validatedDef as ValidatedColumnDef<TData, TValue>);
 
   // 3. Create runtime methods
-  const methods = buildColumnMethods(validatedDef, options.table);
+  const methods = buildColumnMethods(validatedDef as ValidatedColumnDef<TData, TValue>, options.table);
 
   // 4. Create accessor
-  const accessor = createAccessor(validatedDef);
+  const accessor = createAccessor(validatedDef as ValidatedColumnDef<TData, TValue>);
 
   // 5. Build column instance
   const column: Column<TData, TValue> = {
     // Identification
     id: validatedDef.id!,
     table: options.table,
-    columnDef: Object.freeze(validatedDef),
+    columnDef: Object.freeze(validatedDef as ValidatedColumnDef<TData, TValue>),
 
     // State accessors
     getSize: methods.getSize,

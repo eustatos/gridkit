@@ -1,8 +1,8 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
+  "\$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020", "DOM"],
+    "target": "ES2021",
+    "lib": ["ES2021", "DOM"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,

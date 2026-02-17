@@ -1,5 +1,5 @@
 // Builds all runtime methods for column instance
-import type { RowData } from '@/types/base';
+import type { EnsureRowData } from '@/types/helpers';
 import type { ValidatedColumnDef } from '../validation/validate-column';
 import type { Table } from '@/types/table/Table';
 import { buildSizeMethods } from '../methods/size-methods';
@@ -44,11 +44,9 @@ export interface ColumnMethods<TData, TValue> {
  * Builds runtime methods for column instance.
  */
 export function buildColumnMethods<TData, TValue>(
-  columnDef: ValidatedColumnDef<TData, TValue>,
-  table: Table<TData>
+  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
+  table: Table<EnsureRowData<TData>>
 ): ColumnMethods<TData, TValue> {
-  const tableState = () => table.getState();
-
   // Build all method groups
   const sizeMethods = buildSizeMethods(columnDef, table);
   const visibilityMethods = buildVisibilityMethods(columnDef, table);

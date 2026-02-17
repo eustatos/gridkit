@@ -1,4 +1,5 @@
 // Filtering methods for columns
+import type { EnsureRowData } from '@/types/helpers';
 import type { ValidatedColumnDef } from '../validation/validate-column';
 import type { Table } from '@/types/table/Table';
 import type { FilteringState } from '@/types/table/TableState';
@@ -7,8 +8,8 @@ import type { FilteringState } from '@/types/table/TableState';
  * Builds filtering-related methods for column instance.
  */
 export function buildFilteringMethods<TData, TValue>(
-  columnDef: ValidatedColumnDef<TData, TValue>,
-  table: Table<TData>
+  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
+  table: Table<EnsureRowData<TData>>
 ) {
   const tableState = () => table.getState();
 
