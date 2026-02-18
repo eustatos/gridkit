@@ -8,6 +8,9 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test'
     },
+    testTimeout: 10000,
+    hookTimeout: 5000,
+    teardownTimeout: 5000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -28,7 +31,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, '../..'),
     },
   },
 });

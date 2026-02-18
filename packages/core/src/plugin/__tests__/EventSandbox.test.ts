@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EventSandbox } from '../isolation/EventSandbox';
-import { createEventBus } from '../../events/PluginEventBus';
+import { createEventBus, EventPriority } from '../../events';
 
 describe('EventSandbox', () => {
   let baseBus: ReturnType<typeof createEventBus>;
@@ -8,7 +8,7 @@ describe('EventSandbox', () => {
 
   beforeEach(() => {
     baseBus = createEventBus();
-    sandbox = new EventSandbox('test-plugin', baseBus, ['emit:test-event', 'receive:test-event']);
+    sandbox = new EventSandbox('test-plugin', baseBus, ['*']);
   });
 
   describe('constructor', () => {
@@ -21,7 +21,7 @@ describe('EventSandbox', () => {
       baseBus.on('test-event', handler);
 
       const localBus = sandbox.getBus();
-      localBus.emit('test-event', { data: 'test' });
+      localBus.emit('test-event', { data: 'test' }, { priority: EventPriority.IMMEDIATE });
 
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -41,7 +41,7 @@ describe('EventSandbox', () => {
       const localBus = sandbox.getBus();
       localBus.on('external-event', handler);
 
-      baseBus.emit('external-event', { data: 'external' });
+      baseBus.emit('external-event', { data: 'external' }, { priority: EventPriority.IMMEDIATE });
 
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -60,7 +60,7 @@ describe('EventSandbox', () => {
       baseBus.on('allowed-event', handler);
 
       const localBus = sandbox.getBus();
-      localBus.emit('allowed-event', { data: 'test' });
+      localBus.emit('allowed-event', { data: 'test' }, { priority: EventPriority.IMMEDIATE });
 
       expect(handler).toHaveBeenCalled();
     });
@@ -106,7 +106,7 @@ describe('EventSandbox', () => {
       baseBus.on('metadata-test', handler);
 
       const localBus = sandbox.getBus();
-      localBus.emit('metadata-test', { testData: 'value' });
+      localBus.emit('metadata-test', { testData: 'value' }, { priority: EventPriority.IMMEDIATE });
 
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({

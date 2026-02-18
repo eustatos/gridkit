@@ -27,7 +27,7 @@
 
 import type { GridId, ColumnId, RowId, CellId } from './base';
 
-import { GridKitError } from '@/errors/index';
+import { GridKitError } from '../errors/index';
 
 /**
  * Creates a validated GridId with optional prefix.

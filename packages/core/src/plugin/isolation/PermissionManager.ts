@@ -50,6 +50,7 @@ export class PermissionManager {
 
   /**
    * Checks if a plugin has a specific permission.
+   * Supports exact matches and wildcard patterns (e.g., 'receive:*' matches 'receive:test').
    * @param pluginId - The plugin identifier
    * @param permission - The permission to check
    * @returns true if the plugin has the permission, false otherwise
@@ -66,7 +67,26 @@ export class PermissionManager {
     // Check if plugin has the permission
     if (this.pluginPermissions.has(pluginId)) {
       const permissions = this.pluginPermissions.get(pluginId)!;
-      return permissions.has(permission) || permissions.has('*');
+      
+      // Exact match
+      if (permissions.has(permission)) {
+        return true;
+      }
+      
+      // Global wildcard matches everything
+      if (permissions.has('*')) {
+        return true;
+      }
+      
+      // Check for pattern matches (e.g., 'receive:*' matches 'receive:test')
+      for (const perm of permissions) {
+        if (perm.endsWith(':*')) {
+          const prefix = perm.slice(0, perm.indexOf(':*'));
+          if (permission.startsWith(prefix + ':')) {
+            return true;
+          }
+        }
+      }
     }
 
     return false;

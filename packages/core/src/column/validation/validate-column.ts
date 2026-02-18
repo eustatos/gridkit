@@ -2,7 +2,7 @@
 import type { RowData } from '@/types/base';
 import type { ColumnDef } from '@/types/column/ColumnDef';
 import type { Table } from '@/types/table/Table';
-import { GridKitError } from '@/errors/grid-kit-error';
+import { GridKitError } from '../../errors/grid-kit-error';
 import { normalizeColumnDef } from './normalize-column';
 
 /**

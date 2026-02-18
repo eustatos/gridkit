@@ -123,7 +123,11 @@ export interface EventPayloadMap {
 }
 
 // Helper type to get payload type by event type
-export type EventPayload<T extends keyof EventPayloadMap> = EventPayloadMap[T];
+// For known event types, returns the specific payload
+// For unknown event types (like channel events), accepts unknown payload
+export type EventPayload<T extends string> = T extends keyof EventPayloadMap
+  ? EventPayloadMap[T]
+  : unknown;
 
 // Helper type for event type strings
 export type EventType = keyof EventPayloadMap;

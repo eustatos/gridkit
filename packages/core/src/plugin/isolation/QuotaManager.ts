@@ -76,6 +76,15 @@ export class QuotaManager {
   }
 
   /**
+   * Maps quota resource names to usage field names
+   */
+  private static readonly resourceToUsageMap: Record<string, keyof ResourceUsage> = {
+    maxEventsPerSecond: 'eventsEmitted',
+    maxHandlerTimePerSecond: 'handlerExecutionTime',
+    maxMemoryUsage: 'memoryUsage',
+  };
+
+  /**
    * Checks if a plugin is within its quota for a resource.
    * 
    * This method checks if a plugin is within its quota for a specific
@@ -107,12 +116,15 @@ export class QuotaManager {
       this.lastResetTime.set(pluginId, now);
     }
 
-    if (!quota || !quota[resource as keyof PluginQuota]) return true; // No quota = unlimited
+    if (!quota || quota[resource as keyof PluginQuota] === undefined || quota[resource as keyof PluginQuota] === null) return true; // No quota = unlimited
 
     const limit = quota[resource as keyof PluginQuota] as number | undefined;
     if (limit === undefined) return true; // No limit for this resource
 
-    const used = currentUsage[resource as keyof ResourceUsage] as number || 0;
+    const usageField = QuotaManager.resourceToUsageMap[resource];
+    if (!usageField) return true; // Unknown resource type
+
+    const used = currentUsage[usageField] as number || 0;
 
     if (used + amount > limit) {
       this.onQuotaExceeded(pluginId, resource, limit);
@@ -120,7 +132,7 @@ export class QuotaManager {
     }
 
     // Update usage
-    currentUsage[resource as keyof ResourceUsage] = used + amount;
+    currentUsage[usageField] = used + amount;
     this.usage.set(pluginId, currentUsage);
     return true;
   }

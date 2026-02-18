@@ -13,7 +13,7 @@ import { createPriorityQueue, type PriorityQueue } from './utils/priority';
 /**
  * Handler entry with metadata
  */
-interface HandlerEntry<T extends EventType> {
+interface HandlerEntry<T extends string> {
   handler: EventHandler<GridEvent<EventPayload<T>>>;
   options: EventHandlerOptions;
   id: number;
@@ -35,8 +35,8 @@ interface EventBusStats {
  * Performance-optimized event bus implementation
  */
 export class EventBus {
-  private handlers = new Map<string, HandlerEntry<EventType>[]>();
-  private handlerIdMap = new Map<number, HandlerEntry<EventType>>();
+  private handlers = new Map<string, HandlerEntry<string>[]>();
+  private handlerIdMap = new Map<number, HandlerEntry<string>>();
   private middlewares: EventMiddleware[] = [];
   private priorityQueue: PriorityQueue;
   private cleanupManager: CleanupManager;
@@ -66,7 +66,7 @@ export class EventBus {
   /**
    * Subscribe to an event with performance optimizations
    */
-  on<T extends EventType>(
+  on<T extends string>(
     event: T,
     handler: EventHandler<GridEvent<EventPayload<T>>>,
     options: EventHandlerOptions = {}
@@ -91,12 +91,12 @@ export class EventBus {
     const insertIndex = handlers.findIndex((h) => h.priority > entry.priority);
 
     if (insertIndex === -1) {
-      handlers.push(entry as HandlerEntry<EventType>);
+      handlers.push(entry as HandlerEntry<string>);
     } else {
-      handlers.splice(insertIndex, 0, entry as HandlerEntry<EventType>);
+      handlers.splice(insertIndex, 0, entry as HandlerEntry<string>);
     }
 
-    this.handlerIdMap.set(id, entry as HandlerEntry<EventType>);
+    this.handlerIdMap.set(id, entry as HandlerEntry<string>);
     this.stats.totalHandlers++;
 
     // Optimized cleanup tracking
@@ -117,7 +117,7 @@ export class EventBus {
   /**
    * Subscribe to event once
    */
-  once<T extends EventType>(
+  once<T extends string>(
     event: T,
     handler: EventHandler<GridEvent<EventPayload<T>>>
   ): () => void {
@@ -127,7 +127,7 @@ export class EventBus {
   /**
    * Unsubscribe from event - optimized version
    */
-  off<T extends EventType>(
+  off<T extends string>(
     event: T,
     handler: EventHandler<GridEvent<EventPayload<T>>>
   ): void {
@@ -154,7 +154,7 @@ export class EventBus {
   /**
    * High-performance emit with optimizations
    */
-  emit<T extends EventType>(
+  emit<T extends string>(
     event: T,
     payload: EventPayload<T>,
     options?: {
@@ -178,7 +178,7 @@ export class EventBus {
       const processedEvent = this.applyMiddlewareFast(gridEvent, event);
 
       if (processedEvent) {
-        this.executeHandlersSync(event, processedEvent);
+        this.executeHandlersWithPatternSync(event, processedEvent);
       }
       return;
     }
@@ -192,7 +192,7 @@ export class EventBus {
     }
 
     this.priorityQueue.enqueue(
-      () => this.executeHandlers(event, processedEvent),
+      () => this.executeHandlersWithPattern(event, processedEvent, (e, handlers, g) => this.executeHandlerList(e, handlers, g)),
       priority
     );
 
@@ -205,7 +205,7 @@ export class EventBus {
   /**
    * Optimized batch emit
    */
-  emitBatch<T extends EventType>(
+  emitBatch<T extends string>(
     events: Array<{
       event: T;
       payload: EventPayload<T>;
@@ -296,7 +296,7 @@ export class EventBus {
     }
   }
 
-  private createEvent<T extends EventType>(
+  private createEvent<T extends string>(
     event: T,
     payload: EventPayload<T>,
     options?: {
@@ -314,13 +314,11 @@ export class EventBus {
     } as GridEvent<EventPayload<T>>;
   }
 
-  private executeHandlers<T extends EventType>(
+  private executeHandlerList<T extends string>(
     event: T,
+    handlers: HandlerEntry<string>[],
     gridEvent: GridEvent<EventPayload<T>>
   ): void {
-    const handlers = this.handlers.get(event);
-    if (!handlers || handlers.length === 0) return;
-
     const toRemove: number[] = [];
     const startTime = performance.now();
     const length = handlers.length;
@@ -391,13 +389,11 @@ export class EventBus {
     }
   }
 
-  private executeHandlersSync<T extends EventType>(
+  private executeHandlerListSync<T extends string>(
     event: T,
+    handlers: HandlerEntry<string>[],
     gridEvent: GridEvent<EventPayload<T>>
   ): void {
-    const handlers = this.handlers.get(event);
-    if (!handlers || handlers.length === 0) return;
-
     const toRemove: number[] = [];
     const startTime = performance.now();
     const length = handlers.length;
@@ -450,7 +446,80 @@ export class EventBus {
     );
   }
 
-  private applyMiddlewareFast<T extends EventType>(
+  /**
+   * Checks if an event type matches a pattern (supports wildcard *)
+   */
+  private matchesPattern(event: string, pattern: string): boolean {
+    // Exact match
+    if (event === pattern) {
+      return true;
+    }
+    
+    // Global wildcard matches everything
+    if (pattern === '*') {
+      return true;
+    }
+    
+    // Pattern with wildcard (e.g., 'data:*' matches 'data:read')
+    if (pattern.endsWith(':*')) {
+      const prefix = pattern.slice(0, pattern.indexOf(':*'));
+      return event.startsWith(prefix + ':');
+    }
+    
+    return false;
+  }
+
+  /**
+   * Execute handlers for an event with pattern matching support (sync version)
+   */
+  private executeHandlersWithPatternSync<T extends string>(
+    event: T,
+    gridEvent: GridEvent<EventPayload<T>>
+  ): void {
+    this.executeHandlersWithPattern(event, gridEvent, (e, handlers, g) => this.executeHandlerListSync(e, handlers, g));
+  }
+
+  /**
+   * Execute handlers for an event with pattern matching support
+   */
+  private executeHandlersWithPattern<T extends string>(
+    event: T,
+    gridEvent: GridEvent<EventPayload<T>>,
+    executeList: (event: T, handlers: HandlerEntry<string>[], gridEvent: GridEvent<EventPayload<T>>) => void
+  ): void {
+    // Get exact match handlers
+    const exactHandlers = this.handlers.get(event);
+    
+    // Get wildcard handlers
+    const wildcardHandlers = this.handlers.get('*');
+    
+    // Get pattern-based handlers (e.g., 'data:*' for event 'data:read')
+    const patternHandlers: HandlerEntry<T>[] = [];
+    for (const [pattern, handlers] of this.handlers) {
+      if (pattern !== '*' && pattern !== event && pattern.endsWith(':*')) {
+        if (this.matchesPattern(event, pattern)) {
+          patternHandlers.push(...handlers);
+        }
+      }
+    }
+    
+    // Call exact match handlers
+    if (exactHandlers && exactHandlers.length > 0) {
+      executeList(event, exactHandlers, gridEvent);
+    }
+    
+    // Call pattern-based handlers if they exist
+    if (patternHandlers.length > 0) {
+      executeList(event, patternHandlers, gridEvent);
+    }
+    
+    // Call wildcard handlers if they exist
+    if (wildcardHandlers && wildcardHandlers.length > 0) {
+      executeList(event, wildcardHandlers, gridEvent);
+    }
+  }
+
+  private applyMiddlewareFast<T extends string>(
     event: GridEvent<EventPayload<T>>,
     eventType: T
   ): GridEvent<EventPayload<T>> | null {

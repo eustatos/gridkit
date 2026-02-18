@@ -10,6 +10,9 @@ export function createPluginEventBus(): EventBus {
   return createEventBus();
 }
 
+// Re-export createEventBus for test compatibility
+export { createEventBus } from '../../events';
+
 /**
  * Get the global plugin event bus
  * 

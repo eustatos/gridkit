@@ -4,7 +4,7 @@ import {
   destroyPlugins,
   PluginDestructionError
 } from '../lifecycle/Destroyer';
-import type { Plugin, PluginContext } from '../core/Plugin';
+import type { Plugin, PluginContext } from '../../plugin/core/Plugin';
 
 describe('Destroyer', () => {
   describe('destroyPlugin', () => {

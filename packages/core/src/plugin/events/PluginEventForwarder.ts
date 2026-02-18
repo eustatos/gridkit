@@ -1,5 +1,4 @@
-import type { EventBus } from './PluginEventBus';
-import type { GridEvent } from './PluginEvents';
+import type { EventBus } from '../..';
 import { EventSandbox } from '../isolation/EventSandbox';
 
 /**
@@ -60,5 +59,32 @@ export class PluginEventForwarder {
    */
   getSandbox(pluginId: string): EventBus | undefined {
     return this.sandboxes.get(pluginId)?.getBus();
+  }
+
+  /**
+   * Gets the event sandbox for a plugin.
+   * @param pluginId - The unique identifier for the plugin
+   * @returns The event sandbox for the plugin, or undefined if not found
+   * 
+   * @example
+   * ```typescript
+   * const sandbox = forwarder.getSandboxInstance('plugin-1');
+   * ```
+   */
+  getSandboxInstance(pluginId: string): EventSandbox | undefined {
+    return this.sandboxes.get(pluginId);
+  }
+
+  /**
+   * Gets the base event bus used by this forwarder.
+   * @returns The base event bus
+   * 
+   * @example
+   * ```typescript
+   * const baseBus = forwarder.getBaseBus();
+   * ```
+   */
+  getBaseBus(): EventBus {
+    return this.baseBus;
   }
 }

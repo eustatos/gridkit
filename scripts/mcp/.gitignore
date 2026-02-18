@@ -1,0 +1,4 @@
+# Include all files in this directory
+!*
+!README.md
+!.gitignore

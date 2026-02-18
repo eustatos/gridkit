@@ -1,6 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PluginEventForwarder } from '../events/PluginEventForwarder';
-import { createEventBus } from '../../events/PluginEventBus';
+import { createEventBus } from '../../events';
+
+// Helper to wait for microtasks to complete
+const flushMicrotasks = () =>
+  new Promise((resolve) => {
+    if (typeof queueMicrotask !== 'undefined') {
+      queueMicrotask(() => queueMicrotask(() => queueMicrotask(resolve)));
+    } else {
+      // Fallback for environments without queueMicrotask
+      setTimeout(resolve, 0);
+    }
+  });
 
 describe('PluginEventForwarder', () => {
   let baseBus: ReturnType<typeof createEventBus>;
@@ -21,7 +32,7 @@ describe('PluginEventForwarder', () => {
   });
 
   describe('isolation', () => {
-    it('isolates events between plugins', () => {
+    it('isolates events between plugins', async () => {
       const plugin1Bus = forwarder.createSandbox('plugin-1', ['emit:test']);
       const plugin2Bus = forwarder.createSandbox('plugin-2', ['emit:test']);
 
@@ -34,23 +45,34 @@ describe('PluginEventForwarder', () => {
       // Plugin 1 emits event
       plugin1Bus.emit('test', { data: 'from-plugin-1' });
 
-      // Only plugin 1 should receive its own event
+      // Wait for async execution
+      await flushMicrotasks();
+
+      // Plugin 1 should receive its own event
       expect(plugin1Handler).toHaveBeenCalled();
+      // Plugin 2 should NOT receive plugin 1's event
       expect(plugin2Handler).not.toHaveBeenCalled();
     });
   });
 
   describe('permission forwarding', () => {
-    it('forwards events with permission', () => {
+    it('forwards events with permission to base bus', async () => {
       const pluginBus = forwarder.createSandbox('plugin-1', ['emit:allowed']);
 
       const baseHandler = vi.fn();
       baseBus.on('allowed', baseHandler);
       baseBus.on('denied', baseHandler);
 
+      // Plugin emits allowed event - should be forwarded to base bus
       pluginBus.emit('allowed', { data: 'allowed' });
+      
+      // Plugin emits denied event - should NOT be forwarded
       pluginBus.emit('denied', { data: 'denied' });
 
+      // Wait for async execution
+      await flushMicrotasks();
+
+      // Only the allowed event should have been forwarded
       expect(baseHandler).toHaveBeenCalledTimes(1);
       expect(baseHandler).toHaveBeenCalledWith(
         expect.objectContaining({

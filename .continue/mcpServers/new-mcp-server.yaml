@@ -1,0 +1,10 @@
+name: ts-language-mcp
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: ts-language-mcp
+    command: /Users/aleksanderastashkin/.nvm/versions/node/v20.19.4/bin/node
+    args:
+      - /Users/aleksanderastashkin/develop/mcp-module-server/dist/server-mcp.js
+      - /Users/aleksanderastashkin/develop/gridkit
+    env: {}

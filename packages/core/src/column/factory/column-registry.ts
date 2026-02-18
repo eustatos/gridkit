@@ -1,5 +1,5 @@
 // Column registry for managing column instances
-import { GridKitError } from '@/errors/grid-kit-error';
+import { GridKitError } from '../../errors/grid-kit-error';
 import type { EnsureRowData } from '@/types/helpers';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { ColumnId, ColumnGroupId } from '@/types/column/SupportingTypes';
