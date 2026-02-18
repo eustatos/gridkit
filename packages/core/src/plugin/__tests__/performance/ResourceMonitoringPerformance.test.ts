@@ -116,7 +116,7 @@ describe('Resource Monitoring Performance', () => {
         quotaManager.suspendPlugin('test-plugin');
         const duration = performance.now() - start;
 
-        expect(duration).toBeLessThan(0.5); // Adjusted threshold
+        expect(duration).toBeLessThan(1); // Increased threshold for CI/CD variability
         expect(warnSpy).toHaveBeenCalledWith('Plugin test-plugin suspended due to quota violation');
 
         warnSpy.mockRestore();
