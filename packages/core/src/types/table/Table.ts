@@ -20,6 +20,7 @@ import type { TableState } from './TableState';
 import type { TableOptions } from './TableOptions';
 import type { Row, RowModel } from './Row';
 import type { Column } from './Column';
+import type { PerformanceMetrics } from '@/performance';
 
 // ===================================================================
 // Table Instance Interface
@@ -125,7 +126,7 @@ export interface Table<TData extends RowData> {
   /**
    * Performance metrics (enabled in debug mode).
    */
-  readonly metrics?: TableMetrics;
+  readonly metrics?: PerformanceMetrics;
 }
 
 // ===================================================================

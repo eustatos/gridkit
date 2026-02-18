@@ -5,6 +5,7 @@ import { createEventBus } from '../../events';
 import { buildInitialState } from '../builders/state-builder';
 import { buildRowModel } from '../builders/model-builder';
 import { createRowFactory } from '../../row';
+import { createPerformanceMonitor } from '../../performance';
 
 /**
  * Creates the table instance with proper memory management.
@@ -37,9 +38,12 @@ function createTableInstance<TData>(
   });
 
   // === Performance Monitoring ===
-  // const metrics = options.debug?.performance
-  //   ? createPerformanceMonitor()
-  //   : undefined;
+  const performanceMonitor = options.debug?.performance
+    ? createPerformanceMonitor({
+        enabled: true,
+        budgets: options.performanceBudgets,
+      })
+    : undefined;
 
   // === Build the Instance ===
   const instance: Table<TData> = {
@@ -49,20 +53,38 @@ function createTableInstance<TData>(
     // State Management
     getState: () => stateStore.getState(),
     setState: (updater) => {
-      // metrics?.startMeasurement('stateUpdate');
-      stateStore.setState(updater);
-      // metrics?.endMeasurement('stateUpdate');
+      const stop = performanceMonitor?.start('stateUpdate', {
+        tableId: instance.id,
+        operation: typeof updater === 'function' ? 'function' : 'direct',
+      });
+
+      try {
+        stateStore.setState(updater);
+      } finally {
+        stop?.();
+      }
     },
     subscribe: (listener) => stateStore.subscribe(listener),
 
     // Data Access
-    getRowModel: () =>
-      buildRowModel({
-        data: stateStore.getState().data,
-        rowFactory,
-        columnRegistry,
-        table: instance,
-      }),
+    getRowModel: () => {
+      const stop = performanceMonitor?.start('rowModelBuild', {
+        tableId: instance.id,
+        rowCount: stateStore.getState().data.length,
+      });
+
+      try {
+        const model = buildRowModel({
+          data: stateStore.getState().data,
+          rowFactory,
+          columnRegistry,
+          table: instance,
+        });
+        return model;
+      } finally {
+        stop?.();
+      }
+    },
     getRow: (id) => {
       const model = instance.getRowModel();
       return model.rowsById.get(id);
@@ -87,7 +109,7 @@ function createTableInstance<TData>(
       stateStore.destroy();
       columnRegistry.destroy();
       eventBus.clear();
-      // metrics?.destroy();
+      performanceMonitor?.clear();
 
       // Clear references for GC
       Object.keys(instance).forEach((key) => {
@@ -98,7 +120,7 @@ function createTableInstance<TData>(
     // Metadata
     options: Object.freeze(options) as Readonly<ValidatedTableOptions<TData>>,
     meta: options.meta,
-    metrics: undefined,
+    metrics: performanceMonitor?.getMetrics(),
     _internal: {
       stateStore,
       columnRegistry,

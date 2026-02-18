@@ -9,6 +9,7 @@
 import type { RowId, RowData, DeepPartial } from '@/types';
 import type { TableState } from './TableState';
 import type { ColumnDef } from './Column';
+import type { PerformanceBudgets as CorePerformanceBudgets } from '@/performance';
 
 // ===================================================================
 // Table Options (Configuration)
@@ -66,7 +67,7 @@ export interface TableOptions<TData extends RowData> {
    * Performance budgets for validation.
    * Fails fast if budgets are exceeded.
    */
-  performanceBudgets?: PerformanceBudgets;
+  performanceBudgets?: CorePerformanceBudgets;
 
   // === Event Handlers ===
 
@@ -97,8 +98,5 @@ export interface TableOptions<TData extends RowData> {
   meta?: TableMeta;
 }
 
-// Placeholder types for now
-interface DebugOptions {}
-interface PerformanceBudgets {}
-interface GridKitError {}
-interface TableMeta {}
+// Use actual types from performance module
+type PerformanceBudgets = CorePerformanceBudgets;

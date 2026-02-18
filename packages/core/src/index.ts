@@ -15,3 +15,6 @@ export * from './column';
 
 // Table system exports
 export * from './table';
+
+// Performance monitoring exports
+export * from './performance';
