@@ -16,6 +16,9 @@ export interface SelectionOptions {
 
   /** Clear existing selection first */
   readonly clearOthers?: boolean;
+
+  /** Selection mode */
+  readonly mode?: 'single' | 'multi';
 }
 
 /**

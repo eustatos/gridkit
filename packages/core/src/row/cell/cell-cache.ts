@@ -9,13 +9,14 @@
 
 import type { RowData } from '@/types';
 import type { Cell } from '@/types/row/Cell';
-import type { Column } from '@/types/column/ColumnInstance';
+// Column is not used - kept for potential future use
+// import type { Column } from '@/types/column/ColumnInstance';
 
 /**
  * Cell cache entry for storing cell instances.
  */
-interface CellCacheEntry<TData extends RowData, TValue> {
-  cell: Cell<TData, TValue>;
+interface CellCacheEntry<TData extends RowData> {
+  cell: Cell<TData, unknown>;
   lastAccessed: number;
 }
 
@@ -25,7 +26,7 @@ interface CellCacheEntry<TData extends RowData, TValue> {
  * @template TData - Row data type
  */
 export class CellCache<TData extends RowData> {
-  private cache = new Map<string, CellCacheEntry<TData, unknown>>();
+  private cache = new Map<string, CellCacheEntry<TData>>();
   private maxSize: number;
   private accessCounter = 0;
 
@@ -45,7 +46,7 @@ export class CellCache<TData extends RowData> {
   get<TValue = unknown>(
     columnId: string
   ): Cell<TData, TValue> | undefined {
-    const entry = this.cache.get(columnId) as CellCacheEntry<TData, TValue> | undefined;
+    const entry = this.cache.get(columnId) as CellCacheEntry<TData> | undefined;
     if (entry) {
       entry.lastAccessed = ++this.accessCounter;
       return entry.cell as Cell<TData, TValue>;
@@ -65,7 +66,7 @@ export class CellCache<TData extends RowData> {
     }
 
     this.cache.set(columnId, {
-      cell,
+      cell: cell as Cell<TData, unknown>,
       lastAccessed: ++this.accessCounter,
     });
   }

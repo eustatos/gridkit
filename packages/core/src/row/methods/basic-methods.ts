@@ -72,7 +72,7 @@ export interface BuildBasicRowMethodsOptions<TData extends RowData> {
 export function buildBasicRowMethods<TData extends RowData>(
   options: BuildBasicRowMethodsOptions<TData>
 ): BasicRowMethods<TData> {
-  const { id, originalData, table, columns, cellCache } = options;
+  const { originalData, table, columns, cellCache } = options;
 
   return {
     // Cell access methods
@@ -93,7 +93,7 @@ export function buildBasicRowMethods<TData extends RowData>(
 
       columns.forEach((column) => {
         // Check column visibility
-        if (state.columnVisibility?.[column.id] !== false) {
+        if ((state.columnVisibility as Record<string, boolean>)?.[column.id] !== false) {
           const cell = cellCache.get(column.id);
           if (cell) {
             cells.push(cell as Cell<TData>);

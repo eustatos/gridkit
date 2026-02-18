@@ -12,8 +12,25 @@ export type {
 
 // Row methods exports
 export type { BasicRowMethods } from './methods';
+export { 
+  buildSelectionMethods, 
+  createEmptySelectionMethods,
+  SelectionMethods,
+  BuildSelectionMethodsOptions
+} from './methods';
+
+export { 
+  buildExpansionMethods, 
+  createEmptyExpansionMethods,
+  ExpansionMethods,
+  BuildExpansionMethodsOptions
+} from './methods';
 
 // Cell exports
+export { createCell, CellCache, createCellCache } from './cell';
+export type { Cell } from './cell';
+
+// Cell exports (deprecated - use cell module)
 export type { CellCache } from './cell';
 
 // Cell cache exports
