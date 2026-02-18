@@ -26,12 +26,6 @@ export {
   BuildExpansionMethodsOptions
 } from './methods';
 
-// Cell exports
-export { createCell, CellCache, createCellCache } from './cell';
+// Cell exports - re-export from cell module
+export { createCell, createCellCache, CellCache } from './cell';
 export type { Cell } from './cell';
-
-// Cell exports (deprecated - use cell module)
-export type { CellCache } from './cell';
-
-// Cell cache exports
-export { createCellCache, CellCache } from './cell';
