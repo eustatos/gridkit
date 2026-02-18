@@ -4,7 +4,7 @@ import { createColumn } from '../factory/create-column';
 import { ColumnRegistry } from '../factory/column-registry';
 import type { Table } from '@/types/table/Table';
 import type { TableState } from '@/types/table/TableState';
-import { createStore } from '../../state/create-store';
+import { createStore } from '@/state/create-store';
 
 interface User {
   name: string;
