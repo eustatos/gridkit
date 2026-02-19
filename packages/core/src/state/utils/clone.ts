@@ -12,9 +12,29 @@ export function deepClone<T>(obj: T): T {
     return obj.map((item) => deepClone(item)) as T;
   }
 
-  // Handle dates
+  // Handle special objects
   if (obj instanceof Date) {
     return new Date(obj.getTime()) as T;
+  }
+
+  if (obj instanceof RegExp) {
+    return new RegExp(obj.source, obj.flags) as T;
+  }
+
+  if (obj instanceof Map) {
+    const clonedMap = new Map();
+    for (const [key, value] of obj) {
+      clonedMap.set(deepClone(key), deepClone(value));
+    }
+    return clonedMap as T;
+  }
+
+  if (obj instanceof Set) {
+    const clonedSet = new Set();
+    for (const value of obj) {
+      clonedSet.add(deepClone(value));
+    }
+    return clonedSet as T;
   }
 
   // Handle regular objects
@@ -52,6 +72,18 @@ export function deepClone<T>(obj: T): T {
             newValue = [];
           } else if (value instanceof Date) {
             newValue = new Date(value.getTime());
+          } else if (value instanceof RegExp) {
+            newValue = new RegExp(value.source, value.flags);
+          } else if (value instanceof Map) {
+            newValue = new Map();
+            for (const [k, v] of value) {
+              newValue.set(deepClone(k), deepClone(v));
+            }
+          } else if (value instanceof Set) {
+            newValue = new Set();
+            for (const v of value) {
+              newValue.add(deepClone(v));
+            }
           } else {
             newValue = {};
           }
