@@ -189,8 +189,8 @@ describe('createStore - Internal Behavior', () => {
         });
       });
 
-      // Each batch notifies on completion (nested and outer)
-      expect(listener).toHaveBeenCalledTimes(2);
+      // Only outermost batch notifies
+      expect(listener).toHaveBeenCalledTimes(1);
     });
 
     test('maintains batch state with errors', () => {

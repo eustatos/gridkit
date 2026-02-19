@@ -28,9 +28,10 @@ describe('State Utilities Integration', () => {
       const original = { a: 1, b: 2 };
       const cloned = deepClone(original);
 
-      cloned.b = 999;
+      // cloned is frozen, so we need to create a new object to modify
+      const modified = { ...cloned, b: 999 };
 
-      expect(shallowEqual(cloned, original)).toBe(false);
+      expect(shallowEqual(modified, original)).toBe(false);
     });
   });
 

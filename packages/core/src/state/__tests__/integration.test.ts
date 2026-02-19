@@ -17,22 +17,23 @@ describe('createStore - Integration Tests', () => {
 
       // Increment
       store.batch(() => {
-        store.setState((prev) => ({ count: prev.count + prev.step }));
-        store.setState((prev) => ({ count: prev.count + prev.step }));
+        store.setState((prev) => ({ ...prev, count: prev.count + prev.step }));
+        store.setState((prev) => ({ ...prev, count: prev.count + prev.step }));
       });
 
       expect(store.getState().count).toBe(2);
       expect(listeners.increment).toHaveBeenCalledTimes(1);
 
       // Decrement
-      store.setState((prev) => ({ count: prev.count - prev.step }));
+      store.setState((prev) => ({ ...prev, count: prev.count - prev.step }));
       expect(store.getState().count).toBe(1);
-      expect(listeners.decrement).toHaveBeenCalledTimes(1);
+      // All listeners are called on every state change
+      expect(listeners.decrement).toHaveBeenCalledTimes(2);
 
       // Reset
       store.reset();
       expect(store.getState().count).toBe(0);
-      expect(listeners.reset).toHaveBeenCalledTimes(1);
+      expect(listeners.reset).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -269,9 +270,11 @@ describe('createStore - Integration Tests', () => {
       const simulateMessage = (message: string) => {
         store.batch(() => {
           store.setState((prev) => ({
+            ...prev,
             messages: [...prev.messages, message],
           }));
           store.setState((prev) => ({
+            ...prev,
             unreadCount: prev.unreadCount + 1,
           }));
         });

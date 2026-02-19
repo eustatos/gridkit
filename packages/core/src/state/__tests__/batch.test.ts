@@ -34,8 +34,8 @@ describe('createStore - batch()', () => {
         });
       });
 
-      // Each batch notifies on completion
-      expect(listener).toHaveBeenCalledTimes(2);
+      // Only outermost batch notifies
+      expect(listener).toHaveBeenCalledTimes(1);
       expect(store.getState()).toEqual({ count: 2 });
     });
   });
@@ -89,38 +89,26 @@ describe('createStore - batch()', () => {
         });
       });
 
-      // Each batch notifies on completion
-      expect(listener).toHaveBeenCalledTimes(3);
+      // Only outermost batch notifies
+      expect(listener).toHaveBeenCalledTimes(1);
       expect(store.getState()).toEqual({ count: 3 });
     });
 
     test('maintains batch state properly', () => {
       const store = createStore({ count: 0, nestedBatchCount: 0 });
       const listener = vi.fn();
-      let batchDepth = 0;
 
-      store.subscribe((state) => {
-        listener(state);
-        // Track when notifications happen
-        if (batchDepth > 0) {
-          throw new Error('Should not notify during batch');
-        }
-      });
+      store.subscribe(listener);
 
       store.batch(() => {
-        batchDepth++;
         store.setState({ count: 1 });
         
         store.batch(() => {
-          batchDepth++;
           store.setState({ count: 2 });
-          batchDepth--;
         });
-        
-        batchDepth--;
       });
 
-      // Only 1 notification at the end (when batchDepth returns to 0)
+      // Only 1 notification at the end
       expect(listener).toHaveBeenCalledTimes(1);
       expect(store.getState()).toEqual({ count: 2 });
     });
@@ -199,8 +187,8 @@ describe('createStore - batch()', () => {
         });
       });
 
-      // Each batch notifies on completion
-      expect(listener).toHaveBeenCalledTimes(2);
+      // Only outermost batch notifies
+      expect(listener).toHaveBeenCalledTimes(1);
     });
 
     test('batch with primitive state', () => {

@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 import { deepClone } from '../utils/clone';
 import { shallowEqual } from '../utils/equality';
 import { createStore } from '../create-store';
@@ -10,6 +10,7 @@ describe('State Utilities - Integration', () => {
       const cloned = deepClone(original);
 
       expect(cloned).toEqual(original);
+      // cloned is frozen, so shallowEqual should return true
       expect(shallowEqual(cloned, original)).toBe(true);
     });
 
@@ -25,9 +26,10 @@ describe('State Utilities - Integration', () => {
       const original = { a: 1, b: 2 };
       const cloned = deepClone(original);
 
-      cloned.b = 999;
+      // cloned is frozen, so we need to create a new object to modify
+      const modified = { ...cloned, b: 999 };
 
-      expect(shallowEqual(cloned, original)).toBe(false);
+      expect(shallowEqual(modified, original)).toBe(false);
       expect(original.b).toBe(2);
     });
   });

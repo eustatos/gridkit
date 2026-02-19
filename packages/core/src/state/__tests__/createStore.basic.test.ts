@@ -38,8 +38,13 @@ describe('createStore - Basic Functionality', () => {
       expect(state).toEqual({ count: 0 });
 
       // Attempt to modify returned state should not affect store
-      // @ts-expect-error - testing immutability
-      state.count = 100;
+      // In strict mode this will throw, but we verify store is unchanged
+      try {
+        // @ts-expect-error - testing immutability
+        state.count = 100;
+      } catch {
+        // Expected in strict mode
+      }
 
       expect(store.getState().count).toBe(0);
     });

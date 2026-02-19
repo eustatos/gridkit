@@ -98,5 +98,9 @@ export function deepClone<T>(obj: T): T {
     }
   }
 
+  // Only freeze the top-level object for immutability
+  // Deep freezing can cause issues with nested updates
+  Object.freeze(cloned);
+
   return cloned as T;
 }

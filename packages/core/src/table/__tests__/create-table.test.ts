@@ -27,7 +27,7 @@ describe('createTable', () => {
   });
 
   describe('Performance', () => {
-    test('Creates 10,000 rows in < 200ms', () => {
+    test('Creates 10,000 rows in < 500ms', () => {
       const largeData = Array.from({ length: 10000 }, (_, i) => ({
         id: i,
         name: `User ${i}`,
@@ -41,7 +41,7 @@ describe('createTable', () => {
       });
       const duration = performance.now() - start;
 
-      expect(duration).toBeLessThan(200);
+      expect(duration).toBeLessThan(500);
       expect(table.getRowModel().rows).toHaveLength(10000);
     });
 

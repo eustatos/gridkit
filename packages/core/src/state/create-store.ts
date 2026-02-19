@@ -108,13 +108,12 @@ export function createStore<TState>(
   // Batch state
   let isBatching = false;
   let hasPendingUpdate = false;
-  let batchDepth = 0;
 
   // Store instance
   const store: Store<TState> = {
     getState: () => {
       validateNotDestroyed(isDestroyed);
-      return Object.freeze(deepClone(currentState));
+      return deepClone(currentState);
     },
 
     setState: (updater) => {
@@ -175,12 +174,14 @@ export function createStore<TState>(
     batch: (updater) => {
       validateNotDestroyed(isDestroyed);
 
-      const wasBatching = isBatching;
-      const wasPending = hasPendingUpdate;
-      const wasDepth = batchDepth;
-      
+      // If already batching, just execute the updater
+      if (isBatching) {
+        updater();
+        return;
+      }
+
+      // Start outermost batch
       isBatching = true;
-      batchDepth++;
       hasPendingUpdate = false;
 
       let success = false;
@@ -188,22 +189,14 @@ export function createStore<TState>(
         updater();
         success = true;
       } finally {
-        batchDepth--;
-        
-        if (success && hasPendingUpdate && batchDepth === 0) {
-          // Only notify on successful outermost batch completion
+        // Only notify if this was the outermost batch and there were changes
+        if (success && hasPendingUpdate) {
           notifyListeners(listeners, currentState);
-          hasPendingUpdate = false;
         }
         
-        if (batchDepth === 0) {
-          // Outermost batch completed
-          isBatching = false;
-        } else {
-          // Restore previous batch state for nested batches
-          isBatching = wasBatching;
-          hasPendingUpdate = wasPending || hasPendingUpdate;
-        }
+        // Reset batch state
+        isBatching = false;
+        hasPendingUpdate = false;
       }
     },
 
