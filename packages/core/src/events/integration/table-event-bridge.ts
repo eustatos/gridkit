@@ -80,6 +80,9 @@ export function createTableEventBridge<TData extends RowData>(
   // Track previous state for change detection
   let previousState: TableState<TData> | undefined;
 
+  // Track cleanup functions for bridge-managed subscriptions
+  const cleanupFunctions: Array<() => void> = [];
+
   // 1. Wire up table state changes to events
   const unsubscribeState = table.subscribe((state) => {
     // Detect what changed
@@ -173,6 +176,9 @@ export function createTableEventBridge<TData extends RowData>(
     }
   });
 
+  // Add unsubscribeState to cleanup functions
+  cleanupFunctions.push(unsubscribeState);
+
   // 2. Create bridge instance
   const bridge: TableEventBridge<TData> = {
     // Event emission methods
@@ -232,22 +238,33 @@ export function createTableEventBridge<TData extends RowData>(
       event: T,
       handler: (e: any) => void,
       options?: any
-    ) => eventBus.on(event, handler, options),
+    ) => {
+      const cleanup = eventBus.on(event, handler, options);
+      cleanupFunctions.push(cleanup);
+      return cleanup;
+    },
 
     once: <T extends string>(
       event: T,
       handler: (e: any) => void
-    ) => eventBus.once(event, handler),
+    ) => {
+      const cleanup = eventBus.once(event, handler);
+      cleanupFunctions.push(cleanup);
+      return cleanup;
+    },
 
     off: <T extends string>(
       event: T,
       handler: (e: any) => void
-    ) => eventBus.off(event, handler),
+    ) => {
+      eventBus.off(event, handler);
+    },
 
     // Lifecycle
     destroy: () => {
-      unsubscribeState();
-      eventBus.clear();
+      // Clean up all bridge-managed subscriptions
+      cleanupFunctions.forEach((cleanup) => cleanup());
+      cleanupFunctions.length = 0;
     },
 
     // Metadata

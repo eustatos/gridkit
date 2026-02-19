@@ -129,6 +129,19 @@ export interface Table<TData extends RowData> {
    * Performance metrics (enabled in debug mode).
    */
   readonly metrics?: PerformanceMetrics;
+
+  // === Internal Properties (for internal use) ===
+
+  /**
+   * Internal properties for plugin system and advanced features.
+   * Not part of the public API.
+   */
+  _internal?: {
+    /** Event bus instance */
+    eventBus: any;
+    /** Performance monitor instance */
+    performanceMonitor?: any;
+  };
 }
 
 // ===================================================================

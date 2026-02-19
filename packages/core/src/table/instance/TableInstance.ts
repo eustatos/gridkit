@@ -13,7 +13,7 @@ import { buildInitialState } from '../builders/state-builder';
  *
  * @template TData - Row data type (must extend RowData)
  * @param options - Validated table configuration
- * @returns Table instance
+ * @returns Fully initialized, memory-safe table instance
  */
 function createTableInstance<TData extends RowData>(
   options: ValidatedTableOptions<TData>
@@ -52,10 +52,15 @@ function createTableInstance<TData extends RowData>(
       })
     : undefined;
 
+  // Table ID (can be nullified on destroy for memory safety)
+  let tableId: GridId | null = `table-${Date.now()}` as GridId;
+
   // === Build the Instance ===
   const instance: Table<TData> = {
     // Identification
-    id: `table-${Date.now()}` as GridId,
+    get id(): GridId {
+      return tableId as GridId;
+    },
 
     // State Management
     getState: () => stateStore.getState(),
@@ -68,7 +73,7 @@ function createTableInstance<TData extends RowData>(
       try {
         stateStore.setState(updater);
       } finally {
-        stop();
+        stop?.();
       }
     },
     subscribe: (listener) => stateStore.subscribe(listener as any),
@@ -89,7 +94,7 @@ function createTableInstance<TData extends RowData>(
         });
         return model as unknown as RowModel<TData>;
       } finally {
-        stop();
+        stop?.();
       }
     },
     getRow: (id: RowId): Row<TData> | undefined => {
@@ -119,6 +124,8 @@ function createTableInstance<TData extends RowData>(
       columnRegistry.destroy();
       eventBus.clear();
       performanceMonitor?.clear();
+      // Nullify ID to prevent memory leaks from strong references
+      tableId = null;
     },
 
     // Metadata
@@ -127,6 +134,12 @@ function createTableInstance<TData extends RowData>(
     },
     get metrics(): PerformanceMetrics | undefined {
       return performanceMonitor?.getMetrics() as PerformanceMetrics | undefined;
+    },
+
+    // Internal properties (for plugin system and event bridge)
+    _internal: {
+      eventBus,
+      performanceMonitor,
     },
   };
 

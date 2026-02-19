@@ -36,7 +36,68 @@ function buildRowModel<TData extends RowData>(params: {
     rows,
     rowsById,
     totalCount: rows.length,
+    // Alias for backwards compatibility
+    totalRowCount: rows.length,
     getRow: (id: RowId): Row<TData> | undefined => rowsById.get(id),
+
+    // Extended properties
+    flatRows: rows,
+    rowsByOriginalIndex: new Map(rows.map((row, index) => [row.originalIndex, row])),
+    totalFlatRowCount: rows.length,
+    meta: {
+      processingTime: 0, // Not tracking in this builder
+      memoryUsage: rows.length * 100, // Estimate
+      hasHierarchicalData: false,
+      rowCount: {
+        total: rows.length,
+        flat: rows.length,
+      },
+    },
+
+    // Row access methods
+    getRowByOriginalIndex: (index) => {
+      return rowModel.rowsByOriginalIndex?.get(index);
+    },
+
+    // Filter and search methods
+    filterRows: (predicate) => {
+      return rows.filter(predicate);
+    },
+    findRow: (predicate) => {
+      return rows.find(predicate);
+    },
+
+    // State-aware methods
+    getSelectedRows: () => {
+      const state = table.getState();
+      const selectedRows: Row<TData>[] = [];
+      
+      for (const [rowId, isSelected] of Object.entries(state.rowSelection || {})) {
+        if (isSelected) {
+          const row = rowsById.get(rowId as RowId);
+          if (row) {
+            selectedRows.push(row);
+          }
+        }
+      }
+      
+      return selectedRows;
+    },
+    getExpandedRows: () => {
+      const state = table.getState();
+      const expandedRows: Row<TData>[] = [];
+      
+      for (const [rowId, isExpanded] of Object.entries(state.expanded || {})) {
+        if (isExpanded) {
+          const row = rowsById.get(rowId as RowId);
+          if (row) {
+            expandedRows.push(row);
+          }
+        }
+      }
+      
+      return expandedRows;
+    },
   };
 
   return rowModel;

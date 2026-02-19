@@ -88,34 +88,32 @@ export function createScheduler(): Scheduler {
    * Process the queue
    */
   function processQueue(): void {
-    scheduledFlush = false;
+    // Note: don't reset scheduledFlush here - it's managed by scheduleProcessing()
     flushScheduled = false;
 
     try {
       process();
     } finally {
       // Check if more events were added during processing
-      if (queues.size > 0) {
-        let hasTasks = false;
-        const priorityOrder: EventPriority[] = [
-          EventPriority.IMMEDIATE,
-          EventPriority.HIGH,
-          EventPriority.NORMAL,
-          EventPriority.LOW,
-        ];
+      let hasTasks = false;
+      const priorityOrder: EventPriority[] = [
+        EventPriority.IMMEDIATE,
+        EventPriority.HIGH,
+        EventPriority.NORMAL,
+        EventPriority.LOW,
+      ];
 
-        for (const priority of priorityOrder) {
-          const queue = queues.get(priority);
-          if (queue && queue.length > 0) {
-            hasTasks = true;
-            break;
-          }
+      for (const priority of priorityOrder) {
+        const queue = queues.get(priority);
+        if (queue && queue.length > 0) {
+          hasTasks = true;
+          break;
         }
+      }
 
-        if (hasTasks) {
-          flushScheduled = true;
-          scheduleProcessing();
-        }
+      if (hasTasks) {
+        flushScheduled = true;
+        scheduleProcessing();
       }
     }
   }
@@ -126,20 +124,20 @@ export function createScheduler(): Scheduler {
   function process(): void {
     const tasksToProcess = getTasksInPriorityOrder();
 
-    // Execute all tasks BEFORE clearing queues
+    // Clear queues BEFORE executing tasks to prevent re-processing
+    for (const priority of [EventPriority.IMMEDIATE, EventPriority.HIGH, EventPriority.NORMAL, EventPriority.LOW]) {
+      const queue = queues.get(priority);
+      if (queue) {
+        queue.length = 0;
+      }
+    }
+
+    // Execute all tasks
     for (const task of tasksToProcess) {
       try {
         task();
       } catch (error) {
         console.error('Error processing scheduled task:', error);
-      }
-    }
-
-    // Clear all queues after execution
-    for (const priority of [EventPriority.IMMEDIATE, EventPriority.HIGH, EventPriority.NORMAL, EventPriority.LOW]) {
-      const queue = queues.get(priority);
-      if (queue) {
-        queue.length = 0;
       }
     }
   }

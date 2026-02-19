@@ -208,6 +208,13 @@ export class EventBus {
   }
 
   /**
+   * Get internal handler registry for testing purposes
+   */
+  get _handlerRegistry(): HandlerRegistry {
+    return this.handlerRegistry;
+  }
+
+  /**
    * Clear all handlers and reset state
    */
   clear(): void {

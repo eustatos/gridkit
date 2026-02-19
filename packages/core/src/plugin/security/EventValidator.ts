@@ -9,6 +9,8 @@ export interface ValidationResult {
   isValid: boolean;
   errors?: string[];
   warnings?: string[];
+  /** First error message for convenience */
+  errorMessage?: string;
 }
 
 /**
@@ -54,18 +56,50 @@ export class EventValidator {
       errors.push('Event type is required');
     }
 
-    if (!event.payload) {
-      errors.push('Event payload is required');
+    // Validate event type
+    if (event.type && typeof event.type !== 'string') {
+      errors.push('Event type must be a string');
+    }
+
+    // Validate payload
+    if (event.payload !== undefined && event.payload !== null) {
+      const payloadType = typeof event.payload;
+      if (payloadType !== 'object' && payloadType !== 'function') {
+        errors.push('Event payload must be an object');
+      }
+    }
+
+    // Validate source
+    if (event.source !== undefined && event.source !== null) {
+      if (typeof event.source !== 'string') {
+        errors.push('Event source must be a string');
+      }
+    }
+
+    // Validate timestamp
+    if (event.timestamp !== undefined && event.timestamp !== null) {
+      if (typeof event.timestamp !== 'number') {
+        errors.push('Event timestamp must be a number');
+      }
+    }
+
+    // Validate metadata
+    if (event.metadata !== undefined && event.metadata !== null) {
+      if (typeof event.metadata !== 'object' || Array.isArray(event.metadata)) {
+        errors.push('Event metadata must be an object');
+      }
     }
 
     // Check payload size
-    const payloadSize = JSON.stringify(event.payload).length;
-    if (payloadSize > this.options.maxPayloadSize) {
-      errors.push(`Event payload exceeds maximum size of ${this.options.maxPayloadSize} bytes`);
+    if (event.payload) {
+      const payloadSize = JSON.stringify(event.payload).length;
+      if (payloadSize > this.options.maxPayloadSize) {
+        errors.push(`Event payload exceeds maximum size of ${this.options.maxPayloadSize} bytes`);
+      }
     }
 
     // Check event type against allowed pattern
-    if (this.options.allowedEvents && !this.options.allowedEvents.test(event.type)) {
+    if (this.options.allowedEvents && event.type && !this.options.allowedEvents.test(event.type)) {
       errors.push(`Event type '${event.type}' is not allowed`);
     }
 
@@ -78,6 +112,7 @@ export class EventValidator {
       isValid: errors.length === 0,
       errors,
       warnings,
+      errorMessage: errors.length > 0 ? errors[0] : undefined,
     };
   }
 
@@ -87,12 +122,15 @@ export class EventValidator {
    * @returns Sanitized event or null if the event should be rejected
    */
   sanitizeEvent(event: GridEvent): GridEvent | null {
-    if (!event.payload) {
-      return null;
+    if (event.payload === undefined || event.payload === null) {
+      return {
+        ...event,
+        payload: event.payload,
+      };
     }
 
     // Deep clone to avoid mutation
-    const sanitizedPayload = this.sanitizeObject(event.payload as Record<string, unknown>);
+    const sanitizedPayload = this.sanitizeObject(event.payload);
 
     return {
       ...event,
@@ -105,16 +143,35 @@ export class EventValidator {
    * @param obj - The object to sanitize
    * @returns Sanitized object
    */
-  private sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
+  private sanitizeObject(obj: unknown): unknown {
+    // Handle null and undefined
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.sanitizeObject(item));
+    }
+
+    // Handle primitives
+    if (typeof obj !== 'object') {
+      return obj;
+    }
+
+    // Sanitize objects
     const sanitized: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(obj)) {
-      if (this.isSensitiveKey(key)) {
-        // Redact sensitive data
-        sanitized[key] = '[REDACTED]';
-      } else if (value && typeof value === 'object') {
+      // Check for dangerous properties
+      if (this.isDangerousProperty(key)) {
+        // Skip dangerous properties entirely
+        continue;
+      }
+      
+      if (value && typeof value === 'object') {
         // Recursively sanitize nested objects
-        sanitized[key] = this.sanitizeObject(value as Record<string, unknown>);
+        sanitized[key] = this.sanitizeObject(value);
       } else {
         sanitized[key] = value;
       }
@@ -124,23 +181,18 @@ export class EventValidator {
   }
 
   /**
-   * Check if a key is sensitive
+   * Check if a property is dangerous (proto, constructor, prototype)
    * @param key - The key to check
-   * @returns true if the key is sensitive
+   * @returns true if the key is dangerous
    */
-  private isSensitiveKey(key: string): boolean {
-    const sensitivePatterns = [
-      'password',
-      'token',
-      'secret',
-      'key',
-      'credit',
-      'ssn',
-      'routing',
+  private isDangerousProperty(key: string): boolean {
+    const dangerousPatterns = [
+      '__proto__',
+      'constructor',
+      'prototype',
     ];
 
-    const lowerKey = key.toLowerCase();
-    return sensitivePatterns.some((pattern) => lowerKey.includes(pattern));
+    return dangerousPatterns.includes(key);
   }
 
   /**

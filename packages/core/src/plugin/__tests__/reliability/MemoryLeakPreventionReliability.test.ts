@@ -34,8 +34,8 @@ describe('Memory Leak Prevention Reliability', () => {
       sandbox.destroy();
 
       // Verify listeners are cleaned up
-      expect(localBus['handlers'].size).toBe(0);
-      expect(baseBus['handlers'].size).toBeGreaterThan(0); // Base bus should still have listeners
+      expect((localBus as any)._handlerRegistry.size()).toBe(0);
+      expect((baseBus as any)._handlerRegistry.size()).toBeGreaterThan(0); // Base bus should still have listeners
     });
 
     it('should clean up listeners when sandbox is destroyed via forwarder', () => {
@@ -87,7 +87,7 @@ describe('Memory Leak Prevention Reliability', () => {
       bus.clear();
 
       // All handlers should be removed
-      expect(bus['handlers'].size).toBe(0);
+      expect((bus as any)._handlerRegistry.size()).toBe(0);
     });
 
     it('should reset stats on clear()', () => {

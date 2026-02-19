@@ -39,8 +39,10 @@ export class PerformanceMonitorImpl {
   private peakMemoryUsage = 0;
   private allocations = 0;
   private deallocations = 0;
+  private config: PerformanceConfig;
 
   constructor(config: PerformanceConfig) {
+    this.config = config;
     this.budgets = {
       ...DEFAULT_BUDGETS,
       ...config.budgets,
@@ -407,14 +409,14 @@ export class PerformanceMonitorImpl {
   }
 
   private checkOperationBudget(
-    _operation: string,
+    operation: string,
     duration: number,
     memoryDelta: number,
     meta?: any
   ): void {
     if (!this.enabled) return;
 
-    const budget = this.getBudgetForOperation(_operation);
+    const budget = this.getBudgetForOperation(operation);
     if (!budget || budget <= 0) return;
 
     const percentage = duration / budget;
@@ -428,10 +430,10 @@ export class PerformanceMonitorImpl {
       severity = 'warning';
     }
 
-    if (severity && this.config.onViolation) {
+    if (severity) {
       const violation: BudgetViolation = {
         type: 'timing' as const,
-        operation: _operation,
+        operation,
         actual: duration,
         budget,
         percentage,
@@ -444,10 +446,12 @@ export class PerformanceMonitorImpl {
         },
       };
 
-      this.config.onViolation(violation);
+      // Call onViolation callback if provided
+      if (this.config.onViolation) {
+        this.config.onViolation(violation);
+      }
+      // Always emit budgetViolation event
       this.emit('budgetViolation', violation);
     }
   }
-
-  private readonly config: PerformanceConfig = {};
 }
