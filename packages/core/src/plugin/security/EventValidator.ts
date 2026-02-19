@@ -125,7 +125,7 @@ export class EventValidator {
     // Handle null and undefined payload
     if (event.payload === undefined || event.payload === null) {
       const sanitizedMetadata = event.metadata
-        ? this.sanitizeObject(event.metadata)
+        ? (this.sanitizeObject(event.metadata) as Record<string, unknown> | undefined)
         : event.metadata;
       
       return {
@@ -136,9 +136,9 @@ export class EventValidator {
     }
 
     // Deep clone to avoid mutation
-    const sanitizedPayload = this.sanitizeObject(event.payload);
+    const sanitizedPayload = this.sanitizeObject(event.payload) as Record<string, unknown>;
     const sanitizedMetadata = event.metadata
-      ? this.sanitizeObject(event.metadata)
+      ? (this.sanitizeObject(event.metadata) as Record<string, unknown> | undefined)
       : event.metadata;
 
     return {
@@ -161,7 +161,7 @@ export class EventValidator {
 
     // Handle arrays
     if (Array.isArray(obj)) {
-      return obj.map((item) => this.sanitizeObject(item));
+      return (obj as Array<unknown>).map((item) => this.sanitizeObject(item)) as unknown;
     }
 
     // Handle primitives
@@ -172,7 +172,7 @@ export class EventValidator {
     // Sanitize objects
     const sanitized: Record<string, unknown> = {};
 
-    for (const [key, value] of Object.entries(obj)) {
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       // Check for dangerous properties
       if (this.isDangerousProperty(key)) {
         // Skip dangerous properties entirely
@@ -181,7 +181,7 @@ export class EventValidator {
       
       if (value && typeof value === 'object') {
         // Recursively sanitize nested objects
-        sanitized[key] = this.sanitizeObject(value);
+        sanitized[key] = this.sanitizeObject(value) as unknown;
       } else {
         sanitized[key] = value;
       }
