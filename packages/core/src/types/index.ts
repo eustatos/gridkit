@@ -20,7 +20,7 @@
  */
 
 // Branded types (type-only export)
-export type { GridId, RowId, CellId, RowData, Validator } from './base';
+export type { GridId, RowId, CellId, RowData } from './base';
 
 // Re-export ColumnId from column module
 export type { ColumnId } from './column/SupportingTypes';
@@ -77,7 +77,6 @@ export type {
   GroupingState,
   ScrollPosition,
   CellCoordinate,
-  GridKitError,
   ColumnValue,
 } from './table';
 
@@ -107,6 +106,5 @@ export type {
   ColumnFormat,
   CellMeta,
   CellValidation,
-  ValidationResult,
   ColumnUtils,
 } from './column';

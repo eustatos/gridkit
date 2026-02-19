@@ -8,6 +8,7 @@ import type { RowData, Column } from '@/types';
 import type { ColumnDef, ValidatedColumnDef } from '@/types/column';
 import type { ColumnUtils } from '@/types/column/SupportingTypes';
 import type { Table } from '@/types/table';
+import type { ColumnId } from '@/types/column/SupportingTypes';
 
 /**
  * Options for creating a column instance.
@@ -32,7 +33,7 @@ interface ColumnFeatureFlags {
 /**
  * Internal column metadata.
  */
-interface ColumnMetadata {
+interface ColumnMetadata<TData extends RowData, TValue> {
   columnMeta: Record<string, unknown>;
   columnUtils: ColumnUtils<TData, TValue> | Record<string, unknown>;
   featureFlags: ColumnFeatureFlags;
@@ -43,7 +44,7 @@ interface ColumnMetadata {
  */
 function extractColumnMetadata<TData extends RowData, TValue>(
   validatedDef: ValidatedColumnDef<TData, TValue>
-): ColumnMetadata {
+): ColumnMetadata<TData, TValue> {
   return {
     columnMeta: validatedDef.meta ?? {},
     columnUtils: {}, // Will be implemented in future tasks
@@ -80,9 +81,9 @@ export function createColumn<TData extends RowData, TValue = unknown>(
   // 5. Build column instance
   const column: Column<TData, TValue> = {
     // Identification
-    id: validatedDef.id,
+    id: validatedDef.id as ColumnId,
     table: options.table,
-    columnDef: Object.freeze(validatedDef) as typeof validatedDef,
+    columnDef: Object.freeze(validatedDef),
 
     // State accessors
     getSize: methods.getSize,

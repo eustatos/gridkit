@@ -3,8 +3,6 @@ import type {
   RowData,
   ValidatedTableOptions,
   ValidationError,
-  ColumnDef,
-  ValidatedColumnDef,
 } from '../../types';
 
 import {
@@ -49,7 +47,11 @@ export function validateAndNormalize<TData extends RowData>(
 
   // Throw aggregated errors if any
   if (errors.length > 0) {
-    throw new ValidationAggregateError('Invalid table configuration', errors);
+    // Convert ValidationError objects to GridKitError for ValidationAggregateError
+    const gridErrors: GridKitError[] = errors.map((error) =>
+      new GridKitError(error.code, error.message, { field: error.field, value: error.value })
+    );
+    throw new ValidationAggregateError('Invalid table configuration', gridErrors);
   }
 
   // === Normalization ===
@@ -67,7 +69,7 @@ export function validateAndNormalize<TData extends RowData>(
 /**
  * Column validation with detailed error messages.
  */
-function validateColumns<TData>(columns: unknown): ValidationError[] {
+function validateColumns(columns: unknown): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!Array.isArray(columns)) {
@@ -111,9 +113,9 @@ function validateColumns<TData>(columns: unknown): ValidationError[] {
       });
     }
 
-    // Check for duplicate IDs
-    const columnId = col.id ?? col.accessorKey;
-    // ... duplicate detection logic
+      // Check for duplicate IDs
+  // const columnId = col.id ?? col.accessorKey;
+  // ... duplicate detection logic
   });
 
   return errors;
@@ -123,7 +125,7 @@ function validateColumns<TData>(columns: unknown): ValidationError[] {
  * Data validation with detailed error messages.
  * Validates that data is an array of objects.
  */
-function validateData<TData>(data: unknown): ValidationError[] {
+function validateData(data: unknown): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!Array.isArray(data)) {
@@ -158,7 +160,7 @@ function validateData<TData>(data: unknown): ValidationError[] {
   return errors;
 }
 
-function validateRowIdFunction(getRowId: unknown): ValidationError[] {
+function validateRowIdFunction(_getRowId: unknown): ValidationError[] {
   // In a real implementation, this would validate the getRowId function
   return [];
 }

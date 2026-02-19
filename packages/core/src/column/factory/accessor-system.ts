@@ -1,8 +1,9 @@
 // Type-safe accessor system for column value extraction
 import { GridKitError } from '../../errors/grid-kit-error';
-import type { ValidatedColumnDef } from '@/types/column';
 
 import type { RowData } from '@/types';
+import type { ValidatedColumnDef } from '@/types/column';
+
 
 /**
  * Column accessor types.

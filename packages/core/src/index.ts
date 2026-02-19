@@ -23,6 +23,4 @@ export * from './performance';
 
 // Validation system exports
 export * from './validation';
-export type { GridKitError, ValidationError } from './errors';
-export { GridKitError } from './errors';
-export type { ValidationResult } from './validation/schema/Schema';
+export { GridKitError, ValidationError } from './errors';

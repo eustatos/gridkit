@@ -77,17 +77,11 @@ export function createSchema<T extends RowData = RowData>(
 
   return {
     fields: normalizedFields,
-    validate: (data: unknown) =>
-      validateData<T>(data as T, normalizedFields, meta),
+    validate: (data: unknown) => validateData<T>(data as T, normalizedFields),
     validatePartial: (data: Partial<unknown>) =>
-      validateData<Partial<T>>(
-        data as Partial<T>,
-        normalizedFields,
-        meta,
-        true
-      ),
+      validateData<Partial<T>>(data as Partial<T>, normalizedFields, true),
     validateRow: (row: unknown, rowIndex: number) =>
-      validateRow(row, rowIndex, normalizedFields, meta),
+      validateRow(row, rowIndex, normalizedFields),
     isOptional,
     meta: meta || {},
   };
@@ -140,7 +134,6 @@ export function field(
 function validateData<T extends RowData = RowData>(
   data: unknown,
   fields: Record<string, FieldSchema>,
-  meta?: SchemaMeta,
   isPartial: boolean = false
 ): ValidationResult<T> {
   const startTime = performance.now();
@@ -164,8 +157,7 @@ function validateData<T extends RowData = RowData>(
       undefined,
       errors,
       warnings,
-      startTime,
-      meta
+      startTime
     ) as ValidationResult<T>;
   }
 
@@ -257,7 +249,6 @@ function validateData<T extends RowData = RowData>(
     errors,
     warnings,
     startTime,
-    meta,
     duration
   ) as ValidationResult<T>;
 }
@@ -268,8 +259,7 @@ function validateData<T extends RowData = RowData>(
 function validateRow(
   row: unknown,
   rowIndex: number,
-  fields: Record<string, FieldSchema>,
-  meta?: SchemaMeta
+  fields: Record<string, FieldSchema>
 ): RowValidationResult {
   const errors: CellValidationError[] = [];
   const warnings: CellValidationWarning[] = [];
@@ -581,7 +571,6 @@ function createResult(
   errors: ValidationError[],
   warnings: ValidationWarning[],
   startTime: number,
-  meta?: SchemaMeta,
   duration?: number
 ): ValidationResult {
   return {

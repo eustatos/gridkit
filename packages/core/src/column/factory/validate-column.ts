@@ -1,9 +1,11 @@
 // Column definition validation
 import { GridKitError } from '../../errors/grid-kit-error';
 import { normalizeColumnDef } from '../validation/normalize-column';
+import { createColumnId } from '@/types/factory';
 
 import type { RowData } from '@/types';
-import type { ColumnDef } from '@/types/column/ColumnDef';
+import type { ColumnDef, ValidatedColumnDef } from '@/types/column/ColumnDef';
+import type { ColumnId } from '@/types/column/SupportingTypes';
 
 /**
  * Validates column definition and returns normalized version.
@@ -19,10 +21,10 @@ export function validateColumnDef<TData extends RowData, TValue>(
   }
 
   // Validate ID
-  let id: string | undefined = columnDef.id;
+  let id: ColumnId | undefined = columnDef.id as ColumnId;
   if (!id) {
     if (columnDef.accessorKey) {
-      id = columnDef.accessorKey;
+      id = createColumnId(columnDef.accessorKey);
     } else {
       errors.push('Column must have an id when using accessorFn');
     }

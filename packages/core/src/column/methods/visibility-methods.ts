@@ -1,7 +1,6 @@
 // Visibility management methods for columns
-import type { ValidatedColumnDef } from '@/types/column';
-
 import type { RowData } from '@/types';
+import type { ValidatedColumnDef } from '@/types/column';
 import type { Table } from '@/types/table';
 
 /**

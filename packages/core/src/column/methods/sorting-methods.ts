@@ -1,7 +1,6 @@
 // Sorting methods for columns
-import type { ValidatedColumnDef } from '@/types/column';
-
 import type { RowData } from '@/types';
+import type { ValidatedColumnDef } from '@/types/column';
 import type { Table , SortingState } from '@/types/table';
 
 /**

@@ -7,7 +7,7 @@
  * @module CoreHelpers
  */
 
-import { CellId, RowData } from './base';
+import { CellId, RowData, RowId, GridId } from './base';
 import { ColumnId } from './column/SupportingTypes';
 
 /**

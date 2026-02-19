@@ -9,7 +9,7 @@
 
 import type { CellCache } from '../cell/cell-cache';
 
-import type { RowData } from '@/types';
+import type { RowData, RowId } from '@/types';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { Cell } from '@/types/row/Cell';
 import type { Row } from '@/types/row/Row';
@@ -51,7 +51,7 @@ export interface BasicRowMethods<TData extends RowData> {
  */
 export interface BuildBasicRowMethodsOptions<TData extends RowData> {
   /** Row ID */
-  id: string;
+  id: RowId;
   /** Original row data */
   originalData: TData;
   /** Parent table instance */

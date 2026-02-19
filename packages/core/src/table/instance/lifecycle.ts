@@ -1,7 +1,12 @@
+// Lifecycle management for table instances
+import type { Table, RowData } from '@/types/table';
+
+import { buildInitialState } from '../builders/state-builder';
+
 /**
  * Resets the table to its initial state.
  */
-function resetTable<TData>(table: Table<TData>): void {
+function resetTable<TData extends RowData>(table: Table<TData>): void {
   const initialState = buildInitialState(table.options);
   table._internal.stateStore.reset(initialState);
   table._internal.eventBus.emit('table:reset', { tableId: table.id });
@@ -11,7 +16,7 @@ function resetTable<TData>(table: Table<TData>): void {
  * Destroys the table and cleans up all resources.
  * This is critical for memory safety.
  */
-function destroyTable<TData>(table: Table<TData>): void {
+function destroyTable<TData extends RowData>(table: Table<TData>): void {
   // Emit destroy event first
   table._internal.eventBus.emit('table:destroy', { tableId: table.id });
 
@@ -34,7 +39,7 @@ function destroyTable<TData>(table: Table<TData>): void {
 /**
  * Checks if the table has been destroyed.
  */
-function isTableDestroyed<TData>(table: Table<TData>): boolean {
+function isTableDestroyed<TData extends RowData>(table: Table<TData>): boolean {
   try {
     // If the state store has been destroyed, accessing it will throw
     table.getState();
@@ -43,3 +48,5 @@ function isTableDestroyed<TData>(table: Table<TData>): boolean {
     return true;
   }
 }
+
+export { resetTable, destroyTable, isTableDestroyed };

@@ -1,6 +1,6 @@
 /**
  * GridKit Table Core API
- * 
+ *
  * This is the main entry point for the table functionality.
  */
 
@@ -22,13 +22,4 @@ export type {
 } from '../types';
 
 // Error types
-export type {
-  ValidationError,
-  ValidationAggregateError,
-} from '../errors';
-
-// Event types
-export type {
-  TableEvent,
-  TableEventMap,
-} from '../events/table';
+export type { ValidationError, ValidationAggregateError } from '../errors';

@@ -4,7 +4,11 @@
  * @module @gridkit/core/validation/utils
  */
 
-import type { ValidationErrorCode , ValidationError, ValidationFix } from '../result/ValidationResult';
+import type {
+  ValidationErrorCode,
+  ValidationError,
+  ValidationFix,
+} from '../result/ValidationResult';
 
 /**
  * Check if a value is a valid error.
@@ -21,7 +25,9 @@ export function isValidError(value: unknown): boolean {
 /**
  * Check if a value is a valid validation error.
  */
-export function isValidValidationError(value: unknown): value is ValidationError {
+export function isValidValidationError(
+  value: unknown
+): value is ValidationError {
   if (value === null || typeof value !== 'object') {
     return false;
   }
@@ -81,7 +87,9 @@ export function createFix(
 /**
  * Get the severity priority for sorting.
  */
-export function getSeverityPriority(severity: 'error' | 'warning' | 'info'): number {
+export function getSeverityPriority(
+  severity: 'error' | 'warning' | 'info'
+): number {
   switch (severity) {
     case 'error':
       return 0;
@@ -97,7 +105,9 @@ export function getSeverityPriority(severity: 'error' | 'warning' | 'info'): num
 /**
  * Sort errors by severity.
  */
-export function sortErrorsBySeverity(errors: ValidationError[]): ValidationError[] {
+export function sortErrorsBySeverity(
+  errors: ValidationError[]
+): ValidationError[] {
   return [...errors].sort((a, b) => {
     const priorityA = getSeverityPriority(a.severity);
     const priorityB = getSeverityPriority(b.severity);
@@ -110,7 +120,7 @@ export function sortErrorsBySeverity(errors: ValidationError[]): ValidationError
  */
 export function matchesErrorCode(
   code: ValidationErrorCode,
-  pattern: ValidationErrorCode | string
+  pattern: string
 ): boolean {
   if (typeof pattern === 'string') {
     // Check if pattern contains wildcards
@@ -130,28 +140,35 @@ export function filterErrorsBySeverity(
   errors: ValidationError[],
   severities: ('error' | 'warning' | 'info')[]
 ): ValidationError[] {
-  return errors.filter(error => severities.includes(error.severity));
+  return errors.filter((error) => severities.includes(error.severity));
 }
 
 /**
  * Group errors by path.
  */
-export function groupErrorsByPath(errors: ValidationError[]): Record<string, ValidationError[]> {
-  return errors.reduce((acc, error) => {
-    const path = error.path.join('.');
-    if (!acc[path]) {
-      acc[path] = [];
-    }
-    acc[path].push(error);
-    return acc;
-  }, {} as Record<string, ValidationError[]>);
+export function groupErrorsByPath(
+  errors: ValidationError[]
+): Record<string, ValidationError[]> {
+  return errors.reduce(
+    (acc, error) => {
+      const path = error.path.join('.');
+      if (!acc[path]) {
+        acc[path] = [];
+      }
+      acc[path].push(error);
+      return acc;
+    },
+    {} as Record<string, ValidationError[]>
+  );
 }
 
 /**
  * Collect all error codes from an array of errors.
  */
-export function collectErrorCodes(errors: ValidationError[]): Set<ValidationErrorCode> {
-  return new Set(errors.map(error => error.code as ValidationErrorCode));
+export function collectErrorCodes(
+  errors: ValidationError[]
+): Set<ValidationErrorCode> {
+  return new Set(errors.map((error) => error.code as ValidationErrorCode));
 }
 
 /**
@@ -192,9 +209,7 @@ export function createTypeError(
 /**
  * Create a missing required field error.
  */
-export function createMissingFieldError(
-  field: string
-): ValidationError {
+export function createMissingFieldError(field: string): ValidationError {
   return createSimpleError(
     'MISSING_REQUIRED_FIELD',
     `Missing required field: ${field}`,
@@ -258,11 +273,7 @@ export function isArray(value: unknown): value is unknown[] {
  * Check if a value is a valid object.
  */
 export function isObject(value: unknown): value is Record<string, unknown> {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value)
-  );
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 /**
@@ -274,7 +285,7 @@ export function deepClone<T>(value: T): T {
   }
 
   if (Array.isArray(value)) {
-    return value.map(item => deepClone(item)) as T;
+    return value.map((item) => deepClone(item)) as T;
   }
 
   return Object.entries(value).reduce(

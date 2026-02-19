@@ -1,4 +1,4 @@
-import type { Table, ValidatedTableOptions, RowData } from '../../types';
+import type { Table, ValidatedTableOptions, RowData, TableState } from '../../types';
 
 /**
  * Completes table initialization after instance creation.
@@ -14,7 +14,7 @@ export function initializeTableInstance<TData>(
     table.setState((state) => ({
       ...state,
       data: initialData,
-    }));
+    }) as TableState<TData>);
   }
 
   // 2. Apply initial state
@@ -22,7 +22,7 @@ export function initializeTableInstance<TData>(
     table.setState((state) => ({
       ...state,
       ...options.initialState,
-    }));
+    }) as TableState<TData>);
   }
 
   // 3. Setup event system

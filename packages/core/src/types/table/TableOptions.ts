@@ -4,6 +4,7 @@ import { ColumnDef } from './Column';
 import { GridKitError } from './Errors';
 import { TableMeta } from './support/Metadata';
 import { TableState } from './TableState';
+import type { PerformanceBudgets } from '@/performance/types';
 
 /**
  * Debug configuration options for debugging features.
@@ -103,7 +104,7 @@ export interface TableOptions<TData extends RowData> {
    * Performance budgets for validation.
    * Fails fast if budgets are exceeded.
    */
-  performanceBudgets?: CorePerformanceBudgets;
+  performanceBudgets?: PerformanceBudgets;
 
   // === Event Handlers ===
 

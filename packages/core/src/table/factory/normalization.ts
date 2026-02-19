@@ -1,4 +1,4 @@
-import type { DebugConfig, TableState, ColumnDef, ValidatedColumnDef, RowId } from '../../types';
+import type { DebugConfig, TableState, ColumnDef, ValidatedColumnDef, RowId, RowData } from '../../types';
 
 /**
  * Normalizes debug options with sane defaults.
@@ -24,7 +24,7 @@ export function normalizeDebugOptions(debug: DebugConfig | undefined): DebugConf
 /**
  * Normalizes initial state options.
  */
-export function normalizeInitialState<TData>(
+export function normalizeInitialState<TData extends RowData>(
   initialState: Partial<TableState<TData>> | undefined
 ): Partial<TableState<TData>> {
   return initialState ?? {};
@@ -33,7 +33,7 @@ export function normalizeInitialState<TData>(
 /**
  * Normalizes column definitions with default options.
  */
-export function normalizeColumns<TData>(
+export function normalizeColumns<TData extends RowData>(
   columns: ColumnDef<TData>[],
   defaultColumn: Partial<ColumnDef<TData>> | undefined
 ): ValidatedColumnDef<TData>[] {
@@ -47,5 +47,5 @@ export function normalizeColumns<TData>(
  * Default function to get row ID.
  */
 export function defaultGetRowId<TData>(row: TData, index: number): RowId {
-  return index.toString();
+  return String(index) as RowId;
 }

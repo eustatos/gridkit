@@ -11,4 +11,8 @@ export default defineConfig({
   minify: false,
   external: [],
   outDir: 'dist',
+  shims: true,
+  inject: [],
+  platform: 'browser',
+  skipNodeModulesBundle: true,
 });

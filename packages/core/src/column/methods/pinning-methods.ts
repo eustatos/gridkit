@@ -1,8 +1,8 @@
 // Pinning methods for columns
-import type { ValidatedColumnDef } from '@/types/column';
-
 import type { RowData } from '@/types';
+import type { ValidatedColumnDef } from '@/types/column';
 import type { Table } from '@/types/table';
+import type { ColumnId } from '@/types/column/SupportingTypes';
 
 /**
  * Builds pinning-related methods for column instance.
@@ -17,8 +17,9 @@ export function buildPinningMethods<TData extends RowData, TValue>(
     // Pinning
     getPinnedPosition: () => {
       const pinning = tableState().columnPinning;
-      if (pinning?.left?.includes(columnDef.id as string)) return 'left';
-      if (pinning?.right?.includes(columnDef.id as string)) return 'right';
+      const colId = columnDef.id as ColumnId;
+      if (pinning?.left?.includes(colId)) return 'left';
+      if (pinning?.right?.includes(colId)) return 'right';
       return false;
     },
 
@@ -27,8 +28,9 @@ export function buildPinningMethods<TData extends RowData, TValue>(
 
       table.setState((prev) => {
         const currentPinning = prev.columnPinning ?? { left: [], right: [] };
-        const isLeft = currentPinning.left?.includes(columnDef.id as string);
-        const isRight = currentPinning.right?.includes(columnDef.id as string);
+        const colId = columnDef.id as ColumnId;
+        const isLeft = currentPinning.left?.includes(colId);
+        const isRight = currentPinning.right?.includes(colId);
 
         const nextPinning = { ...currentPinning };
 
@@ -39,25 +41,25 @@ export function buildPinningMethods<TData extends RowData, TValue>(
           // Unpin from whichever side
           if (isLeft) {
             nextPinning.left = nextPinning.left?.filter(
-              (id) => id !== columnDef.id as string
+              (id) => id !== colId
             );
           }
           if (isRight) {
             nextPinning.right = nextPinning.right?.filter(
-              (id) => id !== columnDef.id as string
+              (id) => id !== colId
             );
           }
         } else if (position === 'left') {
           // Pin to left (remove from right if present)
-          nextPinning.left = [...(nextPinning.left ?? []), columnDef.id as string];
+          nextPinning.left = [...(nextPinning.left ?? []), colId];
           nextPinning.right = nextPinning.right?.filter(
-            (id) => id !== columnDef.id as string
+            (id) => id !== colId
           );
         } else if (position === 'right') {
           // Pin to right (remove from left if present)
-          nextPinning.right = [...(nextPinning.right ?? []), columnDef.id as string];
+          nextPinning.right = [...(nextPinning.right ?? []), colId];
           nextPinning.left = nextPinning.left?.filter(
-            (id) => id !== columnDef.id as string
+            (id) => id !== colId
           );
         }
 

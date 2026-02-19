@@ -10,7 +10,7 @@
 import { CellCache, createCellCache } from '../cell/cell-cache';
 import type { BasicRowMethods, BuildBasicRowMethodsOptions } from '../methods/basic-methods';
 
-import type { RowData , RowId } from '@/types';
+import type { RowData , RowId, ColumnId, CellId } from '@/types';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { Cell } from '@/types/row/Cell';
 import type { Row } from '@/types/table/Row';
@@ -72,8 +72,9 @@ export function createRow<TData extends RowData>(
     path = [],
   } = options;
 
-  // Generate row ID
-  const id = getRowId(originalData, originalIndex);
+  // Generate row ID (RowId is string | number with brand)
+  const idRaw = getRowId(originalData, originalIndex);
+  const id = typeof idRaw === 'string' ? idRaw as RowId : String(idRaw) as RowId;
 
   // Create cell cache for performance
   const cellCache: CellCache<TData> = createCellCache<TData>();
@@ -171,21 +172,21 @@ function buildBasicRowMethods<TData extends RowData>(
       return cells;
     },
 
-    getCell: (columnId: string): Cell<TData> | undefined => {
-      return cellCache.get(columnId);
+    getCell: (columnId: string | ColumnId): Cell<TData> | undefined => {
+      return cellCache.get(columnId as string);
     },
 
-    getValue: <TValue = unknown>(columnId: string): TValue => {
-      const cell = cellCache.get(columnId);
+    getValue: <TValue = unknown>(columnId: string | ColumnId): TValue => {
+      const cell = cellCache.get(columnId as string);
       if (!cell) {
         throw new Error(`CELL_NOT_FOUND: Cell not found for column ${columnId}`);
       }
       return cell.getValue();
     },
 
-    getOriginalValue: (columnId: string): unknown => {
+    getOriginalValue: (columnId: string | ColumnId): unknown => {
       // Direct access without column accessor
-      const path = columnId.split('.');
+      const path = (columnId as string).split('.');
       let value: any = originalData;
 
       for (const key of path) {
@@ -211,8 +212,8 @@ function initializeCellCache<TData extends RowData>(
   cellCache: CellCache<TData>
 ): void {
   columns.forEach((column, index) => {
-    // Create cell ID: ${rowId}_${columnId}
-    const cellId = `${row.id}_${column.id}`;
+    // Create cell ID: ${rowId}_${columnId} (CellId is branded type)
+    const cellId = `${row.id}_${column.id}` as CellId;
 
     // Create cell with basic properties
     const cell: Cell<TData> = {

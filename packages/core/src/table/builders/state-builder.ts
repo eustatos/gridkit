@@ -1,9 +1,9 @@
-import type { ValidatedTableOptions, TableState, ValidatedColumnDef } from '../../types';
+import type { ValidatedTableOptions, TableState, ValidatedColumnDef, RowData, ColumnId } from '../../types';
 
 /**
  * Builds the initial table state from options.
  */
-function buildInitialState<TData>(
+function buildInitialState<TData extends RowData>(
   options: ValidatedTableOptions<TData>
 ): TableState<TData> {
   return {
@@ -17,8 +17,8 @@ function buildInitialState<TData>(
     rowSelection: {},
 
     // Column ordering
-    columnOrder: options.columns.map((col, index) => 
-      col.id ?? col.accessorKey ?? `column-${index}`
+    columnOrder: options.columns.map((col) => 
+      col.id as ColumnId
     ),
 
     // Column sizing
@@ -57,19 +57,19 @@ function buildInitialState<TData>(
     // Version and timestamp
     version: 1,
     updatedAt: Date.now(),
-  } as TableState<TData>;
+  };
 }
 
 /**
  * Builds initial column visibility state.
  */
-function buildInitialColumnVisibility<TData>(
+function buildInitialColumnVisibility<TData extends RowData>(
   columns: ValidatedColumnDef<TData>[]
 ): Record<string, boolean> {
   const visibility: Record<string, boolean> = {};
 
   columns.forEach((column, index) => {
-    const columnId = column.id ?? column.accessorKey ?? `column-${index}`;
+    const columnId = column.id as ColumnId;
     visibility[columnId] = column.enableHiding !== false;
   });
 

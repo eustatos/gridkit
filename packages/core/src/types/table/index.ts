@@ -52,4 +52,4 @@ export type {
 export type { Row, RowModel } from './Row';
 
 // Error types
-export type { GridKitError, ErrorCode } from './Errors';
+export type { GridKitError, ValidationError, ErrorCode } from './Errors';

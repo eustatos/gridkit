@@ -5,16 +5,15 @@ import { buildPinningMethods } from '../methods/pinning-methods';
 import { buildSizeMethods } from '../methods/size-methods';
 import { buildSortingMethods } from '../methods/sorting-methods';
 import { buildVisibilityMethods } from '../methods/visibility-methods';
-import type { ValidatedColumnDef } from '@/types/column';
 
 import type { RowData } from '@/types';
+import type { ValidatedColumnDef } from '@/types/column';
 import type { Table } from '@/types/table';
-
 
 /**
  * Combined column methods interface.
  */
-export interface ColumnMethods<TData, TValue> {
+export interface ColumnMethods<TData extends RowData, TValue = unknown> {
   // Size management
   getSize: () => number;
   setSize: (size: number) => void;
@@ -45,7 +44,7 @@ export interface ColumnMethods<TData, TValue> {
 /**
  * Builds runtime methods for column instance.
  */
-export function buildColumnMethods<TData extends RowData, TValue>(
+export function buildColumnMethods<TData extends RowData, TValue = unknown>(
   columnDef: ValidatedColumnDef<TData, TValue>,
   table: Table<TData>
 ): ColumnMethods<TData, TValue> {
