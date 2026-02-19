@@ -1,8 +1,6 @@
 // Column definition normalization
-import type { ValidatedColumnDef } from '@/types/column/ColumnDef';
-
 import type { RowData } from '@/types/base';
-import type { ColumnDef } from '@/types/column/ColumnDef';
+import type { ValidatedColumnDef , ColumnDef } from '@/types/column/ColumnDef';
 import type { ColumnId } from '@/types/column/SupportingTypes';
 
 /**
@@ -13,7 +11,7 @@ export function normalizeColumnDef<TData extends RowData, TValue>(
 ): ValidatedColumnDef<TData, TValue> {
   return {
     ...columnDef,
-    id: columnDef.id as ColumnId,
+    id: columnDef.id,
     size: columnDef.size ?? 150,
     minSize: columnDef.minSize ?? 50,
     maxSize: columnDef.maxSize ?? Infinity,

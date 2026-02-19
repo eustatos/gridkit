@@ -1,10 +1,12 @@
+import type { PerformanceBudgets } from '@/performance/types';
+
 import { DeepPartial, RowData, RowId } from '../base';
 
 import { ColumnDef } from './Column';
 import { GridKitError } from './Errors';
 import { TableMeta } from './support/Metadata';
 import { TableState } from './TableState';
-import type { PerformanceBudgets } from '@/performance/types';
+
 
 /**
  * Debug configuration options for debugging features.

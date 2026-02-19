@@ -1,0 +1,96 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module",
+    "project": ["./tsconfig.json"],
+    "tsconfigRootDir": "."
+  },
+  "plugins": ["@typescript-eslint", "import"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "prettier"
+  ],
+  "settings": {
+    "import/resolver": {
+      "typescript": true,
+      "node": true
+    }
+  },
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/explicit-function-return-type": [
+      "error",
+      {
+        "allowExpressions": true,
+        "allowTypedFunctionExpressions": true
+      }
+    ],
+    "@typescript-eslint/naming-convention": [
+      "error",
+      {
+        "selector": "interface",
+        "format": ["PascalCase"]
+      },
+      {
+        "selector": "typeAlias",
+        "format": ["PascalCase"]
+      },
+      {
+        "selector": "variable",
+        "modifiers": ["const", "global"],
+        "format": ["UPPER_CASE", "camelCase", "PascalCase"]
+      }
+    ],
+    "import/no-default-export": "error",
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        }
+      }
+    ],
+    "no-console": "warn",
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": [
+          "**/*.test.ts",
+          "**/*.spec.ts",
+          "**/__tests__/**/*.ts"
+        ]
+      }
+    ],
+    "import/no-unresolved": [
+      "error",
+      {
+        "ignore": ["^@/.*$", "^@gridkit/.*$"]
+      }
+    ]
+  },
+  "ignorePatterns": [
+    "dist",
+    "build",
+    "coverage",
+    "node_modules",
+    "*.config.js",
+    "*.config.ts",
+    "**/__tests__/**",
+    "**/*.test.ts"
+  ]
+}

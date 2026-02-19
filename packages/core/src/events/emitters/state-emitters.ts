@@ -7,9 +7,10 @@
  * @module @gridkit/core/events/emitters
  */
 
+import type { Table, RowData, TableState, ColumnId, RowId } from '@/types';
+
 import { EventBus } from '../EventBus';
 
-import type { Table, RowData, TableState, ColumnId, RowId } from '@/types';
 
 // Track previous state per table for change detection
 const previousStateMap = new Map<string, TableState<any>>();
@@ -53,7 +54,7 @@ export function emitStateEvents<TData extends RowData>(
     // Emit specific events based on changed keys
     if (changedKeys.includes('columnVisibility')) {
       emitColumnVisibilityEvents(
-        previousState!,
+        previousState,
         state,
         table,
         eventBus
@@ -62,7 +63,7 @@ export function emitStateEvents<TData extends RowData>(
 
     if (changedKeys.includes('rowSelection')) {
       emitRowSelectionEvents(
-        previousState!,
+        previousState,
         state,
         table,
         eventBus
@@ -71,7 +72,7 @@ export function emitStateEvents<TData extends RowData>(
 
     if (changedKeys.includes('sorting')) {
       emitSortingEvents(
-        previousState!,
+        previousState,
         state,
         table,
         eventBus
@@ -80,7 +81,7 @@ export function emitStateEvents<TData extends RowData>(
 
     if (changedKeys.includes('filtering')) {
       emitFilteringEvents(
-        previousState!,
+        previousState,
         state,
         table,
         eventBus
@@ -88,11 +89,11 @@ export function emitStateEvents<TData extends RowData>(
     }
 
     if (changedKeys.includes('expanded')) {
-      emitExpansionEvents(previousState!, state, table, eventBus);
+      emitExpansionEvents(previousState, state, table, eventBus);
     }
 
     if (changedKeys.includes('data')) {
-      emitDataEvents(previousState!, state, table, eventBus);
+      emitDataEvents(previousState, state, table, eventBus);
     }
 
     // Update previous state for next comparison

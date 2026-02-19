@@ -130,7 +130,7 @@ export class EventBus {
     const priority = options?.priority ?? EventPriority.NORMAL;
 
     // Create event
-    const gridEvent: GridEvent<EventPayload<T>> = {
+    const gridEvent: GridEvent = {
       type: event,
       payload,
       timestamp: performance.now(),
@@ -224,7 +224,7 @@ export class EventBus {
    */
   private executeImmediate<T extends string>(
     event: T,
-    gridEvent: GridEvent<EventPayload<T>>
+    gridEvent: GridEvent
   ): void {
     const handlers = this.handlerRegistry.getAll();
     const matchedHandlers = this.patternMatcher.match(handlers, event);
@@ -238,7 +238,7 @@ export class EventBus {
    */
   private scheduleProcessing<T extends string>(
     event: T,
-    gridEvent: GridEvent<EventPayload<T>>,
+    gridEvent: GridEvent,
     priority: EventPriority
   ): void {
     const handlers = this.handlerRegistry.getAll();

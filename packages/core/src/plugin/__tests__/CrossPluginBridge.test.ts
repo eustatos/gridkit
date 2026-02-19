@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CrossPluginBridge } from '../events/CrossPluginBridge';
-import { PluginEventForwarder } from '../events/PluginEventForwarder';
-import { createEventBus, EventPriority } from '../../events';
+import { CrossPluginBridge } from '../../core/CrossPluginBridge';
+import { PluginEventForwarder } from '../../core/PluginEventForwarder';
+import { createEventBus, EventPriority } from '../../core/PluginEventForwarder';
 
 describe('CrossPluginBridge', () => {
   let baseBus: ReturnType<typeof createEventBus>;

@@ -1,4 +1,4 @@
-import type { GridEvent, EventPayload, EventMiddleware } from './types';
+import type { GridEvent, EventMiddleware } from './types';
 
 /**
  * Middleware pipeline for processing events through a chain of middleware functions
@@ -8,7 +8,7 @@ import type { GridEvent, EventPayload, EventMiddleware } from './types';
 export interface MiddlewarePipeline {
   add(middleware: EventMiddleware): void;
   remove(middleware: EventMiddleware): void;
-  apply<T extends string>(event: GridEvent<EventPayload<T>>): GridEvent<EventPayload<T>> | null;
+  apply(event: GridEvent): GridEvent | null;
   clear(): void;
   size(): number;
   has(middleware: EventMiddleware): boolean;
@@ -27,12 +27,12 @@ export function createMiddlewarePipeline(): MiddlewarePipeline {
 
     remove(middleware: EventMiddleware): void {
       const index = middlewares.indexOf(middleware);
-      if (index !== -1) {
+      if (index !== 1) {
         middlewares.splice(index, 1);
       }
     },
 
-    apply<T extends string>(event: GridEvent<EventPayload<T>>): GridEvent<EventPayload<T>> | null {
+    apply<T>(event: GridEvent<T>): GridEvent<T> | null {
       if (middlewares.length === 0) {
         return event;
       }
@@ -40,18 +40,18 @@ export function createMiddlewarePipeline(): MiddlewarePipeline {
       // Fast path for single middleware (common case)
       if (middlewares.length === 1) {
         const result = middlewares[0](event);
-        return result === null ? null : (result as GridEvent<EventPayload<T>>);
+        return result === null ? null : (result as GridEvent<T>);
       }
 
       // For multiple middlewares
-      let currentEvent: GridEvent<EventPayload<T>> = event;
+      let currentEvent: GridEvent<T> = event;
 
       for (let i = 0; i < middlewares.length; i++) {
         const result = middlewares[i](currentEvent);
         if (result === null) {
           return null;
         }
-        currentEvent = result;
+        currentEvent = result as GridEvent<T>;
       }
 
       return currentEvent;

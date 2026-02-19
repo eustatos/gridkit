@@ -18,7 +18,7 @@ function buildInitialState<TData extends RowData>(
 
     // Column ordering
     columnOrder: options.columns.map((col) => 
-      col.id as ColumnId
+      col.id
     ),
 
     // Column sizing
@@ -69,7 +69,7 @@ function buildInitialColumnVisibility<TData extends RowData>(
   const visibility: Record<string, boolean> = {};
 
   columns.forEach((column, index) => {
-    const columnId = column.id as ColumnId;
+    const columnId = column.id;
     visibility[columnId] = column.enableHiding !== false;
   });
 

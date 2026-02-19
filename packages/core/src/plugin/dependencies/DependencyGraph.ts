@@ -19,13 +19,13 @@ export class DependencyGraph {
     if (!this.graph.has(dependent)) {
       this.graph.set(dependent, new Set());
     }
-    this.graph.get(dependent)!.add(dependency);
+    this.graph.get(dependent).add(dependency);
 
     // Add to reverse graph for circular detection
     if (!this.reverseGraph.has(dependency)) {
       this.reverseGraph.set(dependency, new Set());
     }
-    this.reverseGraph.get(dependency)!.add(dependent);
+    this.reverseGraph.get(dependency).add(dependent);
 
     this.detectCircularDependency(dependent);
   }

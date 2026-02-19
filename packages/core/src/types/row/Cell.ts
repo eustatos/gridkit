@@ -2,7 +2,6 @@ import type { RowData , CellId } from '../base';
 import type { Column } from '../column';
 
 import type { CellMeta, CellPosition } from './Metadata';
-import type { Row } from './Row';
 
 /**
  * Represents a single table cell with data and UI state.
@@ -28,14 +27,15 @@ export interface Cell<TData extends RowData, TValue = unknown> {
   readonly id: CellId;
 
   /**
-   * Parent row instance.
-   */
-  readonly row: Row<TData>;
-
-  /**
    * Parent column instance with typed accessor.
    */
   readonly column: Column<TData, TValue>;
+
+  /**
+   * Row ID (for lookups).
+   * Use table.getRow(rowId) to get the full row instance.
+   */
+  readonly rowId: string;
 
   // === Data Access ===
 

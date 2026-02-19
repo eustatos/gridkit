@@ -3,6 +3,8 @@ import type { Table, RowData } from '@/types/table';
 
 import { buildInitialState } from '../builders/state-builder';
 
+
+
 /**
  * Resets the table to its initial state.
  */

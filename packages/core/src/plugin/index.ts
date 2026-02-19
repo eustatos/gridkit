@@ -16,53 +16,45 @@ export type {
 
 export { PluginManager } from './core/PluginManager';
 
-// Plugin events exports
-export type {
-  PluginRegisteredEvent,
-  PluginUnregisteredEvent,
-  PluginInitializedEvent,
-  PluginDestroyedEvent,
-  PluginUpdatedEvent,
-  PluginErrorEvent,
-  PluginEventType,
-  PluginEventPayloadMap,
-  PluginEventPayload
-} from './events/PluginEvents';
-
-export {
-  createPluginEventBus,
-  getPluginEventBus,
-  resetPluginEventBus
-} from './events/PluginEventBus';
-
 // Plugin isolation exports
 export { EventSandbox } from './isolation/EventSandbox';
 
 // Plugin event forwarding exports
-export { PluginEventForwarder } from './events/PluginEventForwarder';
+export { PluginEventForwarder } from './core/PluginEventForwarder';
+export type { PluginEventForwarder as IPluginEventForwarder } from './core/PluginEventForwarder';
 
 // Cross-plugin communication exports
-export { CrossPluginBridge } from './events/CrossPluginBridge';
+export { CrossPluginBridge } from './core/CrossPluginBridge';
+export type { CrossPluginBridge as ICrossPluginBridge } from './core/CrossPluginBridge';
 
 // Plugin lifecycle exports
 export type {
-  InitializationOptions,
-  InitializationResult
-} from './lifecycle/Initializer';
+  Initializer,
+  InitializerOptions,
+  Destroyer,
+  DestroyerOptions
+} from './lifecycle';
 
-export type {
-  DestructionOptions,
-  DestructionResult
-} from './lifecycle/Destroyer';
+// Plugin error boundary exports
+export { ErrorBoundary } from './security/ErrorBoundary';
 
-export {
-  initializePlugin,
-  initializePlugins,
-  PluginInitializationError
-} from './lifecycle/Initializer';
+// Plugin quota manager exports
+export { QuotaManager } from './isolation/QuotaManager';
 
-export {
-  destroyPlugin,
-  destroyPlugins,
-  PluginDestructionError
-} from './lifecycle/Destroyer';
+// Plugin permission manager exports
+export { PermissionManager } from './isolation/PermissionManager';
+
+// Plugin resource monitor exports
+export { ResourceMonitor } from './security/ResourceMonitor';
+
+// Plugin event validator exports
+export { EventValidator } from './security/EventValidator';
+
+// Configurable plugin exports
+export { ConfigurablePlugin } from './ConfigurablePlugin';
+
+// Plugin config exports
+export { ConfigManager } from './config/ConfigManager';
+export type { ConfigSchema } from './config/ConfigSchema';
+export { ConfigValidator } from './config/ConfigValidator';
+export { ConfigWatcher } from './config/ConfigWatcher';

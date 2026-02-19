@@ -1,23 +1,19 @@
 // Core event registry with essential event types
+// Note: GridId, ColumnId, RowId are imported from '@/types/base' (not from this file)
 
 import type { GridEvent } from './base';
 
-// Placeholder types since the actual types are not yet implemented
-export type GridId = string;
-export type ColumnId = string;
-export type RowId = string;
-
 // Grid lifecycle events
-export interface GridCreatedEvent extends GridEvent<{ gridId: GridId }> {
+export interface GridCreatedEvent extends GridEvent<{ gridId: string }> {
   readonly type: 'grid.created';
 }
 
-export interface GridDestroyedEvent extends GridEvent<{ gridId: GridId }> {
+export interface GridDestroyedEvent extends GridEvent<{ gridId: string }> {
   readonly type: 'grid.destroyed';
 }
 
 export interface GridResizeEvent extends GridEvent<{ 
-  gridId: GridId; 
+  gridId: string; 
   width: number; 
   height: number 
 }> {
@@ -26,23 +22,23 @@ export interface GridResizeEvent extends GridEvent<{
 
 // Column events
 export interface ColumnAddedEvent extends GridEvent<{ 
-  gridId: GridId; 
-  columnId: ColumnId;
+  gridId: string; 
+  columnId: string;
   index: number;
 }> {
   readonly type: 'column.added';
 }
 
 export interface ColumnRemovedEvent extends GridEvent<{ 
-  gridId: GridId; 
-  columnId: ColumnId;
+  gridId: string; 
+  columnId: string;
 }> {
   readonly type: 'column.removed';
 }
 
 export interface ColumnMovedEvent extends GridEvent<{ 
-  gridId: GridId; 
-  columnId: ColumnId;
+  gridId: string; 
+  columnId: string;
   fromIndex: number;
   toIndex: number;
 }> {
@@ -51,23 +47,23 @@ export interface ColumnMovedEvent extends GridEvent<{
 
 // Row events
 export interface RowAddedEvent extends GridEvent<{ 
-  gridId: GridId; 
-  rowId: RowId;
+  gridId: string; 
+  rowId: string;
   index: number;
 }> {
   readonly type: 'row.added';
 }
 
 export interface RowRemovedEvent extends GridEvent<{ 
-  gridId: GridId; 
-  rowId: RowId;
+  gridId: string; 
+  rowId: string;
 }> {
   readonly type: 'row.removed';
 }
 
 export interface RowMovedEvent extends GridEvent<{ 
-  gridId: GridId; 
-  rowId: RowId;
+  gridId: string; 
+  rowId: string;
   fromIndex: number;
   toIndex: number;
 }> {
@@ -76,9 +72,9 @@ export interface RowMovedEvent extends GridEvent<{
 
 // Cell events
 export interface CellValueChangedEvent extends GridEvent<{ 
-  gridId: GridId; 
-  rowId: RowId;
-  columnId: ColumnId;
+  gridId: string; 
+  rowId: string;
+  columnId: string;
   oldValue: unknown;
   newValue: unknown;
 }> {
@@ -87,8 +83,8 @@ export interface CellValueChangedEvent extends GridEvent<{
 
 // Selection events
 export interface SelectionChangedEvent extends GridEvent<{ 
-  gridId: GridId; 
-  selectedCells: Array<{ rowId: RowId; columnId: ColumnId }>;
+  gridId: string; 
+  selectedCells: Array<{ rowId: string; columnId: string }>;
 }> {
   readonly type: 'selection.changed';
 }
@@ -122,12 +118,6 @@ export interface EventPayloadMap {
   'selection.changed': SelectionChangedEvent['payload'];
 }
 
-// Helper type to get payload type by event type
-// For known event types, returns the specific payload
-// For unknown event types (like channel events), accepts unknown payload
-export type EventPayload<T extends string> = T extends keyof EventPayloadMap
-  ? EventPayloadMap[T]
-  : unknown;
 
-// Helper type for event type strings
-export type EventType = keyof EventPayloadMap;
+// Re-export base types for convenience
+export type { EventType, EventPayload } from './base';

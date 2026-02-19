@@ -29,17 +29,6 @@ export interface GridDestroyEvent extends GridEvent<{
   readonly type: 'grid:destroy';
 }
 
-// Grid dimension events
-export interface GridResizeEvent extends GridEvent<{
-  readonly gridId: GridId;
-  readonly width: number;
-  readonly height: number;
-  readonly previousWidth: number;
-  readonly previousHeight: number;
-}> {
-  readonly type: 'grid:resize';
-}
-
 // Grid state events
 export interface GridStateChangeEvent extends GridEvent<{
   readonly gridId: GridId;
@@ -55,7 +44,6 @@ export type GridEventType =
   | GridInitEvent
   | GridReadyEvent
   | GridDestroyEvent
-  | GridResizeEvent
   | GridStateChangeEvent;
 
 // Type mapping for grid event payloads
@@ -63,7 +51,6 @@ export interface GridEventPayloadMap {
   'grid:init': GridInitEvent['payload'];
   'grid:ready': GridReadyEvent['payload'];
   'grid:destroy': GridDestroyEvent['payload'];
-  'grid:resize': GridResizeEvent['payload'];
   'grid:state-change': GridStateChangeEvent['payload'];
 }
 

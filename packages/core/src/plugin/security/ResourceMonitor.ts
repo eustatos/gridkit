@@ -183,7 +183,7 @@ export class ResourceMonitor {
       });
     }
     
-    return this.pluginUsage.get(pluginId)!;
+    return this.pluginUsage.get(pluginId);
   }
 
   /**

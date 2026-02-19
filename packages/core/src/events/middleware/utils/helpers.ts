@@ -1,6 +1,6 @@
 // helpers.ts
 
-import { GridEvent, EventMiddleware } from '../core/EventPipeline';
+import { GridEvent, EventMiddleware } from '@/events/types';
 
 export function createConditionalMiddleware(
   condition: (event: GridEvent) => boolean,

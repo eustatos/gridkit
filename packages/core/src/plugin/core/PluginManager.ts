@@ -1,5 +1,5 @@
 import { createEventBus, type EventBus } from '../../events';
-import { EventPriority } from '../../events/types';
+import { EventPriority } from '../../events/types/base';
 
 import type { Plugin, PluginContext, PluginMetadata } from './Plugin';
 

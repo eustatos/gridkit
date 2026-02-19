@@ -7,10 +7,11 @@
  * @module @gridkit/core/events/integration
  */
 
+import type { Table, RowData, GridId , RowId } from '@/types';
+
 import { EventBus } from '../EventBus';
 import type { TableEventBridge, DataChangeType } from '../types/event-bridge';
 
-import type { Table, RowData, GridId , RowId } from '@/types';
 
 // Helper to detect changed keys between states
 function detectChangedKeys<TData extends RowData>(
@@ -93,7 +94,7 @@ export function createTableEventBridge<TData extends RowData>(
         'state:update',
         {
           tableId,
-          previousState: previousState as TableState<TData>,
+          previousState: previousState,
           newState: state,
           changedKeys,
           timestamp: Date.now(),

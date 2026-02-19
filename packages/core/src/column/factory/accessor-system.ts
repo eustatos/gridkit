@@ -1,8 +1,9 @@
 // Type-safe accessor system for column value extraction
-import { GridKitError } from '../../errors/grid-kit-error';
 
 import type { RowData } from '@/types';
 import type { ValidatedColumnDef } from '@/types/column';
+
+import { GridKitError } from '../../errors/grid-kit-error';
 
 
 /**
@@ -36,10 +37,10 @@ export function createAccessor<TData extends RowData, TValue>(
       getValue: (row: TData, index: number): TValue => {
         // Check cache
         if (cache.has(row as object)) {
-          return cache.get(row as object)!;
+          return cache.get(row as object);
         }
 
-        const value = columnDef.accessorFn!(row, index);
+        const value = columnDef.accessorFn(row, index);
         cache.set(row as object, value);
         return value;
       },

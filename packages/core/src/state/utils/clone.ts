@@ -24,7 +24,7 @@ export function deepClone<T>(obj: T): T {
   const stack = [{ original: obj, cloned }];
 
   while (stack.length > 0) {
-    const { original, cloned } = stack.pop()!;
+    const { original, cloned } = stack.pop();
 
     // Track visited objects for circular references
     seen.set(original, cloned);

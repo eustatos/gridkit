@@ -1,6 +1,6 @@
 // compose.ts
 
-import { EventMiddleware } from '../core/EventPipeline';
+import { EventMiddleware } from '@/events/types';
 
 export function composeMiddlewares(
   ...middlewares: EventMiddleware[]

@@ -23,7 +23,7 @@ export class ConfigWatcher {
       this.watchers.set(pluginId, new Set());
     }
     
-    const watchers = this.watchers.get(pluginId)!;
+    const watchers = this.watchers.get(pluginId);
     const typedCallback = callback as (config: unknown) => void;
     
     // Wrap the callback with debouncing

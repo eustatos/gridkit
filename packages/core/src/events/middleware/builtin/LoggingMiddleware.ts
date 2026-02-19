@@ -1,6 +1,6 @@
 // LoggingMiddleware.ts
 
-import { GridEvent, EventMiddleware } from '../core/EventPipeline';
+import { GridEvent, EventMiddleware } from '@/events/types';
 
 export function createLoggingMiddleware(
   logger: (message: string) => void

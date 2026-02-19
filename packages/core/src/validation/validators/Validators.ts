@@ -557,10 +557,17 @@ export const Validators: ValidatorFactory = {
       severity: 'error',
       fixable: true,
       validate: (value: unknown, context: ValidationContext) => {
-        if (typeof value !== 'string' || value.length < length) {
+        if (typeof value !== 'string') {
+          return createError(
+            'TYPE_MISMATCH',
+            `Expected string, got ${typeof value}`,
+            context
+          );
+        }
+        if (value.length < length) {
           return createError(
             'MIN_LENGTH_VIOLATION',
-            `Length must be at least ${length}, got ${value ? value.length : 0}`,
+            `Length must be at least ${length}, got ${value.length}`,
             context
           );
         }
@@ -579,10 +586,17 @@ export const Validators: ValidatorFactory = {
       severity: 'error',
       fixable: true,
       validate: (value: unknown, context: ValidationContext) => {
-        if (typeof value !== 'string' || value.length > length) {
+        if (typeof value !== 'string') {
+          return createError(
+            'TYPE_MISMATCH',
+            `Expected string, got ${typeof value}`,
+            context
+          );
+        }
+        if (value.length > length) {
           return createError(
             'MAX_LENGTH_VIOLATION',
-            `Length must be at most ${length}, got ${value ? value.length : 0}`,
+            `Length must be at most ${length}, got ${value.length}`,
             context
           );
         }

@@ -5,7 +5,6 @@ import type { RowData } from '../base'
 import type { Row } from '../table/Row'
 import type { Table } from '../table/Table'
 
-import type { Column } from './ColumnInstance'
 import type { CellMeta } from './SupportingTypes'
 
 /**
@@ -14,7 +13,7 @@ import type { CellMeta } from './SupportingTypes'
  */
 export interface HeaderContext<TData extends RowData, TValue = unknown> {
   /** Column instance */
-  readonly column: Column<TData, TValue>;
+  readonly column: any;
 
   /** Table instance */
   readonly table: Table<TData>;
@@ -43,7 +42,7 @@ export interface CellContext<TData extends RowData, TValue = unknown> {
   readonly getRow: () => Row<TData>;
 
   /** Get column instance */
-  readonly column: Column<TData, TValue>;
+  readonly column: any;
 
   /** Get table instance */
   readonly table: Table<TData>;
@@ -68,22 +67,7 @@ export interface CellContext<TData extends RowData, TValue = unknown> {
  * Context for footer renderers.
  */
 export interface FooterContext<TData extends RowData, TValue = unknown> {
-  readonly column: Column<TData, TValue>;
+  readonly column: any;
   readonly table: Table<TData>;
   readonly footer: string;
 }
-
-/**
- * Renderer function types.
- */
-export type HeaderRenderer<TData extends RowData, TValue = unknown> = (
-  context: HeaderContext<TData, TValue>
-) => unknown;
-
-export type CellRenderer<TData extends RowData, TValue = unknown> = (
-  context: CellContext<TData, TValue>
-) => unknown;
-
-export type FooterRenderer<TData extends RowData, TValue = unknown> = (
-  context: FooterContext<TData, TValue>
-) => unknown;

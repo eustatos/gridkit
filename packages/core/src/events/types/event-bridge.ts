@@ -7,18 +7,17 @@
  * @module @gridkit/core/events/types/bridge
  */
 
-import type { EventBus } from '../EventBus';
+import type { TableState, RowId, GridId } from '@/types';
 
+import type { EventBus } from '../EventBus';
 import type {
   EventType,
   EventPayload,
   EventHandler,
   EventHandlerOptions,
   GridEvent,
-} from './base';
+} from '../types';
 
-import type { TableState, RowId } from '@/types';
-import type { GridId } from '@/types/base';
 
 // ===================================================================
 // Data Change Types

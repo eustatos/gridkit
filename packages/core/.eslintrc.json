@@ -1,9 +1,10 @@
 {
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2020,
+    "ecmaVersion": 2021,
     "sourceType": "module",
-    "project": "./tsconfig.json"
+    "project": ["./tsconfig.json"],
+    "tsconfigRootDir": "."
   },
   "plugins": ["@typescript-eslint", "import"],
   "extends": [
@@ -14,6 +15,12 @@
     "plugin:import/typescript",
     "prettier"
   ],
+  "settings": {
+    "import/resolver": {
+      "typescript": true,
+      "node": true
+    }
+  },
   "rules": {
     "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/explicit-function-return-type": [
@@ -58,7 +65,23 @@
         }
       }
     ],
-    "no-console": "warn"
+    "no-console": "warn",
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": [
+          "**/*.test.ts",
+          "**/*.spec.ts",
+          "**/__tests__/**/*.ts"
+        ]
+      }
+    ],
+    "import/no-unresolved": [
+      "error",
+      {
+        "ignore": ["^@/.*$"]
+      }
+    ]
   },
   "ignorePatterns": [
     "dist",

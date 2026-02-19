@@ -7,12 +7,13 @@
  * @module @gridkit/core/row/methods/basic-methods
  */
 
-import type { CellCache } from '../cell/cell-cache';
 
 import type { RowData, RowId } from '@/types';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { Cell } from '@/types/row/Cell';
 import type { Row } from '@/types/row/Row';
+
+import type { CellCache } from '../cell/cell-cache';
 
 /**
  * Basic row methods interface.
@@ -109,7 +110,7 @@ export function buildBasicRowMethods<TData extends RowData>(
       return cellCache.get(columnId);
     },
 
-    getValue: <TValue = unknown>(columnId: string): TValue => {
+    getValue: <TValue = unknown>(columnId: string): unknown => {
       const cell = cellCache.get(columnId);
       if (!cell) {
         throw new Error(`CELL_NOT_FOUND: Cell not found for column ${columnId}`);

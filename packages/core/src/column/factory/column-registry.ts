@@ -1,9 +1,10 @@
 // Column registry for managing column instances
-import { GridKitError } from '../../errors/grid-kit-error';
 
 import type { Column , RowData } from '@/types';
 import type { ColumnId, ColumnGroupId } from '@/types/column/SupportingTypes';
 import type { Table } from '@/types/table';
+
+import { GridKitError } from '../../errors/grid-kit-error';
 
 /**
  * Manages all columns in a table with O(1) lookups.
@@ -49,7 +50,7 @@ export class ColumnRegistry<TData extends RowData> {
       if (!this.columnGroups.has(groupId)) {
         this.columnGroups.set(groupId, []);
       }
-      this.columnGroups.get(groupId)!.push(column.id);
+      this.columnGroups.get(groupId).push(column.id);
     }
   }
 
@@ -64,7 +65,7 @@ export class ColumnRegistry<TData extends RowData> {
    * Get all columns in registration order.
    */
   getAll(): Column<TData>[] {
-    return this.columnOrder.map((id) => this.columns.get(id)!);
+    return this.columnOrder.map((id) => this.columns.get(id));
   }
 
   /**
@@ -73,7 +74,7 @@ export class ColumnRegistry<TData extends RowData> {
   getVisible(visibilityState: Record<ColumnId, boolean>): Column<TData>[] {
     return this.columnOrder
       .filter((id) => visibilityState[id] !== false)
-      .map((id) => this.columns.get(id)!);
+      .map((id) => this.columns.get(id));
   }
 
   /**

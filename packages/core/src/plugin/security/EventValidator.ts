@@ -1,223 +1,171 @@
-import type { GridEvent } from '../../events/PluginEvents';
+// EventValidator.ts - Validates event payloads for security and type safety
+
+import type { GridEvent } from '../events/PluginEvents';
 
 /**
- * ValidationResult represents the result of event validation.
+ * Event validation results
  */
 export interface ValidationResult {
-  /** Whether the event is valid */
   isValid: boolean;
-  
-  /** Error message if the event is invalid */
-  errorMessage?: string;
-  
-  /** Sanitized event payload if the event can be sanitized */
-  sanitizedPayload?: unknown;
+  errors?: string[];
+  warnings?: string[];
 }
 
 /**
- * EventValidator handles payload validation and sanitization for events
- * to prevent security issues and malformed data.
- * 
- * The event validator ensures that events conform to expected formats
- * and removes potentially dangerous content from event payloads.
- * It provides both validation and sanitization capabilities.
- * 
- * @example
- * ```typescript
- * const validator = new EventValidator();
- * const result = validator.validateEvent(event);
- * if (!result.isValid) {
- *   console.error(`Invalid event: ${result.errorMessage}`);
- * }
- * 
- * const sanitizedEvent = validator.sanitizeEvent(event);
- * if (sanitizedEvent) {
- *   // Use the sanitized event
- * }
- * ```
+ * Event validation options
+ */
+export interface ValidationOptions {
+  /** Maximum payload size in bytes */
+  maxPayloadSize?: number;
+  /** Maximum number of event handlers */
+  maxHandlers?: number;
+  /** Allowed event types pattern */
+  allowedEvents?: RegExp;
+  /** Required event properties */
+  requiredProperties?: string[];
+}
+
+/**
+ * Event validator for plugin event system
  */
 export class EventValidator {
+  private options: ValidationOptions;
+
+  constructor(options: ValidationOptions = {}) {
+    this.options = {
+      maxPayloadSize: options.maxPayloadSize ?? 1024 * 1024, // 1MB default
+      maxHandlers: options.maxHandlers ?? 1000,
+      allowedEvents: options.allowedEvents,
+      requiredProperties: options.requiredProperties ?? ['type', 'payload'],
+    };
+  }
+
   /**
-   * Validates an event payload.
-   * 
-   * This method checks if an event conforms to expected formats
-   * and contains valid data. It verifies required fields and
-   * proper data types.
-   * 
+   * Validate an event payload
    * @param event - The event to validate
    * @returns Validation result
-   * 
-   * @example
-   * ```typescript
-   * const result = validator.validateEvent(event);
-   * if (!result.isValid) {
-   *   console.error(`Invalid event: ${result.errorMessage}`);
-   * }
-   * ```
    */
-  public validateEvent(event: GridEvent): ValidationResult {
-    // Check for required fields
+  validateEvent(event: GridEvent): ValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Check required properties
     if (!event.type) {
-      return {
-        isValid: false,
-        errorMessage: 'Event type is required',
-      };
+      errors.push('Event type is required');
     }
 
-    // Check for valid source format
-    if (event.source && typeof event.source !== 'string') {
-      return {
-        isValid: false,
-        errorMessage: 'Event source must be a string',
-      };
+    if (!event.payload) {
+      errors.push('Event payload is required');
     }
 
-    // Check for valid timestamp
-    if (event.timestamp && typeof event.timestamp !== 'number') {
-      return {
-        isValid: false,
-        errorMessage: 'Event timestamp must be a number',
-      };
+    // Check payload size
+    const payloadSize = JSON.stringify(event.payload).length;
+    if (payloadSize > this.options.maxPayloadSize) {
+      errors.push(`Event payload exceeds maximum size of ${this.options.maxPayloadSize} bytes`);
     }
 
-    // Check for valid metadata
-    if (event.metadata && typeof event.metadata !== 'object') {
-      return {
-        isValid: false,
-        errorMessage: 'Event metadata must be an object',
-      };
+    // Check event type against allowed pattern
+    if (this.options.allowedEvents && !this.options.allowedEvents.test(event.type)) {
+      errors.push(`Event type '${event.type}' is not allowed`);
     }
 
-    // Additional validation can be added here based on event type
+    // Check for security issues
+    if (this.hasSecurityIssues(event.payload)) {
+      errors.push('Event payload contains security-sensitive data');
+    }
+
     return {
-      isValid: true,
+      isValid: errors.length === 0,
+      errors,
+      warnings,
     };
   }
 
   /**
-   * Sanitizes an event payload to remove potentially harmful content.
-   * 
-   * This method removes potentially dangerous properties from
-   * event payloads and metadata to prevent security issues.
-   * It creates a copy of the event to avoid modifying the original.
-   * 
+   * Sanitize an event payload by removing sensitive data
    * @param event - The event to sanitize
    * @returns Sanitized event or null if the event should be rejected
-   * 
-   * @example
-   * ```typescript
-   * const sanitizedEvent = validator.sanitizeEvent(event);
-   * if (sanitizedEvent) {
-   *   // Use the sanitized event
-   * }
-   * ```
    */
-  public sanitizeEvent(event: GridEvent): GridEvent | null {
-    // Create a copy of the event to avoid modifying the original
-    const sanitizedEvent: GridEvent = {
-      type: event.type,
-      payload: this.sanitizePayload(event.payload),
-      timestamp: event.timestamp,
-      source: event.source,
-      metadata: event.metadata ? this.sanitizeMetadata(event.metadata) : undefined,
+  sanitizeEvent(event: GridEvent): GridEvent | null {
+    if (!event.payload) {
+      return null;
+    }
+
+    // Deep clone to avoid mutation
+    const sanitizedPayload = this.sanitizeObject(event.payload as Record<string, unknown>);
+
+    return {
+      ...event,
+      payload: sanitizedPayload,
     };
-
-    return sanitizedEvent;
   }
 
   /**
-   * Sanitizes event payload.
-   * 
-   * This method recursively sanitizes event payloads by removing
-   * potentially dangerous properties and ensuring data integrity.
-   * 
-   * @param payload - The payload to sanitize
-   * @returns Sanitized payload
-   * 
-   * @example
-   * ```typescript
-   * const sanitizedPayload = this.sanitizePayload(payload);
-   * ```
+   * Recursively sanitize an object
+   * @param obj - The object to sanitize
+   * @returns Sanitized object
    */
-  private sanitizePayload(payload: unknown): unknown {
-    if (payload === null || payload === undefined) {
-      return payload;
-    }
-
-    // For objects, recursively sanitize properties
-    if (typeof payload === 'object') {
-      // Handle arrays
-      if (Array.isArray(payload)) {
-        return payload.map(item => this.sanitizePayload(item));
-      }
-
-      // Handle plain objects
-      const sanitized: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(payload)) {
-        // Skip potentially dangerous properties
-        if (this.isDangerousProperty(key)) {
-          continue;
-        }
-        sanitized[key] = this.sanitizePayload(value);
-      }
-      return sanitized;
-    }
-
-    // For primitives, return as-is
-    return payload;
-  }
-
-  /**
-   * Sanitizes event metadata.
-   * 
-   * This method sanitizes event metadata by removing potentially
-   * dangerous properties while preserving valid metadata.
-   * 
-   * @param metadata - The metadata to sanitize
-   * @returns Sanitized metadata
-   * 
-   * @example
-   * ```typescript
-   * const sanitizedMetadata = this.sanitizeMetadata(metadata);
-   * ```
-   */
-  private sanitizeMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
+  private sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
     const sanitized: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(metadata)) {
-      // Skip potentially dangerous properties
-      if (this.isDangerousProperty(key)) {
-        continue;
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (this.isSensitiveKey(key)) {
+        // Redact sensitive data
+        sanitized[key] = '[REDACTED]';
+      } else if (value && typeof value === 'object') {
+        // Recursively sanitize nested objects
+        sanitized[key] = this.sanitizeObject(value as Record<string, unknown>);
+      } else {
+        sanitized[key] = value;
       }
-      sanitized[key] = this.sanitizePayload(value);
     }
+
     return sanitized;
   }
 
   /**
-   * Checks if a property name is potentially dangerous.
-   * 
-   * This method checks if a property name is potentially dangerous
-   * and should be removed during sanitization. Dangerous properties
-   * include those that could be used for prototype pollution.
-   * 
-   * @param propertyName - The property name to check
-   * @returns true if the property is dangerous, false otherwise
-   * 
-   * @example
-   * ```typescript
-   * if (this.isDangerousProperty(key)) {
-   *   // Skip this property
-   * }
-   * ```
+   * Check if a key is sensitive
+   * @param key - The key to check
+   * @returns true if the key is sensitive
    */
-  private isDangerousProperty(propertyName: string): boolean {
-    // List of potentially dangerous property names
-    const dangerousProperties = [
-      '__proto__',
-      'constructor',
-      'prototype',
+  private isSensitiveKey(key: string): boolean {
+    const sensitivePatterns = [
+      'password',
+      'token',
+      'secret',
+      'key',
+      'credit',
+      'ssn',
+      'routing',
     ];
 
-    return dangerousProperties.includes(propertyName);
+    const lowerKey = key.toLowerCase();
+    return sensitivePatterns.some((pattern) => lowerKey.includes(pattern));
+  }
+
+  /**
+   * Check if the payload has security issues
+   * @param payload - The payload to check
+   * @returns true if the payload has security issues
+   */
+  private hasSecurityIssues(payload: unknown): boolean {
+    if (!payload || typeof payload !== 'object') {
+      return false;
+    }
+
+    // Check for circular references (security risk)
+    try {
+      JSON.stringify(payload);
+    } catch (error) {
+      return true;
+    }
+
+    // Check for function types (security risk)
+    const payloadStr = JSON.stringify(payload);
+    if (payloadStr.includes('function') || payloadStr.includes('=>')) {
+      return true;
+    }
+
+    return false;
   }
 }

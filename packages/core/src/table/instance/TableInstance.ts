@@ -1,5 +1,5 @@
 import { createColumnRegistry } from '../../column';
-import { createEventBus } from '../../events';
+import { createEventBus } from '../../events/core';
 import { createPerformanceMonitor, type PerformanceMetrics } from '../../performance';
 import { createRowFactory } from '../../row';
 import { createStore } from '../../state';

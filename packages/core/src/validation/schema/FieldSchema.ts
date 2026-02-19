@@ -7,6 +7,8 @@
  */
 
 // Import types from base using relative path from validation folder
+import type { RowData } from '@/types';
+
 import type {
   ValidationMode,
   FieldType,
@@ -15,7 +17,6 @@ import type {
   ValidationContext,
 } from './BaseTypes';
 
-import type { RowData } from '@/types';
 
 // Import base types
 

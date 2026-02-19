@@ -1,7 +1,5 @@
 import { createEventBus, type EventBus } from '../../events';
 
-import type { PluginEventType } from './PluginEvents';
-
 /**
  * Create a plugin-scoped event bus
  * 
@@ -29,11 +27,13 @@ export function getPluginEventBus(): EventBus {
 }
 
 /**
- * Reset the global plugin event bus (for testing)
+ * Reset the global plugin event bus
+ * 
+ * @returns void
  */
 export function resetPluginEventBus(): void {
-  if (globalPluginEventBus) {
-    globalPluginEventBus.clear();
-    globalPluginEventBus = null;
-  }
+  globalPluginEventBus = null;
 }
+
+// Re-export EventBus for test compatibility
+export { EventBus } from '../../events';

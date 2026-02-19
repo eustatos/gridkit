@@ -7,14 +7,15 @@
  * @module @gridkit/core/row/factory/create-row
  */
 
-import { CellCache, createCellCache } from '../cell/cell-cache';
-import type { BasicRowMethods, BuildBasicRowMethodsOptions } from '../methods/basic-methods';
 
 import type { RowData , RowId, ColumnId, CellId } from '@/types';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { Cell } from '@/types/row/Cell';
 import type { Row } from '@/types/table/Row';
 import type { Table } from '@/types/table/Table';
+
+import { CellCache, createCellCache } from '../cell/cell-cache';
+import type { BasicRowMethods, BuildBasicRowMethodsOptions } from '../methods/basic-methods';
 
 /**
  * Options for creating a row instance.
@@ -218,7 +219,7 @@ function initializeCellCache<TData extends RowData>(
     // Create cell with basic properties
     const cell: Cell<TData> = {
       id: cellId,
-      row,
+      rowId: row.id as string,
       column,
       getValue: () => column._internal.accessor.getValue(row.original, row.originalIndex),
       renderValue: () => column._internal.accessor.getValue(row.original, row.originalIndex),

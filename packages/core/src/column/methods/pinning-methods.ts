@@ -1,8 +1,8 @@
 // Pinning methods for columns
 import type { RowData } from '@/types';
 import type { ValidatedColumnDef } from '@/types/column';
-import type { Table } from '@/types/table';
 import type { ColumnId } from '@/types/column/SupportingTypes';
+import type { Table } from '@/types/table';
 
 /**
  * Builds pinning-related methods for column instance.
@@ -17,7 +17,7 @@ export function buildPinningMethods<TData extends RowData, TValue>(
     // Pinning
     getPinnedPosition: () => {
       const pinning = tableState().columnPinning;
-      const colId = columnDef.id as ColumnId;
+      const colId = columnDef.id;
       if (pinning?.left?.includes(colId)) return 'left';
       if (pinning?.right?.includes(colId)) return 'right';
       return false;
@@ -28,7 +28,7 @@ export function buildPinningMethods<TData extends RowData, TValue>(
 
       table.setState((prev) => {
         const currentPinning = prev.columnPinning ?? { left: [], right: [] };
-        const colId = columnDef.id as ColumnId;
+        const colId = columnDef.id;
         const isLeft = currentPinning.left?.includes(colId);
         const isRight = currentPinning.right?.includes(colId);
 

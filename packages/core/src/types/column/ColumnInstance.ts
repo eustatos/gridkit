@@ -57,7 +57,7 @@ export interface Column<TData extends RowData, TValue = unknown> {
   readonly table: Table<TData>;
 
   /** Original column definition */
-  readonly columnDef: ColumnDef<TData, TValue>;
+  readonly columnDef: any;
 
   // === State Accessors ===
 

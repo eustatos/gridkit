@@ -1,11 +1,13 @@
 // Column definition validation
-import { GridKitError } from '../../errors/grid-kit-error';
 
-import { normalizeColumnDef } from './normalize-column';
 
 import type { RowData } from '@/types/base';
 import type { ColumnDef, ValidatedColumnDef } from '@/types/column/ColumnDef';
 import type { Table } from '@/types/table';
+
+import { GridKitError } from '../../errors/grid-kit-error';
+
+import { normalizeColumnDef } from './normalize-column';
 
 /**
  * Validates column definition and returns normalized version.
@@ -47,7 +49,7 @@ export function validateColumnDef<TData extends RowData, TValue>(
   // Normalize with defaults
   const normalizedDef = {
     ...columnDef,
-    id: id!,
+    id: id,
   };
 
   return normalizeColumnDef(normalizedDef);

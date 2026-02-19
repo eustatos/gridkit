@@ -182,7 +182,11 @@ export type FilterOperator =
   | 'greaterThan'
   | 'lessThan'
   | 'greaterOrEqual'
-  | 'lessOrEqual';
+  | 'lessOrEqual'
+  | 'between'
+  | 'in'
+  | 'notIn'
+  | 'custom';
 
 /**
  * Pagination state.

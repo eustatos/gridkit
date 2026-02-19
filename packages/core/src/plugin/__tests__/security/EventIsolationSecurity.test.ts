@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PluginEventForwarder } from '../../events/PluginEventForwarder';
+import { PluginEventForwarder } from '../../core/PluginEventForwarder';
 import { createEventBus, EventPriority } from '../../../events';
 
 describe('Event Isolation Security', () => {

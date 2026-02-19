@@ -1,0 +1,80 @@
+{
+    "name": "@gridkit/core",
+    "version": "0.0.1",
+    "description": "Core table functionality for GridKit",
+    "type": "module",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        },
+        "./types": {
+            "types": "./dist/types/index.d.ts",
+            "import": "./dist/types/index.js"
+        },
+        "./plugin": {
+            "types": "./dist/plugin/index.d.ts",
+            "import": "./dist/plugin/index.js",
+            "require": "./dist/plugin/index.cjs"
+        },
+        "./plugin/*": {
+            "types": "./dist/plugin/*/index.d.ts",
+            "import": "./dist/plugin/*/index.js",
+            "require": "./dist/plugin/*/index.cjs"
+        },
+        "./events": {
+            "types": "./dist/events/index.d.ts",
+            "import": "./dist/events/index.js",
+            "require": "./dist/events/index.cjs"
+        },
+        "./events/*": {
+            "types": "./dist/events/*/index.d.ts",
+            "import": "./dist/events/*/index.js",
+            "require": "./dist/events/*/index.cjs"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsup && tsc --project tsconfig.json --emitDeclarationOnly --outDir dist",
+        "dev": "tsup --watch",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage",
+        "lint": "eslint .",,
+        "lint:fix": "eslint src --ext .ts --fix",
+        "type-check": "tsc --noEmit",
+        "clean": "rm -rf dist .turbo node_modules"
+    },
+    "keywords": [
+        "table",
+        "grid",
+        "datagrid",
+        "typescript",
+        "framework-agnostic"
+    ],
+    "author": "GridKit Team",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^20.11.5",
+        "eslint-import-resolver-typescript": "^4.4.4",
+        "eslint-plugin-prettier": "^5.5.5",
+        "tsup": "^8.0.1",
+        "typescript": "^5.3.3",
+        "vitest": "^1.2.1"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "dependencies": {
+        "yaml": "^2.3.4",
+        "zod": "^3.22.4"
+    }
+}

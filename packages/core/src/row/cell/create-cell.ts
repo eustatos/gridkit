@@ -10,7 +10,7 @@
 import type { RowData } from '@/types';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { Cell } from '@/types/row/Cell';
-import type { Row } from '@/types/row/Row';
+import type { Row } from '@/types/table/Row';
 
 /**
  * Create a cell instance for a row/column pair.
@@ -29,7 +29,7 @@ export function createCell<TData extends RowData, TValue = unknown>(
 
   const cell: Cell<TData, TValue> = {
     id: cellId as any,
-    row,
+    rowId: row.id as string,
     column,
 
     getValue: () => {
@@ -60,7 +60,9 @@ export function createCell<TData extends RowData, TValue = unknown>(
           meta: column.columnDef.meta?.cell || {},
         };
 
-        return cellRenderer(context);
+        if (typeof cellRenderer === 'function') {
+          return cellRenderer(context);
+        }
       }
 
       return value;
@@ -79,11 +81,11 @@ export function createCell<TData extends RowData, TValue = unknown>(
     },
 
     getIsEditable: () => {
-      const meta = (column.columnDef.meta as any)?.cell;
+      const meta = (column.columnDef.meta)?.cell;
       return meta?.editable === true;
     },
 
-    meta: (column.columnDef.meta as any)?.cell || {},
+    meta: (column.columnDef.meta)?.cell || {},
     index: column.getIndex(),
 
     // Position (for virtualization)

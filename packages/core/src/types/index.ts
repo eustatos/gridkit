@@ -93,8 +93,6 @@ export type {
   HeaderContext,
   CellContext,
   FooterContext,
-  HeaderRenderer,
-  CellRenderer,
   FooterRenderer,
   Column as ColumnInstance,
   ColumnId as ColumnIdentifier,

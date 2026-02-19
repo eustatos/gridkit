@@ -121,6 +121,7 @@ export function createPriorityQueue(): PriorityQueue {
  */
 export function createMockPriorityQueue(): PriorityQueue & {
   getQueue: (priority: EventPriority) => QueuedTask[];
+  getProcessedTasks: () => QueuedTask[];
 } {
   const queues = new Map<EventPriority, QueuedTask[]>([
     [EventPriority.IMMEDIATE, []],
@@ -159,7 +160,7 @@ export function createMockPriorityQueue(): PriorityQueue & {
       ];
 
       for (const priority of priorityOrder) {
-        const queue = queues.get(priority)!;
+        const queue = queues.get(priority);
         // For immediate priority, we don't need to sort by sequence number
         if (priority === EventPriority.IMMEDIATE) {
           tasksToProcess.push(...queue);

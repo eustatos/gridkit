@@ -194,7 +194,7 @@ function validateData<T extends RowData = RowData>(
     let normalizedValue: unknown = fieldValue;
     if (fieldSchema.normalize) {
       const normalizeFn = fieldSchema.normalize as (value: unknown) => unknown;
-      const normalizedResult = normalizeFn(fieldValue as unknown);
+      const normalizedResult = normalizeFn(fieldValue);
       normalizedValue = normalizedResult;
       (normalizedData as Record<string, unknown>)[fieldName] = normalizedValue;
     }

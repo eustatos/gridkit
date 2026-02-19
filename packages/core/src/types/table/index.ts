@@ -19,7 +19,7 @@ export type {
 } from './TableState';
 
 // Table options types
-export type { TableOptions, ValidatedTableOptions } from './TableOptions';
+export type { TableOptions, ValidatedTableOptions, DebugOptions, DebugConfig } from './TableOptions';
 
 // Column types (re-export from main column module)
 export type {
@@ -33,8 +33,6 @@ export type {
   HeaderContext,
   CellContext,
   FooterContext,
-  HeaderRenderer,
-  CellRenderer,
   FooterRenderer,
   ColumnId,
   ColumnGroupId,

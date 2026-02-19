@@ -1,4 +1,8 @@
 // Builds all runtime methods for column instance
+import type { RowData } from '@/types';
+import type { ValidatedColumnDef } from '@/types/column';
+import type { Table } from '@/types/table';
+
 import { buildFilteringMethods } from '../methods/filtering-methods';
 import { buildIndexMethods } from '../methods/index-methods';
 import { buildPinningMethods } from '../methods/pinning-methods';
@@ -6,9 +10,6 @@ import { buildSizeMethods } from '../methods/size-methods';
 import { buildSortingMethods } from '../methods/sorting-methods';
 import { buildVisibilityMethods } from '../methods/visibility-methods';
 
-import type { RowData } from '@/types';
-import type { ValidatedColumnDef } from '@/types/column';
-import type { Table } from '@/types/table';
 
 /**
  * Combined column methods interface.

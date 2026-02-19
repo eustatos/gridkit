@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EventSandbox } from '../../isolation/EventSandbox';
 import { createEventBus, EventPriority } from '../../../events';
-import { PluginEventForwarder } from '../../events/PluginEventForwarder';
+import { PluginEventForwarder } from '../../core/PluginEventForwarder';
 
 describe('Event Forwarding Performance', () => {
   let baseBus: ReturnType<typeof createEventBus>;

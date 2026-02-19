@@ -136,7 +136,7 @@ export async function destroyPlugins(
         };
 
         if (failFast) {
-          throw new PluginDestructionError(pluginId, result.error!);
+          throw new PluginDestructionError(pluginId, result.error);
         }
 
         return result;
@@ -149,7 +149,7 @@ export async function destroyPlugins(
       // Use allSettled to collect all results, then check for errors
       const destroyResults = await Promise.allSettled(destroyPromises);
       for (let i = 0; i < destroyResults.length; i++) {
-        const result = destroyResults[i]!;
+        const result = destroyResults[i];
         if (result.status === 'fulfilled') {
           results.push(result.value);
         } else {
@@ -167,13 +167,13 @@ export async function destroyPlugins(
       // In non-failFast mode, collect all results
       const destroyResults = await Promise.allSettled(destroyPromises);
       for (let i = 0; i < destroyResults.length; i++) {
-        const result = destroyResults[i]!;
+        const result = destroyResults[i];
         if (result.status === 'fulfilled') {
           results.push(result.value);
         } else {
           // This shouldn't happen due to error handling in promises
           const plugin = plugins[i];
-          const pluginId = plugin!.metadata.id;
+          const pluginId = plugin.metadata.id;
           results.push({
             pluginId,
             success: false,
@@ -188,7 +188,7 @@ export async function destroyPlugins(
     for (let i = plugins.length - 1; i >= 0; i--) {
       const plugin = plugins[i];
       const startTime = performance.now();
-      const pluginId = plugin!.metadata.id;
+      const pluginId = plugin.metadata.id;
       const context = contexts.get(pluginId);
 
       // Plugin not initialized, nothing to destroy
@@ -203,7 +203,7 @@ export async function destroyPlugins(
 
       try {
         // Apply timeout if specified
-        let destroyPromise = destroyPlugin(plugin!, context);
+        let destroyPromise = destroyPlugin(plugin, context);
         if (timeout > 0) {
           destroyPromise = Promise.race([
             destroyPromise,

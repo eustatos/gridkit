@@ -1,6 +1,6 @@
 // FilterMiddleware.ts
 
-import { GridEvent, EventMiddleware } from '../core/EventPipeline';
+import { GridEvent, EventMiddleware } from '@/events/types';
 
 export function createFilterMiddleware(
   predicate: (event: GridEvent) => boolean

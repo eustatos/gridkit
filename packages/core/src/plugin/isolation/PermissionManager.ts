@@ -16,7 +16,7 @@ export class PermissionManager {
       this.pluginPermissions.set(pluginId, new Set());
     }
 
-    const permissions = this.pluginPermissions.get(pluginId)!;
+    const permissions = this.pluginPermissions.get(pluginId);
     for (const capability of capabilities) {
       permissions.add(capability);
     }
@@ -32,7 +32,7 @@ export class PermissionManager {
       return;
     }
 
-    const permissions = this.pluginPermissions.get(pluginId)!;
+    const permissions = this.pluginPermissions.get(pluginId);
     for (const capability of capabilities) {
       permissions.delete(capability);
     }
@@ -42,7 +42,7 @@ export class PermissionManager {
       this.revokedPermissions.set(pluginId, new Set());
     }
 
-    const revoked = this.revokedPermissions.get(pluginId)!;
+    const revoked = this.revokedPermissions.get(pluginId);
     for (const capability of capabilities) {
       revoked.add(capability);
     }
@@ -58,7 +58,7 @@ export class PermissionManager {
   public hasPermission(pluginId: string, permission: string): boolean {
     // Check if permission was revoked
     if (this.revokedPermissions.has(pluginId)) {
-      const revoked = this.revokedPermissions.get(pluginId)!;
+      const revoked = this.revokedPermissions.get(pluginId);
       if (revoked.has(permission)) {
         return false;
       }
@@ -66,7 +66,7 @@ export class PermissionManager {
 
     // Check if plugin has the permission
     if (this.pluginPermissions.has(pluginId)) {
-      const permissions = this.pluginPermissions.get(pluginId)!;
+      const permissions = this.pluginPermissions.get(pluginId);
       
       // Exact match
       if (permissions.has(permission)) {
@@ -121,7 +121,7 @@ export class PermissionManager {
     if (!this.pluginPermissions.has(pluginId)) {
       return [];
     }
-    return Array.from(this.pluginPermissions.get(pluginId)!);
+    return Array.from(this.pluginPermissions.get(pluginId));
   }
 
   /**

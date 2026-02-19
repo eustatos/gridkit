@@ -1,11 +1,13 @@
 // Column definition validation
-import { GridKitError } from '../../errors/grid-kit-error';
-import { normalizeColumnDef } from '../validation/normalize-column';
-import { createColumnId } from '@/types/factory';
+
 
 import type { RowData } from '@/types';
 import type { ColumnDef, ValidatedColumnDef } from '@/types/column/ColumnDef';
 import type { ColumnId } from '@/types/column/SupportingTypes';
+import { createColumnId } from '@/types/factory';
+
+import { GridKitError } from '../../errors/grid-kit-error';
+import { normalizeColumnDef } from '../validation/normalize-column';
 
 /**
  * Validates column definition and returns normalized version.
@@ -21,7 +23,7 @@ export function validateColumnDef<TData extends RowData, TValue>(
   }
 
   // Validate ID
-  let id: ColumnId | undefined = columnDef.id as ColumnId;
+  let id: ColumnId | undefined = columnDef.id;
   if (!id) {
     if (columnDef.accessorKey) {
       id = createColumnId(columnDef.accessorKey);
@@ -47,7 +49,7 @@ export function validateColumnDef<TData extends RowData, TValue>(
   // Normalize with defaults
   const normalizedDef = {
     ...columnDef,
-    id: id!,
+    id: id,
   };
 
   return normalizeColumnDef(normalizedDef);

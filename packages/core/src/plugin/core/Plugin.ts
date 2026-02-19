@@ -1,4 +1,4 @@
-import type { EventBus } from '../events';
+import type { EventBus } from '../../events/core';
 
 /**
  * Plugin context providing access to core services

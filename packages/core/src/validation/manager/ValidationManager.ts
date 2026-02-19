@@ -6,11 +6,12 @@
  * @module @gridkit/core/validation/manager
  */
 
+import type { RowData, Unsubscribe } from '@/types';
+
 import type { ErrorBoundary, ErrorScope, ErrorContext, CapturedError, RecoveryResult, BoundaryOptions, ErrorCapture } from '../error-boundary/ErrorBoundary';
 import type { ValidationResult, RowValidationResult, ValidationReport } from '../result/ValidationResult';
 import type { Schema } from '../schema/FieldSchema';
 
-import type { RowData, Unsubscribe } from '@/types';
 
 
 // ===================================================================

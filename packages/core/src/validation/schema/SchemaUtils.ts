@@ -8,6 +8,8 @@
 
 // Import base types
 
+import type { ColumnDef } from '@/types/column/ColumnDef';
+
 import { RowData } from '../../types';
 
 import type {
@@ -25,7 +27,6 @@ import { createSchema as createSchemaFunc } from './Schema';
 // Import validators - use 'any' to avoid circular deps
 
 // Import ColumnDef and ColumnMeta
-import type { ColumnDef } from '@/types/column/ColumnDef';
 
 // Import createSchema function (NOT as type only - we need the actual function)
 
@@ -439,7 +440,7 @@ function inferFieldSchema<TData extends RowData>(
   // Check meta for validation hints
   const metaValidation = column.meta?.validation;
 
-  if (metaValidation) {
+  if (metaValidation && typeof metaValidation === 'object' && 'type' in metaValidation) {
     return createFieldConfig(metaValidation);
   }
 

@@ -1,8 +1,8 @@
 // Filtering methods for columns
 import type { RowData } from '@/types';
 import type { ValidatedColumnDef } from '@/types/column';
-import type { Table , FilteringState, FilterOperator } from '@/types/table';
 import type { ColumnId } from '@/types/column/SupportingTypes';
+import type { Table , FilteringState, FilterOperator } from '@/types/table';
 
 /**
  * Builds filtering-related methods for column instance.
@@ -17,12 +17,12 @@ export function buildFilteringMethods<TData extends RowData, TValue>(
     // Filtering
     getIsFiltered: () => {
       const filtering = tableState().filtering ?? [];
-      return filtering.some((f) => f.id === (columnDef.id as ColumnId));
+      return filtering.some((f) => f.id === (columnDef.id));
     },
 
     getFilterValue: () => {
       const filtering = tableState().filtering ?? [];
-      const filter = filtering.find((f) => f.id === (columnDef.id as ColumnId));
+      const filter = filtering.find((f) => f.id === (columnDef.id));
       return filter?.value;
     },
 
@@ -32,7 +32,7 @@ export function buildFilteringMethods<TData extends RowData, TValue>(
       table.setState((prev) => {
         const currentFiltering = prev.filtering ?? [];
         const existingIndex = currentFiltering.findIndex(
-          (f) => f.id === (columnDef.id as ColumnId)
+          (f) => f.id === (columnDef.id)
         );
 
         let nextFiltering: FilteringState[];
@@ -46,7 +46,7 @@ export function buildFilteringMethods<TData extends RowData, TValue>(
           // Update existing filter
           nextFiltering = [...currentFiltering];
           nextFiltering[existingIndex] = {
-            id: columnDef.id as ColumnId,
+            id: columnDef.id,
             value: value as string,
             operator: columnDef.filterFn ? ('custom' as FilterOperator) : ('equals' as FilterOperator),
           };
@@ -55,7 +55,7 @@ export function buildFilteringMethods<TData extends RowData, TValue>(
           nextFiltering = [
             ...currentFiltering,
             {
-              id: columnDef.id as ColumnId,
+              id: columnDef.id,
               value: value as string,
               operator: columnDef.filterFn ? ('custom' as FilterOperator) : ('equals' as FilterOperator),
             },

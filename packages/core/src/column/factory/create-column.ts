@@ -1,14 +1,15 @@
 // Main factory function for creating column instances
+
+
+import type { RowData, Column } from '@/types';
+import type { ColumnDef, ValidatedColumnDef } from '@/types/column';
+import type { ColumnUtils , ColumnId } from '@/types/column/SupportingTypes';
+import type { Table } from '@/types/table';
+
 import { validateColumnDef } from '../validation/validate-column';
 
 import { createAccessor } from './accessor-system';
 import { buildColumnMethods } from './build-column-methods';
-
-import type { RowData, Column } from '@/types';
-import type { ColumnDef, ValidatedColumnDef } from '@/types/column';
-import type { ColumnUtils } from '@/types/column/SupportingTypes';
-import type { Table } from '@/types/table';
-import type { ColumnId } from '@/types/column/SupportingTypes';
 
 /**
  * Options for creating a column instance.
@@ -81,7 +82,7 @@ export function createColumn<TData extends RowData, TValue = unknown>(
   // 5. Build column instance
   const column: Column<TData, TValue> = {
     // Identification
-    id: validatedDef.id as ColumnId,
+    id: validatedDef.id,
     table: options.table,
     columnDef: Object.freeze(validatedDef),
 

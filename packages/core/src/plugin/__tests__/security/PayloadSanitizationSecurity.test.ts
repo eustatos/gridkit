@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createEventBus, EventPriority } from '../../../events';
-import { PluginEventForwarder } from '../../../plugin/events';
+import { PluginEventForwarder } from '../../../plugin/core/PluginEventForwarder';
 
 describe('Payload Sanitization Security', () => {
   let baseBus: ReturnType<typeof createEventBus>;

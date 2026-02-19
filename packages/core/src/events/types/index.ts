@@ -2,6 +2,7 @@
 // Implements CORE-005B requirement for modular type architecture
 
 export * from './base';
+export * from './registry';
 export * from './grid';
 export * from './column';
 export * from './row';

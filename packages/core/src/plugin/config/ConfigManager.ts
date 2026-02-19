@@ -52,7 +52,7 @@ export class ConfigManager {
       throw new Error(`No schema registered for plugin ${pluginId}`);
     }
     
-    const schema = this.schemas.get(pluginId)!;
+    const schema = this.schemas.get(pluginId);
     const currentConfig = this.getConfig<T>(pluginId);
     
     // Merge changes with current configuration
@@ -80,7 +80,7 @@ export class ConfigManager {
       throw new Error(`No schema registered for plugin ${pluginId}`);
     }
     
-    const schema = this.schemas.get(pluginId)!;
+    const schema = this.schemas.get(pluginId);
     const defaultConfig = { ...schema.defaults };
     
     // Update the configuration
@@ -101,7 +101,7 @@ export class ConfigManager {
       this.watchers.set(pluginId, new Set());
     }
     
-    const watchers = this.watchers.get(pluginId)!;
+    const watchers = this.watchers.get(pluginId);
     const typedCallback = callback as (config: unknown) => void;
     watchers.add(typedCallback);
     

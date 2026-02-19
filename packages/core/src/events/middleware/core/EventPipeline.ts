@@ -1,11 +1,6 @@
 // EventPipeline.ts
 
-export interface GridEvent {
-  type: string;
-  payload?: any;
-}
-
-export type EventMiddleware = (event: GridEvent) => GridEvent | null;
+import type { GridEvent, EventMiddleware } from '@/events/types';
 
 export class EventPipeline {
   private middlewares: EventMiddleware[] = [];
@@ -22,7 +17,7 @@ export class EventPipeline {
     if (this.isDirty) {
       this.compile();
     }
-    return this.compiled!(event);
+    return this.compiled(event);
   }
 
   private remove(middleware: EventMiddleware): void {

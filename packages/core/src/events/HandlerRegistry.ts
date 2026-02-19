@@ -186,12 +186,12 @@ export interface HandlerProcessor {
   executeSync<T extends string>(
     event: T,
     handlers: HandlerEntry<string>[],
-    gridEvent: GridEvent<EventPayload<T>>
+    gridEvent: GridEvent
   ): number[];
   execute<T extends string>(
     event: T,
     handlers: HandlerEntry<string>[],
-    gridEvent: GridEvent<EventPayload<T>>
+    gridEvent: GridEvent
   ): number[];
 }
 
@@ -200,8 +200,8 @@ export interface HandlerProcessor {
  */
 export function createHandlerProcessor(devMode: boolean = false): HandlerProcessor {
   function executeHandler<T extends string>(
-    handler: EventHandler<GridEvent<EventPayload<T>>>,
-    gridEvent: GridEvent<EventPayload<T>>,
+    handler: EventHandler<GridEvent>,
+    gridEvent: GridEvent,
     devMode: boolean
   ): void {
     try {
@@ -223,7 +223,7 @@ export function createHandlerProcessor(devMode: boolean = false): HandlerProcess
   function processWithCleanup<T extends string>(
     event: T,
     handlers: HandlerEntry<string>[],
-    gridEvent: GridEvent<EventPayload<T>>,
+    gridEvent: GridEvent,
     sync: boolean
   ): number[] {
     const toRemove: number[] = [];
@@ -259,7 +259,7 @@ export function createHandlerProcessor(devMode: boolean = false): HandlerProcess
     executeSync<T extends string>(
       event: T,
       handlers: HandlerEntry<string>[],
-      gridEvent: GridEvent<EventPayload<T>>
+      gridEvent: GridEvent
     ): number[] {
       return processWithCleanup(event, handlers, gridEvent, true);
     },
@@ -267,7 +267,7 @@ export function createHandlerProcessor(devMode: boolean = false): HandlerProcess
     execute<T extends string>(
       event: T,
       handlers: HandlerEntry<string>[],
-      gridEvent: GridEvent<EventPayload<T>>
+      gridEvent: GridEvent
     ): number[] {
       return processWithCleanup(event, handlers, gridEvent, false);
     },

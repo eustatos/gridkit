@@ -9,13 +9,9 @@ export type {
 
 export { EventPriority } from './types';
 
-// Core
-export {
-  EventBus,
-  getEventBus,
-  resetEventBus,
-  createEventBus,
-} from './EventBus';
+// Core (imported from core.ts to avoid circular dependencies)
+export { EventBus, createEventBus } from './core';
+export { getEventBus, resetEventBus } from './EventBus';
 
 // Component creators
 export {
@@ -69,7 +65,5 @@ export {
 } from './emitters';
 
 // Eventful Table
-export { createEventfulTable } from './types/eventful-table';
 export type {
-  EventfulTable,
 } from './types/eventful-table';

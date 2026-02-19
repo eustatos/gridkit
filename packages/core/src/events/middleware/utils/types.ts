@@ -1,6 +1,6 @@
 // types.ts
 
-import { GridEvent } from '../core/EventPipeline';
+import { GridEvent } from '@/events/types';
 
 export type MiddlewareResult<T extends GridEvent = GridEvent> =
   | T

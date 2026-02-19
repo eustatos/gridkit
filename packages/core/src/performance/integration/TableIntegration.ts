@@ -6,10 +6,11 @@
  * @module @gridkit/core/performance/integration/table
  */
 
+import type { Table, TableOptions, RowData } from '@/types';
+
 import { createPerformanceMonitor } from '../monitor/factory';
 import type { PerformanceConfig } from '../types';
 
-import type { Table, TableOptions, RowData } from '@/types';
 
 /**
  * Wrap a table with performance monitoring.

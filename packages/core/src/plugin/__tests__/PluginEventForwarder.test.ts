@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PluginEventForwarder } from '../events/PluginEventForwarder';
-import { createEventBus } from '../../events';
+import { PluginEventForwarder } from '../../core/PluginEventForwarder';
+import { createEventBus } from '../../core/PluginEventForwarder';
 
 // Helper to wait for microtasks to complete
 const flushMicrotasks = () =>

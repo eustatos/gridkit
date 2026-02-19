@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { createEventBus, EventPriority } from '../../events';
-import { PluginEventForwarder } from '../events/PluginEventForwarder';
+import { createEventBus, EventPriority } from '../../core/PluginEventForwarder';
+import { PluginEventForwarder } from '../../core/PluginEventForwarder';
 
 describe('Debug Test', () => {
   it('should debug plugin bus', () => {

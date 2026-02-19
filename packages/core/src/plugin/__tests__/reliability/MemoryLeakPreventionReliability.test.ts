@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EventSandbox } from '../../isolation/EventSandbox';
 import { createEventBus, EventPriority } from '../../../events';
-import { PluginEventForwarder } from '../../events/PluginEventForwarder';
+import { PluginEventForwarder } from '../../core/PluginEventForwarder';
 import { PermissionManager } from '../../isolation/PermissionManager';
 import { QuotaManager } from '../../isolation/QuotaManager';
-import { CrossPluginBridge } from '../../events/CrossPluginBridge';
+import { CrossPluginBridge } from '../../core/CrossPluginBridge';
 
 describe('Memory Leak Prevention Reliability', () => {
   describe('EventSandbox cleanup', () => {

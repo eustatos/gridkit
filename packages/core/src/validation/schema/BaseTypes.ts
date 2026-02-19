@@ -136,4 +136,10 @@ export interface ValidationContext {
    * Row index for array validation.
    */
   readonly rowIndex?: number;
+
+  /**
+   * Current value being validated (deprecated, use data + path).
+   * @deprecated
+   */
+  value?: unknown;
 }

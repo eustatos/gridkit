@@ -4,7 +4,7 @@
 import type { RowData } from '../base'
 
 import type { AccessorKey, AccessorFn } from './AccessorTypes'
-import type { HeaderRenderer, CellRenderer, FooterRenderer } from './RenderContext'
+import type { HeaderContext, CellContext, FooterContext } from './RenderContext'
 import type { ColumnId, ColumnGroupId, Comparator, FilterFn, AggregationFn, ColumnMeta } from './SupportingTypes'
 
 /**
@@ -72,7 +72,7 @@ export interface ColumnDef<TData extends RowData, TValue = unknown> {
    * Cell content renderer.
    * Receives typed context with getValue().
    */
-  cell?: CellRenderer<TData, TValue>;
+  cell?: CellRenderer<TData, TValue> | string;
 
   /**
    * Footer content (string or render function).

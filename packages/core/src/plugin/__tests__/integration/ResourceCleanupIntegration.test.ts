@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { PermissionManager } from '../../isolation/PermissionManager';
 import { QuotaManager } from '../../isolation/QuotaManager';
 import { ResourceMonitor } from '../../security/ResourceMonitor';
-import { CrossPluginBridge } from '../../events/CrossPluginBridge';
+import { CrossPluginBridge } from '../../core/CrossPluginBridge';
 import { createEventBus, EventPriority } from '../../../events';
-import { PluginEventForwarder } from '../../events';
+import { PluginEventForwarder } from '../../core/PluginEventForwarder';
 
 // Helper to wait for microtasks to complete
 const flushMicrotasks = () =>

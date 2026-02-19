@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ErrorBoundary } from '../../security/ErrorBoundary';
 import { EventSandbox } from '../../isolation/EventSandbox';
 import { createEventBus, EventPriority } from '../../../events';
-import { PluginEventForwarder } from '../../events/PluginEventForwarder';
+import { PluginEventForwarder } from '../../core/PluginEventForwarder';
 
 describe('Error Recovery Reliability', () => {
   describe('ErrorBoundary reliability', () => {

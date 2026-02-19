@@ -2,30 +2,47 @@
 
 import { ConfigManager } from './config/ConfigManager';
 import { ConfigSchema } from './config/ConfigSchema';
-import { Plugin } from './core/Plugin';
+import { Plugin, PluginMetadata } from './core/Plugin';
 import { DependencyResolver } from './dependencies/DependencyResolver';
 
 /**
  * Enhanced plugin with configuration and dependency management
  */
-export class ConfigurablePlugin<T extends Record<string, unknown> = Record<string, unknown>> implements Plugin {
+export class ConfigurablePlugin<T extends Record<string, unknown> = Record<string, unknown>> implements Plugin<T> {
   private configManager: ConfigManager;
   private dependencyResolver: DependencyResolver;
   private schema?: ConfigSchema<T>;
+  private _metadata: PluginMetadata;
   
   /**
    * Creates a new configurable plugin
    * @param id - The unique identifier for the plugin
+   * @param name - Human-readable plugin name
+   * @param version - Plugin version
    * @param configManager - The configuration manager to use
    * @param dependencyResolver - The dependency resolver to use
    */
   constructor(
     public readonly id: string,
+    public readonly name: string = id,
+    public readonly version: string = '1.0.0',
     configManager: ConfigManager,
     dependencyResolver: DependencyResolver
   ) {
     this.configManager = configManager;
     this.dependencyResolver = dependencyResolver;
+    this._metadata = {
+      id,
+      name,
+      version,
+    };
+  }
+  
+  /**
+   * Gets the plugin metadata
+   */
+  get metadata(): PluginMetadata {
+    return this._metadata;
   }
   
   /**

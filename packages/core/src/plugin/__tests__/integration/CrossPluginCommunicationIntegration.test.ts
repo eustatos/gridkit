@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createEventBus, EventPriority } from '../../../events';
-import { PluginEventForwarder } from '../../events/PluginEventForwarder';
-import { CrossPluginBridge } from '../../events/CrossPluginBridge';
+import { PluginEventForwarder } from '../../core/PluginEventForwarder';
+import { CrossPluginBridge } from '../../core/CrossPluginBridge';
 import { PermissionManager } from '../../isolation/PermissionManager';
 
 // Helper to wait for microtasks to complete

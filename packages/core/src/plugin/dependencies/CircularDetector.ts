@@ -95,7 +95,7 @@ export class CircularDetector {
 
     // Process queue
     while (queue.length > 0) {
-      const node = queue.shift()!;
+      const node = queue.shift();
       visitedCount++;
 
       const deps = dependencies.get(node) || [];

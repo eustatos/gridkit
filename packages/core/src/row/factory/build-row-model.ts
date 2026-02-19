@@ -7,13 +7,14 @@
  * @module @gridkit/core/row/factory/build-row-model
  */
 
-import type { CreateRowOptions } from './create-row';
-import { createRow } from './create-row';
 
 import type { RowData , RowId } from '@/types';
 import type { Column } from '@/types/column/ColumnInstance';
 import type { Row , RowModel } from '@/types/table/Row';
 import type { Table } from '@/types/table/Table';
+
+import { createRow } from './create-row';
+import type { CreateRowOptions } from './create-row';
 
 /**
  * Options for building a row model.

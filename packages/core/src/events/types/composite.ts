@@ -18,24 +18,6 @@ export type EventRegistry =
   StateEventType &
   TableEventType;
 
-// Union type of all event types
-export type EventType = 
-  | GridEventType
-  | ColumnEventType
-  | RowEventType
-  | CellEventType
-  | StateEventType<unknown>
-  | TableEventType;
-
-// Combined payload mapping for all events
-export interface EventPayloadMap extends 
-  GridEventPayloadMap,
-  ColumnEventPayloadMap,
-  RowEventPayloadMap,
-  CellEventPayloadMap,
-  StateEventPayloadMap,
-  TableEventPayloadMap {}
-
 // Re-export payload mapping types from individual modules
 export type {
   GridEventPayloadMap,
