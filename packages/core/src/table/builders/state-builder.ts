@@ -30,12 +30,6 @@ function buildInitialState<TData extends RowData>(
       right: [],
     },
 
-    // Row pinning
-    rowPinning: {
-      top: [],
-      bottom: [],
-    },
-
     // Pagination
     pagination: {
       pageIndex: 0,
@@ -49,7 +43,7 @@ function buildInitialState<TData extends RowData>(
     filtering: [],
 
     // Grouping (default empty)
-    grouping: [],
+    grouping: { groupBy: [] as ColumnId[] },
 
     // Expanded rows (default empty)
     expanded: {},

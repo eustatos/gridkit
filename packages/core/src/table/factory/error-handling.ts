@@ -1,10 +1,10 @@
 import { GridKitError, ValidationAggregateError } from '../../errors';
-import type { TableOptions } from '../../types';
+import type { TableOptions, RowData } from '../../types';
 
 /**
  * Wraps creation errors with additional context for better debugging.
  */
-export function wrapCreationError(error: unknown, options: TableOptions<unknown>): GridKitError {
+export function wrapCreationError(error: unknown, options: TableOptions<RowData>): GridKitError {
   // If it's already a GridKit error, just rethrow
   if (error instanceof GridKitError) {
     return error;

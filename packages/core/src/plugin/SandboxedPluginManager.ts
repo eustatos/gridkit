@@ -91,10 +91,10 @@ export class SandboxedPluginManager {
   public validateEvent(event: GridEvent): { isValid: boolean; errorMessage?: string } {
     const result = this.eventValidator.validateEvent(event);
     
-    if (!result.isValid) {
+    if (!result.isValid && result.errors && result.errors.length > 0) {
       return {
         isValid: false,
-        errorMessage: result.errorMessage,
+        errorMessage: result.errors[0], // Use first error as message
       };
     }
     

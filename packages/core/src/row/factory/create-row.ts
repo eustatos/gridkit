@@ -178,7 +178,7 @@ function buildBasicRowMethods<TData extends RowData>(
     },
 
     getValue: <TValue = unknown>(columnId: string | ColumnId): TValue => {
-      const cell = cellCache.get(columnId as string);
+      const cell = cellCache.get(columnId as string) as Cell<TData, TValue> | undefined;
       if (!cell) {
         throw new Error(`CELL_NOT_FOUND: Cell not found for column ${columnId}`);
       }
@@ -217,7 +217,8 @@ function initializeCellCache<TData extends RowData>(
     const cellId = `${row.id}_${column.id}` as CellId;
 
     // Create cell with basic properties
-    const cell: Cell<TData> = {
+    // Cell needs TValue from column, but column is Column<TData> with default unknown
+    const cell = {
       id: cellId,
       rowId: row.id as string,
       column,
@@ -231,6 +232,7 @@ function initializeCellCache<TData extends RowData>(
     };
 
     // Cache the cell for O(1) lookups
-    cellCache.set(column.id, cell);
+    // Use type assertion since we know the cell has the right structure
+    cellCache.set(column.id, cell as any);
   });
 }

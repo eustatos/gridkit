@@ -195,6 +195,14 @@ export type ValidationErrorCode =
   | 'INVALID_COLUMN_ACCESSOR'
   | 'INVALID_CELL_VALUE'
 
+  // Schema validation errors
+  | 'COLUMNS_NOT_ARRAY'
+  | 'NO_COLUMNS'
+  | 'INVALID_COLUMN_DEF'
+  | 'NO_ACCESSOR'
+  | 'DATA_NOT_ARRAY'
+  | 'INVALID_ROW_TYPE'
+
   // Constraint errors
   | 'MIN_VALUE_VIOLATION'
   | 'MAX_VALUE_VIOLATION'

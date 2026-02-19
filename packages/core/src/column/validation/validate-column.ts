@@ -3,6 +3,7 @@
 
 import type { RowData } from '@/types/base';
 import type { ColumnDef, ValidatedColumnDef } from '@/types/column/ColumnDef';
+import type { ColumnId } from '@/types/column/SupportingTypes';
 import type { Table } from '@/types/table';
 
 import { GridKitError } from '../../errors/grid-kit-error';
@@ -49,7 +50,7 @@ export function validateColumnDef<TData extends RowData, TValue>(
   // Normalize with defaults
   const normalizedDef = {
     ...columnDef,
-    id: id,
+    id: id as ColumnId,
   };
 
   return normalizeColumnDef(normalizedDef);

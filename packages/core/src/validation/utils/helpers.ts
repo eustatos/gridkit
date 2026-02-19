@@ -315,7 +315,7 @@ export function getObjectSize(obj: Record<string, unknown>): number {
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         bytes += key.length * 2; // UTF-16
-        bytes += getObjectSize(obj[key]);
+        bytes += getObjectSize(obj[key] as Record<string, unknown>);
       }
     }
   }

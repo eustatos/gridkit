@@ -6,6 +6,7 @@ import type { RowData } from '../base'
 import type { AccessorKey, AccessorFn } from './AccessorTypes'
 import type { HeaderContext, CellContext, FooterContext } from './RenderContext'
 import type { ColumnId, ColumnGroupId, Comparator, FilterFn, AggregationFn, ColumnMeta } from './SupportingTypes'
+import type { HeaderRenderer, CellRenderer, FooterRenderer } from './RendererTypes'
 
 /**
  * Complete column definition with type-safe accessors.

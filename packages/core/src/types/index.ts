@@ -78,6 +78,8 @@ export type {
   ScrollPosition,
   CellCoordinate,
   ColumnValue,
+  DebugOptions,
+  DebugConfig,
 } from './table';
 
 // Re-export ValidatedColumnDef from column validation
@@ -93,6 +95,8 @@ export type {
   HeaderContext,
   CellContext,
   FooterContext,
+  HeaderRenderer,
+  CellRenderer,
   FooterRenderer,
   Column as ColumnInstance,
   ColumnId as ColumnIdentifier,

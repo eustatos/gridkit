@@ -110,8 +110,8 @@ export function buildBasicRowMethods<TData extends RowData>(
       return cellCache.get(columnId);
     },
 
-    getValue: <TValue = unknown>(columnId: string): unknown => {
-      const cell = cellCache.get(columnId);
+    getValue: <TValue = unknown>(columnId: string): TValue => {
+      const cell = cellCache.get(columnId) as Cell<TData, TValue> | undefined;
       if (!cell) {
         throw new Error(`CELL_NOT_FOUND: Cell not found for column ${columnId}`);
       }

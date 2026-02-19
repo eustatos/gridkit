@@ -1,23 +1,47 @@
-import type { DebugConfig, TableState, ColumnDef, ValidatedColumnDef, RowId, RowData } from '../../types';
+import type { DebugConfig, DebugOptions, TableState, ColumnDef, ValidatedColumnDef, RowId, RowData, DeepPartial } from '../../types';
 
 /**
  * Normalizes debug options with sane defaults.
  */
-export function normalizeDebugOptions(debug: DebugConfig | undefined): DebugConfig {
+export function normalizeDebugOptions(debug: DebugConfig | DebugOptions | boolean | undefined): DebugConfig {
   if (debug === undefined) {
     return {
+      logStateChanges: false,
+      logPerformance: false,
+      validateState: false,
+      devTools: false,
       performance: false,
-      validation: false,
       events: false,
+      validation: false,
       memory: false,
     };
   }
 
+  if (typeof debug === 'boolean') {
+    // If debug is a boolean, enable all debug features if true
+    return {
+      logStateChanges: debug,
+      logPerformance: debug,
+      validateState: debug,
+      devTools: debug,
+      performance: debug,
+      events: debug,
+      validation: debug,
+      memory: debug,
+    };
+  }
+
+  // Normalize DebugOptions to DebugConfig
+  const debugObj = debug as DebugOptions;
   return {
-    performance: Boolean(debug.performance),
-    validation: Boolean(debug.validation),
-    events: Boolean(debug.events),
-    memory: Boolean(debug.memory),
+    logStateChanges: Boolean(debugObj.logStateChanges),
+    logPerformance: Boolean(debugObj.logPerformance),
+    validateState: Boolean(debugObj.validateState),
+    devTools: Boolean(debugObj.devTools),
+    performance: Boolean((debug as DebugConfig).performance),
+    events: Boolean((debug as DebugConfig).events),
+    validation: Boolean((debug as DebugConfig).validation),
+    memory: Boolean((debug as DebugConfig).memory),
   };
 }
 
@@ -25,8 +49,8 @@ export function normalizeDebugOptions(debug: DebugConfig | undefined): DebugConf
  * Normalizes initial state options.
  */
 export function normalizeInitialState<TData extends RowData>(
-  initialState: Partial<TableState<TData>> | undefined
-): Partial<TableState<TData>> {
+  initialState: DeepPartial<TableState<TData>> | undefined
+): DeepPartial<TableState<TData>> {
   return initialState ?? {};
 }
 

@@ -16,6 +16,10 @@ import type { Table } from '@/types/table/Table';
 import { createRow } from './create-row';
 import type { CreateRowOptions } from './create-row';
 
+export { createRow } from './create-row';
+export type { CreateRowOptions } from './create-row';
+export type { RowModel } from '@/types/table/Row';
+
 /**
  * Options for building a row model.
  */

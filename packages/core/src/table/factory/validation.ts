@@ -2,8 +2,10 @@ import { GridKitError, ValidationAggregateError } from '../../errors';
 import type {
   RowData,
   ValidatedTableOptions,
-  ValidationError,
+  TableOptions,
 } from '../../types';
+import { createValidationError } from '../../types/table/Errors';
+import type { ValidationError } from '../../types/table/Errors';
 
 import {
   normalizeColumns,
@@ -73,44 +75,36 @@ function validateColumns(columns: unknown): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!Array.isArray(columns)) {
-    errors.push({
-      code: 'COLUMNS_NOT_ARRAY',
-      message: 'columns must be an array',
+    errors.push(createValidationError('COLUMNS_NOT_ARRAY', 'columns must be an array', {
       field: 'columns',
       value: columns,
-    });
+    }));
     return errors;
   }
 
   if (columns.length === 0) {
-    errors.push({
-      code: 'NO_COLUMNS',
-      message: 'At least one column definition is required',
+    errors.push(createValidationError('NO_COLUMNS', 'At least one column definition is required', {
       field: 'columns',
       value: columns,
-    });
+    }));
   }
 
   // Validate each column
   columns.forEach((col, index) => {
     if (!col || typeof col !== 'object') {
-      errors.push({
-        code: 'INVALID_COLUMN_DEF',
-        message: `Column at index ${index} must be an object`,
+      errors.push(createValidationError('INVALID_COLUMN_DEF', `Column at index ${index} must be an object`, {
         field: `columns[${index}]`,
         value: col,
-      });
+      }));
       return;
     }
 
     // Check for required fields
     if (!col.accessorKey && !col.accessorFn) {
-      errors.push({
-        code: 'NO_ACCESSOR',
-        message: `Column at index ${index} must have either accessorKey or accessorFn`,
+      errors.push(createValidationError('NO_ACCESSOR', `Column at index ${index} must have either accessorKey or accessorFn`, {
         field: `columns[${index}].accessor`,
         value: col,
-      });
+      }));
     }
 
       // Check for duplicate IDs
@@ -129,31 +123,25 @@ function validateData(data: unknown): ValidationError[] {
   const errors: ValidationError[] = [];
 
   if (!Array.isArray(data)) {
-    errors.push({
-      code: 'DATA_NOT_ARRAY',
-      message: 'data must be an array',
+    errors.push(createValidationError('DATA_NOT_ARRAY', 'data must be an array', {
       field: 'data',
       value: data,
-    });
+    }));
     return errors;
   }
 
   // Check each row in the data
   data.forEach((row, index) => {
     if (row === null || row === undefined) {
-      errors.push({
-        code: 'INVALID_ROW_DATA',
-        message: `Row at index ${index} is null or undefined`,
+      errors.push(createValidationError('INVALID_ROW_DATA', `Row at index ${index} is null or undefined`, {
         field: `data[${index}]`,
         value: row,
-      });
+      }));
     } else if (typeof row !== 'object' || Array.isArray(row)) {
-      errors.push({
-        code: 'INVALID_ROW_TYPE',
-        message: `Row at index ${index} must be an object, got ${Array.isArray(row) ? 'array' : typeof row}`,
+      errors.push(createValidationError('INVALID_ROW_TYPE', `Row at index ${index} must be an object, got ${Array.isArray(row) ? 'array' : typeof row}`, {
         field: `data[${index}]`,
         value: row,
-      });
+      }));
     }
   });
 

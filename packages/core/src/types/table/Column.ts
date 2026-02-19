@@ -4,4 +4,5 @@ export type {
   ColumnDef,
   ColumnMeta,
   ColumnValue,
+  ValidatedColumnDef,
 } from '@/types/column';

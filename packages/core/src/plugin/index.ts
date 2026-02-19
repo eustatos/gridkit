@@ -28,15 +28,17 @@ export { CrossPluginBridge } from './core/CrossPluginBridge';
 export type { CrossPluginBridge as ICrossPluginBridge } from './core/CrossPluginBridge';
 
 // Plugin lifecycle exports
+export { initializePlugin, initializePlugins, PluginInitializationError } from './lifecycle/index';
+export { destroyPlugin, destroyPlugins, PluginDestructionError } from './lifecycle/index';
 export type {
-  Initializer,
-  InitializerOptions,
-  Destroyer,
-  DestroyerOptions
-} from './lifecycle';
+  InitializationOptions,
+  InitializationResult,
+  DestructionOptions,
+  DestructionResult
+} from './lifecycle/index';
 
-// Plugin error boundary exports
-export { ErrorBoundary } from './security/ErrorBoundary';
+// Plugin security exports
+export { ErrorBoundary as PluginErrorBoundary } from './security/ErrorBoundary';
 
 // Plugin quota manager exports
 export { QuotaManager } from './isolation/QuotaManager';

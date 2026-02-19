@@ -19,9 +19,15 @@ export function deepClone<T>(obj: T): T {
 
   // Handle regular objects
   const cloned: any = {};
-  const seen = new WeakMap();
+  const seen = new WeakMap<object, object>();
 
-  const stack = [{ original: obj, cloned }];
+  // Stack entry type for circular reference tracking
+  interface StackEntry {
+    original: object;
+    cloned: object;
+  }
+
+  const stack: StackEntry[] = [{ original: obj, cloned }];
 
   while (stack.length > 0) {
     const { original, cloned } = stack.pop();

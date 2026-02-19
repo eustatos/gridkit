@@ -81,7 +81,10 @@ export class ConfigManager {
     }
     
     const schema = this.schemas.get(pluginId);
-    const defaultConfig = { ...schema.defaults };
+    if (!schema) {
+      throw new Error(`No schema registered for plugin ${pluginId}`);
+    }
+    const defaultConfig = schema.defaults as T;
     
     // Update the configuration
     this.configs.set(pluginId, defaultConfig);

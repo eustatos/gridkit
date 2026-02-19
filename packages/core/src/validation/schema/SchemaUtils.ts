@@ -67,11 +67,8 @@ export const SchemaUtils = {
         options?.description || 'Schema inferred from column definitions',
       fieldDescriptions: columns.reduce(
         (acc, col) => {
-          if (col.accessorKey) {
-            acc[col.accessorKey] =
-              typeof col.header === 'string'
-                ? col.header
-                : (col.header as string);
+          if (col.accessorKey && col.header != null && typeof col.header === 'string') {
+            acc[col.accessorKey] = col.header;
           }
           return acc;
         },
@@ -97,7 +94,7 @@ export const SchemaUtils = {
         if (isFieldSchema(config)) {
           acc[key] = config;
         } else {
-          acc[key] = createFieldConfig(config);
+          acc[key] = createFieldConfig(config as FieldConfig);
         }
         return acc;
       },
@@ -441,7 +438,8 @@ function inferFieldSchema<TData extends RowData>(
   const metaValidation = column.meta?.validation;
 
   if (metaValidation && typeof metaValidation === 'object' && 'type' in metaValidation) {
-    return createFieldConfig(metaValidation);
+    const validation = metaValidation as FieldConfig;
+    return createFieldConfig(validation);
   }
 
   // Infer from accessorKey if possible

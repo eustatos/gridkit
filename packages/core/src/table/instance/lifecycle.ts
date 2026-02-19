@@ -1,5 +1,6 @@
 // Lifecycle management for table instances
-import type { Table, RowData } from '@/types/table';
+import type { Table } from '@/types/table';
+import type { RowData } from '@/types';
 
 import { buildInitialState } from '../builders/state-builder';
 
@@ -9,9 +10,9 @@ import { buildInitialState } from '../builders/state-builder';
  * Resets the table to its initial state.
  */
 function resetTable<TData extends RowData>(table: Table<TData>): void {
-  const initialState = buildInitialState(table.options);
-  table._internal.stateStore.reset(initialState);
-  table._internal.eventBus.emit('table:reset', { tableId: table.id });
+  const initialState = buildInitialState(table.options as any);
+  (table as any)._internal.stateStore.reset(initialState);
+  (table as any)._internal.eventBus.emit('table:reset', { tableId: table.id });
 }
 
 /**
@@ -20,13 +21,13 @@ function resetTable<TData extends RowData>(table: Table<TData>): void {
  */
 function destroyTable<TData extends RowData>(table: Table<TData>): void {
   // Emit destroy event first
-  table._internal.eventBus.emit('table:destroy', { tableId: table.id });
+  (table as any)._internal.eventBus.emit('table:destroy', { tableId: table.id });
 
   // Cleanup in reverse dependency order
-  table._internal.stateStore.destroy();
-  table._internal.columnRegistry.destroy();
-  table._internal.eventBus.clear();
-  table.metrics?.destroy();
+  (table as any)._internal.stateStore.destroy();
+  (table as any)._internal.columnRegistry.destroy();
+  (table as any)._internal.eventBus.clear();
+  (table as any).metrics?.destroy();
 
   // Clear references for GC
   Object.keys(table).forEach((key) => {

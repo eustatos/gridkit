@@ -68,7 +68,7 @@ export function createColumn<TData extends RowData, TValue = unknown>(
   options: CreateColumnOptions<TData, TValue>
 ): Column<TData, TValue> {
   // 1. Validate and normalize definition
-  const validatedDef = validateColumnDef(options.columnDef, options.table);
+  const validatedDef = validateColumnDef(options.columnDef);
 
   // 2. Extract column metadata
   const metadata = extractColumnMetadata(validatedDef);

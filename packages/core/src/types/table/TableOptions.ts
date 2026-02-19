@@ -2,7 +2,7 @@ import type { PerformanceBudgets } from '@/performance/types';
 
 import { DeepPartial, RowData, RowId } from '../base';
 
-import { ColumnDef } from './Column';
+import { ColumnDef, ValidatedColumnDef } from './Column';
 import { GridKitError } from './Errors';
 import { TableMeta } from './support/Metadata';
 import { TableState } from './TableState';
@@ -149,7 +149,7 @@ export interface ValidatedTableOptions<
   /**
    * Normalized columns with all defaults applied.
    */
-  columns: ColumnDef<TData>[];
+  columns: ValidatedColumnDef<TData>[];
 
   /**
    * Normalized data array (always has a value, defaults to empty array).
