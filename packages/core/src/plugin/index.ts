@@ -47,10 +47,13 @@ export { CrossPluginBridge } from './events/CrossPluginBridge';
 // Plugin lifecycle exports
 export type {
   InitializationOptions,
-  InitializationResult,
+  InitializationResult
+} from './lifecycle/Initializer';
+
+export type {
   DestructionOptions,
   DestructionResult
-} from './lifecycle/Initializer';
+} from './lifecycle/Destroyer';
 
 export {
   initializePlugin,
