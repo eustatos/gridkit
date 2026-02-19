@@ -114,6 +114,8 @@ export function createScheduler(): Scheduler {
       if (hasTasks) {
         flushScheduled = true;
         scheduleProcessing();
+      } else {
+        scheduledFlush = false;
       }
     }
   }

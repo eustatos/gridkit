@@ -27,7 +27,7 @@ export function createMiddlewarePipeline(): MiddlewarePipeline {
 
     remove(middleware: EventMiddleware): void {
       const index = middlewares.indexOf(middleware);
-      if (index !== 1) {
+      if (index !== -1) {
         middlewares.splice(index, 1);
       }
     },

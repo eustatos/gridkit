@@ -5,13 +5,19 @@ import type { GridEvent, EventMiddleware } from '../types';
  * Only lets through first event, ignores subsequent ones
  */
 export function createSimpleDebounceMiddleware(): EventMiddleware {
-  const lastProcessed = new Map<string, number>();
+  const lastProcessed = new Map<string, number | null>();
   const DEBOUNCE_MS = 10;
 
   return (event: GridEvent): GridEvent | null => {
     const eventType = event.type;
     const now = Date.now();
-    const lastTime = lastProcessed.get(eventType) || 0;
+    const lastTime = lastProcessed.get(eventType);
+
+    // If no previous event, let it through
+    if (lastTime === undefined) {
+      lastProcessed.set(eventType, now);
+      return event;
+    }
 
     // If enough time has passed since last event, let it through
     if (now - lastTime > DEBOUNCE_MS) {

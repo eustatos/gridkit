@@ -9,6 +9,7 @@ export interface HandlerEntry<T extends string> {
   id: number;
   addedAt: number;
   priority: EventPriority;
+  event: T; // The event type this handler is registered for
 }
 
 /**
@@ -123,7 +124,7 @@ export function createHandlerRegistry(): HandlerRegistry {
  * Pattern matching helper for handler matching
  */
 export interface PatternMatcher {
-  match(handlers: HandlerEntry<string>[], event: string): HandlerEntry<string>[];
+  match(handlers: HandlerEntry<string>[], event: string, gridEvent?: GridEvent): HandlerEntry<string>[];
   matchesPattern(event: string, pattern: string): boolean;
 }
 
@@ -145,28 +146,21 @@ export function createPatternMatcher(): PatternMatcher {
     return false;
   }
 
-  function match(handlers: HandlerEntry<string>[], event: string): HandlerEntry<string>[] {
-    // Return all handlers that have no pattern restrictions
-    // Pattern matching is only for wildcard handlers like 'grid:*' or '*'
+  function match(handlers: HandlerEntry<string>[], event: string, gridEvent?: GridEvent): HandlerEntry<string>[] {
     const matched: HandlerEntry<string>[] = [];
 
-    for (const handler of handlers) {
-      const pattern = handler.options.filter
-        ? handler.options.filter.toString()
-        : handler.options.priority?.toString() || 'default';
-
-      // Check if handler has a wildcard pattern
-      if (pattern === '*') {
-        matched.push(handler);
-      } else if (pattern.endsWith(':*')) {
-        const prefix = pattern.slice(0, pattern.indexOf(':*'));
-        if (event.startsWith(prefix + ':')) {
-          matched.push(handler);
+    for (const handlerEntry of handlers) {
+      const handlerEvent = handlerEntry.event; // The event type this handler was registered for
+      
+      // Check if this handler should match the emitted event
+      if (handlerEvent === event || 
+          handlerEvent === '*' ||
+          (handlerEvent.endsWith(':*') && event.startsWith(handlerEvent.slice(0, -2) + ':'))) {
+        // Check for custom filter - use provided gridEvent if available
+        if (handlerEntry.options.filter && !handlerEntry.options.filter(gridEvent || { type: event } as GridEvent)) {
+          continue;
         }
-      } else {
-        // Default: match all handlers unless they have a specific filter
-        // The filter function is applied during execution, not pattern matching
-        matched.push(handler);
+        matched.push(handlerEntry);
       }
     }
 

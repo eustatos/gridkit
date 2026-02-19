@@ -61,6 +61,7 @@ export class EventBus {
   ): () => void {
     const id = this.nextHandlerId++;
     const entry: HandlerEntry<T> = {
+      event,
       handler,
       options,
       id,
@@ -233,8 +234,12 @@ export class EventBus {
     event: T,
     gridEvent: GridEvent
   ): void {
-    const handlers = this.handlerRegistry.getAll();
-    const matchedHandlers = this.patternMatcher.match(handlers, event);
+    // Get all handlers - the pattern matcher will filter by event type
+    const allHandlers = this.handlerRegistry.getAll();
+    if (allHandlers.length === 0) return;
+    
+    const matchedHandlers = this.patternMatcher.match(allHandlers, event, gridEvent);
+    if (matchedHandlers.length === 0) return;
     
     const toRemove = this.handlerProcessor.executeSync(event, matchedHandlers, gridEvent);
     this.removeOnceHandlers(toRemove);
@@ -248,8 +253,12 @@ export class EventBus {
     gridEvent: GridEvent,
     priority: EventPriority
   ): void {
-    const handlers = this.handlerRegistry.getAll();
-    const matchedHandlers = this.patternMatcher.match(handlers, event);
+    // Get all handlers - the pattern matcher will filter by event type
+    const allHandlers = this.handlerRegistry.getAll();
+    if (allHandlers.length === 0) return;
+    
+    const matchedHandlers = this.patternMatcher.match(allHandlers, event, gridEvent);
+    if (matchedHandlers.length === 0) return;
 
     this.scheduler.schedule(() => {
       const toRemove = this.handlerProcessor.execute(event, matchedHandlers, gridEvent);
