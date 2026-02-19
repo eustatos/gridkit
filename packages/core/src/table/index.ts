@@ -17,11 +17,12 @@ export type {
   ColumnDef,
   RowData,
   RowId,
+  ValidatedColumnDef,
+  ValidatedTableOptions,
 } from '../types';
 
 // Error types
 export type {
-  GridError,
   ValidationError,
   ValidationAggregateError,
 } from '../errors';
@@ -30,4 +31,4 @@ export type {
 export type {
   TableEvent,
   TableEventMap,
-} from '../events';
+} from '../events/table';

@@ -1,18 +1,20 @@
 // Main factory function for creating column instances
-import type { EnsureRowData } from '@/types/helpers';
-import type { ColumnDef } from '@/types/column/ColumnDef';
-import type { Column } from '@/types/column/ColumnInstance';
-import type { Table } from '@/types/table/Table';
-import { validateColumnDef, ValidatedColumnDef } from '../validation/validate-column';
-import { createAccessor, ColumnAccessor } from './accessor-system';
+import { validateColumnDef } from '../validation/validate-column';
+
+import { createAccessor } from './accessor-system';
 import { buildColumnMethods } from './build-column-methods';
+
+import type { RowData, Column } from '@/types';
+import type { ColumnDef, ValidatedColumnDef } from '@/types/column';
+import type { ColumnUtils } from '@/types/column/SupportingTypes';
+import type { Table } from '@/types/table';
 
 /**
  * Options for creating a column instance.
  */
-export interface CreateColumnOptions<TData, TValue = unknown> {
-  columnDef: ColumnDef<EnsureRowData<TData>, TValue>;
-  table: Table<EnsureRowData<TData>>;
+export interface CreateColumnOptions<TData extends RowData, TValue = unknown> {
+  columnDef: ColumnDef<TData, TValue>;
+  table: Table<TData>;
 }
 
 /**
@@ -32,14 +34,14 @@ interface ColumnFeatureFlags {
  */
 interface ColumnMetadata {
   columnMeta: Record<string, unknown>;
-  columnUtils: Record<string, unknown>;
+  columnUtils: ColumnUtils<TData, TValue> | Record<string, unknown>;
   featureFlags: ColumnFeatureFlags;
 }
 
 /**
  * Extracts metadata from validated column definition.
  */
-function extractColumnMetadata<TData, TValue>(
+function extractColumnMetadata<TData extends RowData, TValue>(
   validatedDef: ValidatedColumnDef<TData, TValue>
 ): ColumnMetadata {
   return {
@@ -60,27 +62,27 @@ function extractColumnMetadata<TData, TValue>(
  * Creates a runtime column instance from definition.
  * Handles type inference, validation, and feature enablement.
  */
-export function createColumn<TData, TValue = unknown>(
+export function createColumn<TData extends RowData, TValue = unknown>(
   options: CreateColumnOptions<TData, TValue>
 ): Column<TData, TValue> {
   // 1. Validate and normalize definition
   const validatedDef = validateColumnDef(options.columnDef, options.table);
 
   // 2. Extract column metadata
-  const metadata = extractColumnMetadata(validatedDef as ValidatedColumnDef<TData, TValue>);
+  const metadata = extractColumnMetadata(validatedDef);
 
   // 3. Create runtime methods
-  const methods = buildColumnMethods(validatedDef as ValidatedColumnDef<TData, TValue>, options.table);
+  const methods = buildColumnMethods(validatedDef, options.table);
 
   // 4. Create accessor
-  const accessor = createAccessor(validatedDef as ValidatedColumnDef<TData, TValue>);
+  const accessor = createAccessor(validatedDef);
 
   // 5. Build column instance
   const column: Column<TData, TValue> = {
     // Identification
-    id: validatedDef.id!,
+    id: validatedDef.id,
     table: options.table,
-    columnDef: Object.freeze(validatedDef as ValidatedColumnDef<TData, TValue>),
+    columnDef: Object.freeze(validatedDef) as typeof validatedDef,
 
     // State accessors
     getSize: methods.getSize,
@@ -104,11 +106,11 @@ export function createColumn<TData, TValue = unknown>(
 
     // Metadata
     meta: metadata.columnMeta,
-    utils: metadata.columnUtils,
+    utils: metadata.columnUtils as ColumnUtils<TData, TValue>,
 
     // Internal (for performance)
     _internal: {
-      accessor: accessor as ColumnAccessor<TData, TValue>,
+      accessor: accessor,
       featureFlags: metadata.featureFlags,
       stateWatchers: new Set(),
     },

@@ -7,8 +7,9 @@
  * @module @gridkit/core/events/emitters
  */
 
-import type { Table, RowData, TableState } from '@/types';
 import { EventBus } from '../EventBus';
+
+import type { Table, RowData, TableState, ColumnId, RowId } from '@/types';
 
 // Track previous state per table for change detection
 const previousStateMap = new Map<string, TableState<any>>();
@@ -30,9 +31,7 @@ export function emitStateEvents<TData extends RowData>(
   const tableId = table.id as string;
 
   // Get previous state for this table
-  const previousState = previousStateMap.get(tableId) as
-    | TableState<TData>
-    | undefined;
+  const previousState = previousStateMap.get(tableId);
 
   // Detect what changed
   const changedKeys = detectChangedKeys(previousState, state);
@@ -178,8 +177,8 @@ function emitColumnVisibilityEvents<TData extends RowData>(
   ]);
 
   for (const columnId of allColumnIds) {
-    const prevVisible = previous.columnVisibility[columnId];
-    const currVisible = current.columnVisibility[columnId];
+    const prevVisible = previous.columnVisibility[columnId as ColumnId];
+    const currVisible = current.columnVisibility[columnId as ColumnId];
     if (prevVisible !== currVisible) {
       changedColumns.push(columnId);
     }
@@ -219,8 +218,8 @@ function emitRowSelectionEvents<TData extends RowData>(
   ]);
 
   for (const rowId of allRowIds) {
-    const prevSelected = previous.rowSelection[rowId];
-    const currSelected = current.rowSelection[rowId];
+    const prevSelected = previous.rowSelection[rowId as RowId];
+    const currSelected = current.rowSelection[rowId as RowId];
     if (prevSelected !== currSelected) {
       changedRows.push(rowId);
     }
@@ -318,8 +317,8 @@ function emitExpansionEvents<TData extends RowData>(
   ]);
 
   for (const rowId of allRowIds) {
-    const prevExpanded = previous.expanded[rowId];
-    const currExpanded = current.expanded[rowId];
+    const prevExpanded = previous.expanded[rowId as RowId];
+    const currExpanded = current.expanded[rowId as RowId];
     if (prevExpanded !== currExpanded) {
       changedRows.push(rowId);
     }

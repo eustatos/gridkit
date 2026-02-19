@@ -2,10 +2,11 @@
  * Row Factory System - Usage Examples
  */
 
-import type { RowData } from '@/types';
-import type { Table } from '@/types/table/Table';
-import type { Column } from '@/types/column/ColumnInstance';
 import { createRow, buildRowModel, RowRegistry } from '../factory';
+
+import type { RowData } from '@/types';
+import type { Column } from '@/types/column/ColumnInstance';
+import type { Table } from '@/types/table/Table';
 
 // Example 1: Creating a single row
 function exampleCreateRow<TData extends RowData>(

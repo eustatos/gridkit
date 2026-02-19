@@ -46,7 +46,7 @@ export class CellCache<TData extends RowData> {
   get<TValue = unknown>(
     columnId: string
   ): Cell<TData, TValue> | undefined {
-    const entry = this.cache.get(columnId) as CellCacheEntry<TData> | undefined;
+    const entry = this.cache.get(columnId);
     if (entry) {
       entry.lastAccessed = ++this.accessCounter;
       return entry.cell as Cell<TData, TValue>;

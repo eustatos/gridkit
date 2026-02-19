@@ -25,9 +25,11 @@
  * @module CoreFactory
  */
 
-import type { GridId, ColumnId, RowId, CellId } from './base';
-
 import { GridKitError } from '../errors/index';
+
+import type { GridId, RowId, CellId } from './base';
+import type { ColumnId } from './column/SupportingTypes';
+
 
 /**
  * Creates a validated GridId with optional prefix.

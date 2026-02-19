@@ -2,8 +2,8 @@
 // Implements CORE-005B requirement for cell-level events
 
 import type { GridEvent } from './base';
-import type { GridId } from './grid';
 import type { ColumnId } from './column';
+import type { GridId } from './grid';
 import type { RowId } from './row';
 
 // Cell focus events

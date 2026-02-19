@@ -369,7 +369,7 @@ export class PerformanceMonitorImpl {
       minTime,
       maxTime,
       p95Time,
-      errors: measurements.filter((m) => (m.meta as any)?.error).length,
+      errors: measurements.filter((m) => (m.meta)?.error).length,
       lastExecuted,
     };
   }

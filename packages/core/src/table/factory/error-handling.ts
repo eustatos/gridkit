@@ -1,5 +1,5 @@
-import type { TableOptions } from '../../types';
 import { GridKitError, ValidationAggregateError } from '../../errors';
+import type { TableOptions } from '../../types';
 
 /**
  * Wraps creation errors with additional context for better debugging.

@@ -7,17 +7,19 @@
  * @module @gridkit/core/events/types/eventful-table
  */
 
+import { createTableEventBridge } from '../../events/integration/table-event-bridge';
+import { createTable } from '../../table/factory/create-table';
+import type { EventBus } from '../EventBus';
+import { createEventBus } from '../EventBus';
+
+import type { TableEventBridge } from './event-bridge';
+
 import type {
   Table,
   TableOptions,
   RowData,
   GridId,
 } from '@/types';
-import type { TableEventBridge } from './event-bridge';
-import type { EventBus } from '../EventBus';
-import { createTable } from '../../table/factory/create-table';
-import { createEventBus } from '../EventBus';
-import { createTableEventBridge } from '../../events/integration/table-event-bridge';
 
 // ===================================================================
 // Eventful Table Interface

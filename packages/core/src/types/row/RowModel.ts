@@ -1,6 +1,7 @@
 import type { RowData, RowId } from '../base';
-import type { Row } from './Row';
+
 import type { RowModelMeta } from './Metadata';
+import type { Row } from './Row';
 
 /**
  * Predicate function for row filtering.

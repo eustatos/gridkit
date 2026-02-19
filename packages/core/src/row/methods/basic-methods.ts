@@ -7,11 +7,12 @@
  * @module @gridkit/core/row/methods/basic-methods
  */
 
-import type { RowData } from '@/types';
-import type { Cell } from '@/types/row/Cell';
-import type { Column } from '@/types/column/ColumnInstance';
-import type { Row } from '@/types/row/Row';
 import type { CellCache } from '../cell/cell-cache';
+
+import type { RowData } from '@/types';
+import type { Column } from '@/types/column/ColumnInstance';
+import type { Cell } from '@/types/row/Cell';
+import type { Row } from '@/types/row/Row';
 
 /**
  * Basic row methods interface.
@@ -81,7 +82,7 @@ export function buildBasicRowMethods<TData extends RowData>(
       columns.forEach((column) => {
         const cell = cellCache.get(column.id);
         if (cell) {
-          cells.push(cell as Cell<TData>);
+          cells.push(cell);
         }
       });
       return cells;
@@ -96,7 +97,7 @@ export function buildBasicRowMethods<TData extends RowData>(
         if ((state.columnVisibility as Record<string, boolean>)?.[column.id] !== false) {
           const cell = cellCache.get(column.id);
           if (cell) {
-            cells.push(cell as Cell<TData>);
+            cells.push(cell);
           }
         }
       });
@@ -105,15 +106,15 @@ export function buildBasicRowMethods<TData extends RowData>(
     },
 
     getCell: (columnId: string): Cell<TData> | undefined => {
-      return cellCache.get(columnId) as Cell<TData> | undefined;
+      return cellCache.get(columnId);
     },
 
     getValue: <TValue = unknown>(columnId: string): TValue => {
-      const cell = cellCache.get(columnId) as Cell<TData, TValue> | undefined;
+      const cell = cellCache.get(columnId);
       if (!cell) {
         throw new Error(`CELL_NOT_FOUND: Cell not found for column ${columnId}`);
       }
-      return cell.getValue() as TValue;
+      return cell.getValue();
     },
 
     getOriginalValue: (columnId: string): unknown => {

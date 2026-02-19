@@ -8,6 +8,31 @@ import type { RowData } from '../base';
  * Uses template literal types for dot notation inference.
  *
  * @template TData - Row data type
+ * 
+ * @example
+ * ```typescript
+ * interface User {
+ *   profile: {
+ *     name: string;
+ *   };
+ * }
+ * 
+ * // Get all valid accessor keys
+ * type UserKeys = AccessorKey<User>;
+ * // Type: 'profile' | 'profile.name'
+ * 
+ * // Use with as const for type-safe accessor paths
+ * const col: ColumnDef<User> = {
+ *   accessorKey: 'profile.name' as const, // ✅ Type: 'profile.name'
+ *   header: 'Name'
+ * };
+ * 
+ * // Or use plain string (works but less strict type checking)
+ * const col2: ColumnDef<User> = {
+ *   accessorKey: 'profile.name', // ✅ Type: string
+ *   header: 'Name'
+ * };
+ * ```
  */
 export type AccessorKey<TData extends RowData> =
   // Extract all string keys

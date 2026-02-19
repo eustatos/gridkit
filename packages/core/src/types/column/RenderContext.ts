@@ -2,9 +2,10 @@
 // Renderer context types for header, cell, and footer renderers
 
 import type { RowData } from '../base'
-import type { Column } from './ColumnInstance'
-import type { Table } from '../table/Table'
 import type { Row } from '../table/Row'
+import type { Table } from '../table/Table'
+
+import type { Column } from './ColumnInstance'
 import type { CellMeta } from './SupportingTypes'
 
 /**

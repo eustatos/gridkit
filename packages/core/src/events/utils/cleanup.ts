@@ -22,8 +22,11 @@ export function createCleanupManager(): CleanupManager {
     },
 
     cleanup(): void {
-      for (const id of tracked) {
-        const cleanup = cleanups.get(id);
+      // Use iterator explicitly to handle Set iteration
+      const iterator = tracked.values();
+      let current = iterator.next();
+      while (!current.done) {
+        const cleanup = cleanups.get(current.value);
         if (cleanup) {
           try {
             cleanup();
@@ -31,6 +34,7 @@ export function createCleanupManager(): CleanupManager {
             console.error('Error during cleanup:', error);
           }
         }
+        current = iterator.next();
       }
       tracked.clear();
       cleanups.clear();

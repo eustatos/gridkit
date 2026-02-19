@@ -4,14 +4,16 @@
 import type { RowData } from '../base';
 
 /**
- * Column ID type
+ * Column ID type - branded type for compile-time safety
  */
-export type ColumnId = string;
+declare const COLUMN_ID_SYMBOL: unique symbol;
+export type ColumnId = string & { readonly [COLUMN_ID_SYMBOL]: never };
 
 /**
- * Column Group ID type
+ * Column Group ID type - branded type for compile-time safety
  */
-export type ColumnGroupId = string;
+declare const COLUMN_GROUP_ID_SYMBOL: unique symbol;
+export type ColumnGroupId = string & { readonly [COLUMN_GROUP_ID_SYMBOL]: never };
 
 /**
  * Comparator function type for sorting

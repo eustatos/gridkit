@@ -1,6 +1,7 @@
-import type { Plugin, PluginContext, PluginMetadata } from './Plugin';
 import { createEventBus, type EventBus } from '../../events';
 import { EventPriority } from '../../events/types';
+
+import type { Plugin, PluginContext, PluginMetadata } from './Plugin';
 
 /**
  * Plugin manager for centralized plugin management

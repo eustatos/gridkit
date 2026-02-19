@@ -19,17 +19,13 @@ export type {
 } from './TableState';
 
 // Table options types
-export type {
-  TableOptions,
-} from './TableOptions';
+export type { TableOptions, ValidatedTableOptions } from './TableOptions';
 
 // Column types (re-export from main column module)
 export type {
   Column,
   ColumnDef,
   ColumnMeta,
-  ColumnAccessor,
-  ColumnAccessorFn,
   ColumnValue,
   AccessorKey,
   AccessorFn,

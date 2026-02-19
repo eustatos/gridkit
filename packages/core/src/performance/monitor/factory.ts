@@ -8,8 +8,9 @@
  */
 
 import type { PerformanceConfig } from '../types';
-import { PerformanceMonitorImpl } from './PerformanceMonitorImpl';
+
 import { createNoopMonitor } from './NoopMonitor';
+import { PerformanceMonitorImpl } from './PerformanceMonitorImpl';
 
 /**
  * Creates a performance monitor instance.

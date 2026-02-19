@@ -115,7 +115,7 @@ export async function destroyPlugins(
             destroyPromise,
             new Promise<void>((_, reject) => {
               setTimeout(() => reject(new Error(`Plugin ${pluginId} destruction timeout`)), timeout);
-            }) as Promise<void>
+            })
           ]);
         }
         
@@ -205,7 +205,7 @@ export async function destroyPlugins(
             destroyPromise,
             new Promise<void>((_, reject) => {
               setTimeout(() => reject(new Error(`Plugin ${pluginId} destruction timeout`)), timeout);
-            }) as Promise<void>
+            })
           ]);
         }
         

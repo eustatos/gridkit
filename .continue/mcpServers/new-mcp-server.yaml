@@ -1,10 +1,12 @@
-name: ts-language-mcp
+name: MCP context server
 version: 0.0.1
 schema: v1
 mcpServers:
-  - name: ts-language-mcp
-    command: /Users/aleksanderastashkin/.nvm/versions/node/v20.19.4/bin/node
+  - name: MCP context server
+    command: node
     args:
       - /Users/aleksanderastashkin/develop/mcp-module-server/dist/server-mcp.js
       - /Users/aleksanderastashkin/develop/gridkit
-    env: {}
+    env:
+      NODE_ENV: production
+      LOG_LEVEL: info

@@ -7,6 +7,9 @@
  * @module CoreHelpers
  */
 
+import { CellId, RowData } from './base';
+import { ColumnId } from './column/SupportingTypes';
+
 /**
  * Helper type to constrain generic types to RowData.
  * Use this instead of direct RowData constraints.

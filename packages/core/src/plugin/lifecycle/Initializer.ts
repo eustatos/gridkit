@@ -109,7 +109,7 @@ export async function initializePlugins(
           initPromise,
           new Promise<void>((_, reject) => {
             setTimeout(() => reject(new Error(`Plugin ${pluginId} initialization timeout`)), timeout);
-          }) as Promise<void>
+          })
         ]);
       }
       

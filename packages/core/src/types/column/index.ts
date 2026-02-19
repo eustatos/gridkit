@@ -1,7 +1,7 @@
 // index.ts
 // Export all column types
 
-export type { ColumnDef } from './ColumnDef'
+export type { ColumnDef, ValidatedColumnDef } from './ColumnDef'
 export type { AccessorKey, AccessorFn, ColumnValue, AccessorValue } from './AccessorTypes'
 export type { HeaderContext, CellContext, FooterContext, HeaderRenderer, CellRenderer, FooterRenderer } from './RenderContext'
 export type { Column } from './ColumnInstance'

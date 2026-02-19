@@ -118,13 +118,13 @@ export class QuotaManager {
 
     if (!quota || quota[resource as keyof PluginQuota] === undefined || quota[resource as keyof PluginQuota] === null) return true; // No quota = unlimited
 
-    const limit = quota[resource as keyof PluginQuota] as number | undefined;
+    const limit = quota[resource as keyof PluginQuota];
     if (limit === undefined) return true; // No limit for this resource
 
     const usageField = QuotaManager.resourceToUsageMap[resource];
     if (!usageField) return true; // Unknown resource type
 
-    const used = currentUsage[usageField] as number || 0;
+    const used = currentUsage[usageField] || 0;
 
     if (used + amount > limit) {
       this.onQuotaExceeded(pluginId, resource, limit);

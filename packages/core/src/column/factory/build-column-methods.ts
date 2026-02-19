@@ -1,13 +1,15 @@
 // Builds all runtime methods for column instance
-import type { EnsureRowData } from '@/types/helpers';
-import type { ValidatedColumnDef } from '../validation/validate-column';
-import type { Table } from '@/types/table/Table';
-import { buildSizeMethods } from '../methods/size-methods';
-import { buildVisibilityMethods } from '../methods/visibility-methods';
-import { buildSortingMethods } from '../methods/sorting-methods';
 import { buildFilteringMethods } from '../methods/filtering-methods';
-import { buildPinningMethods } from '../methods/pinning-methods';
 import { buildIndexMethods } from '../methods/index-methods';
+import { buildPinningMethods } from '../methods/pinning-methods';
+import { buildSizeMethods } from '../methods/size-methods';
+import { buildSortingMethods } from '../methods/sorting-methods';
+import { buildVisibilityMethods } from '../methods/visibility-methods';
+import type { ValidatedColumnDef } from '@/types/column';
+
+import type { RowData } from '@/types';
+import type { Table } from '@/types/table';
+
 
 /**
  * Combined column methods interface.
@@ -43,9 +45,9 @@ export interface ColumnMethods<TData, TValue> {
 /**
  * Builds runtime methods for column instance.
  */
-export function buildColumnMethods<TData, TValue>(
-  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
-  table: Table<EnsureRowData<TData>>
+export function buildColumnMethods<TData extends RowData, TValue>(
+  columnDef: ValidatedColumnDef<TData, TValue>,
+  table: Table<TData>
 ): ColumnMethods<TData, TValue> {
   // Build all method groups
   const sizeMethods = buildSizeMethods(columnDef, table);

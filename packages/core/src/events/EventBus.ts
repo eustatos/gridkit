@@ -1,66 +1,54 @@
-import type {
-  EventType,
-  EventPayload,
-  EventHandlerOptions,
-  GridEvent,
-  EventMiddleware,
-  EventHandler,
-} from './types';
+import type { HandlerRegistry, HandlerEntry, PatternMatcher, HandlerProcessor } from './HandlerRegistry';
+import { createHandlerRegistry, createPatternMatcher, createHandlerProcessor } from './HandlerRegistry';
+import type { MiddlewarePipeline } from './MiddlewarePipeline';
+import { createMiddlewarePipeline } from './MiddlewarePipeline';
+import type { Scheduler } from './Scheduler';
+import { createScheduler } from './Scheduler';
+import type { StatsCollector, EventBusStats } from './StatsCollector';
+import { createStatsCollector } from './StatsCollector';
+import type { EventPayload, EventHandlerOptions, GridEvent, EventMiddleware, EventHandler } from './types';
 import { EventPriority } from './types/base';
 import { createCleanupManager, type CleanupManager } from './utils/cleanup';
-import { createPriorityQueue, type PriorityQueue } from './utils/priority';
-
-/**
- * Handler entry with metadata
- */
-interface HandlerEntry<T extends string> {
-  handler: EventHandler<GridEvent<EventPayload<T>>>;
-  options: EventHandlerOptions;
-  id: number;
-  addedAt: number;
-  priority: EventPriority;
-}
-
-/**
- * Optimized event bus statistics
- */
-interface EventBusStats {
-  totalEvents: number;
-  totalHandlers: number;
-  eventCounts: Map<string, number>;
-  avgExecutionTime: Map<string, number>;
-}
 
 /**
  * Performance-optimized event bus implementation
+ * 
+ * This class follows Single Responsibility Principle by delegating
+ * specific concerns to specialized components:
+ * - HandlerRegistry: Manages event handlers
+ * - PatternMatcher: Matches events to handler patterns
+ * - HandlerProcessor: Executes handlers safely
+ * - MiddlewarePipeline: Processes events through middleware
+ * - StatsCollector: Collects performance metrics
+ * - Scheduler: Manages event processing timing
+ * 
+ * Main Responsibilities:
+ * - Public API surface for event subscription and emission
+ * - Lifecycle management (clear, cleanup)
+ * - Dependency injection of specialized components
  */
 export class EventBus {
-  private handlers = new Map<string, HandlerEntry<string>[]>();
-  private handlerIdMap = new Map<number, HandlerEntry<string>>();
-  private middlewares: EventMiddleware[] = [];
-  private priorityQueue: PriorityQueue;
-  private cleanupManager: CleanupManager;
-  private isProcessing = false;
-  private stats: EventBusStats;
-  private devMode: boolean;
-  private flushScheduled = false;
+  // Core components with single responsibilities
+  private readonly handlerRegistry: HandlerRegistry;
+  private readonly patternMatcher: PatternMatcher;
+  private readonly handlerProcessor: HandlerProcessor;
+  private readonly middlewarePipeline: MiddlewarePipeline;
+  private readonly statsCollector: StatsCollector;
+  private readonly scheduler: Scheduler;
+  private readonly cleanupManager: CleanupManager;
+  private readonly devMode: boolean;
   private nextHandlerId = 1;
-  private immediateEvents: Array<() => void> = [];
-  private immediateProcessing = false;
-  private scheduledFlush = false;
 
-  // Cache for common operations
-  private emptyArray: HandlerEntry<EventType>[] = [];
   constructor(options: { devMode?: boolean } = {}) {
-    this.priorityQueue = createPriorityQueue();
+    // Initialize specialized components
+    this.handlerRegistry = createHandlerRegistry();
+    this.patternMatcher = createPatternMatcher();
+    this.handlerProcessor = createHandlerProcessor(options.devMode ?? false);
+    this.middlewarePipeline = createMiddlewarePipeline();
+    this.statsCollector = createStatsCollector();
+    this.scheduler = createScheduler();
     this.cleanupManager = createCleanupManager();
     this.devMode = options.devMode ?? false;
-    this.stats = {
-      totalEvents: 0,
-      totalHandlers: 0,
-      eventCounts: new Map(),
-      avgExecutionTime: new Map(),
-    };
   }
 
   /**
@@ -80,37 +68,20 @@ export class EventBus {
       priority: options.priority ?? EventPriority.NORMAL,
     };
 
-    let handlers = this.handlers.get(event);
-    if (!handlers) {
-      handlers = [];
-      this.handlers.set(event, handlers);
-    }
+    // Register handler with the registry
+    this.handlerRegistry.add(event, entry);
 
-    // Insert handler in priority order (lower number = higher priority)
-    // If priorities are equal, maintain insertion order (FIFO)
-    const insertIndex = handlers.findIndex((h) => h.priority > entry.priority);
-
-    if (insertIndex === -1) {
-      handlers.push(entry as HandlerEntry<string>);
-    } else {
-      handlers.splice(insertIndex, 0, entry as HandlerEntry<string>);
-    }
-
-    this.handlerIdMap.set(id, entry as HandlerEntry<string>);
-    this.stats.totalHandlers++;
-
-    // Optimized cleanup tracking
-    this.cleanupManager.track(id, () => {
-      if (this.handlerIdMap.has(id)) {
-        this.removeHandler(event, id);
-      }
+    // Track for cleanup
+    const cleanupKey = `handler-${id}`;
+    this.cleanupManager.track(cleanupKey as unknown as symbol, () => {
+      this.handlerRegistry.remove(event, id);
     });
+
+    this.statsCollector.incrementTotalHandlers();
 
     // Return optimized unsubscribe function
     return () => {
-      if (this.handlerIdMap.has(id)) {
-        this.removeHandler(event, id);
-      }
+      this.off(event, handler);
     };
   }
 
@@ -125,29 +96,19 @@ export class EventBus {
   }
 
   /**
-   * Unsubscribe from event - optimized version
+   * Unsubscribe from event
    */
   off<T extends string>(
     event: T,
     handler: EventHandler<GridEvent<EventPayload<T>>>
   ): void {
-    const handlers = this.handlers.get(event);
+    const handlers = this.handlerRegistry.get(event);
     if (!handlers) return;
 
-    // Fast path for small arrays
-    if (handlers.length <= 10) {
-      for (let i = handlers.length - 1; i >= 0; i--) {
-        if (handlers[i].handler === handler) {
-          this.removeHandlerAtIndex(event, i);
-          break;
-        }
-      }
-    } else {
-      // For larger arrays, use indexOf
-      const index = handlers.findIndex((entry) => entry.handler === handler);
-      if (index !== -1) {
-        this.removeHandlerAtIndex(event, index);
-      }
+    // Find and remove handler
+    const index = handlers.findIndex((entry) => entry.handler === handler);
+    if (index !== -1) {
+      this.removeHandler(event, index);
     }
   }
 
@@ -163,42 +124,31 @@ export class EventBus {
       metadata?: Record<string, unknown>;
     }
   ): void {
-    // Quick check for cancelled events
-    this.stats.totalEvents++;
-    this.stats.eventCounts.set(
-      event,
-      (this.stats.eventCounts.get(event) || 0) + 1
-    );
+    this.statsCollector.incrementTotalEvents();
+    this.statsCollector.incrementEventCount(event);
 
     const priority = options?.priority ?? EventPriority.NORMAL;
 
-    // Fast path for IMMEDIATE priority - execute synchronously
+    // Create event
+    const gridEvent: GridEvent<EventPayload<T>> = {
+      type: event,
+      payload,
+      timestamp: performance.now(),
+      source: options?.source,
+      metadata: options?.metadata,
+    };
+
+    // Process through middleware
+    const processedEvent = this.middlewarePipeline.apply(gridEvent);
+    if (processedEvent === null) {
+      return;
+    }
+
+    // Execute handlers
     if (priority === EventPriority.IMMEDIATE) {
-      const gridEvent = this.createEvent(event, payload, options);
-      const processedEvent = this.applyMiddlewareFast(gridEvent, event);
-
-      if (processedEvent) {
-        this.executeHandlersWithPatternSync(event, processedEvent);
-      }
-      return;
-    }
-
-    // For non-immediate events, schedule processing
-    const gridEvent = this.createEvent(event, payload, options);
-    const processedEvent = this.applyMiddlewareFast(gridEvent, event);
-
-    if (!processedEvent) {
-      return;
-    }
-
-    this.priorityQueue.enqueue(
-      () => this.executeHandlersWithPattern(event, processedEvent, (e, handlers, g) => this.executeHandlerList(e, handlers, g)),
-      priority
-    );
-
-    if (!this.flushScheduled) {
-      this.flushScheduled = true;
-      this.scheduleProcessing();
+      this.executeImmediate(event, processedEvent);
+    } else {
+      this.scheduleProcessing(event, processedEvent, priority);
     }
   }
 
@@ -214,9 +164,7 @@ export class EventBus {
   ): void {
     if (events.length === 0) return;
 
-    // Process all events in order
-    for (let i = 0; i < events.length; i++) {
-      const { event, payload, priority = EventPriority.NORMAL } = events[i];
+    for (const { event, payload, priority = EventPriority.NORMAL } of events) {
       this.emit(event, payload, { priority });
     }
   }
@@ -225,12 +173,9 @@ export class EventBus {
    * Add middleware
    */
   use(middleware: EventMiddleware): () => void {
-    this.middlewares.push(middleware);
+    this.middlewarePipeline.add(middleware);
     return () => {
-      const index = this.middlewares.indexOf(middleware);
-      if (index > -1) {
-        this.middlewares.splice(index, 1);
-      }
+      this.middlewarePipeline.remove(middleware);
     };
   }
 
@@ -238,370 +183,155 @@ export class EventBus {
    * Get event bus statistics
    */
   getStats(): Readonly<EventBusStats> {
-    return { ...this.stats };
+    return this.statsCollector.getStats();
   }
 
   /**
-   * Clear all handlers and reset state - optimized
+   * Process all scheduled tasks (for testing)
+   */
+  processPending(): void {
+    this.scheduler.process();
+  }
+
+  /**
+   * Get internal scheduler for testing purposes
+   */
+  get _scheduler(): Scheduler {
+    return this.scheduler;
+  }
+
+  /**
+   * Get internal stats collector for testing purposes
+   */
+  get _stats(): StatsCollector {
+    return this.statsCollector;
+  }
+
+  /**
+   * Clear all handlers and reset state
    */
   clear(): void {
-    this.handlers.clear();
-    this.handlerIdMap.clear();
-    this.middlewares.length = 0;
-    this.priorityQueue.clear();
+    this.handlerRegistry.clear();
+    this.middlewarePipeline.clear();
+    this.statsCollector.clear();
+    this.scheduler.clear();
     this.cleanupManager.cleanup();
-    this.immediateEvents.length = 0;
-    this.stats = {
-      totalEvents: 0,
-      totalHandlers: 0,
-      eventCounts: new Map(),
-      avgExecutionTime: new Map(),
-    };
-    this.flushScheduled = false;
-    this.immediateProcessing = false;
-    this.scheduledFlush = false;
     this.nextHandlerId = 1;
   }
 
-  // ============================================
-  // Private Methods - Optimized
-  // ============================================
+  /**
+   * Execute handlers for an event immediately (synchronously)
+   */
+  private executeImmediate<T extends string>(
+    event: T,
+    gridEvent: GridEvent<EventPayload<T>>
+  ): void {
+    const handlers = this.handlerRegistry.getAll();
+    const matchedHandlers = this.patternMatcher.match(handlers, event);
+    
+    const toRemove = this.handlerProcessor.executeSync(event, matchedHandlers, gridEvent);
+    this.removeOnceHandlers(toRemove);
+  }
 
-  private removeHandler(event: string, id: number): void {
-    const handlers = this.handlers.get(event);
-    if (!handlers) return;
+  /**
+   * Schedule event processing for later execution
+   */
+  private scheduleProcessing<T extends string>(
+    event: T,
+    gridEvent: GridEvent<EventPayload<T>>,
+    priority: EventPriority
+  ): void {
+    const handlers = this.handlerRegistry.getAll();
+    const matchedHandlers = this.patternMatcher.match(handlers, event);
 
-    // Use lastIndexOf for faster removal
-    for (let i = handlers.length - 1; i >= 0; i--) {
-      if (handlers[i].id === id) {
-        this.removeHandlerAtIndex(event, i);
-        break;
+    this.scheduler.schedule(() => {
+      const toRemove = this.handlerProcessor.execute(event, matchedHandlers, gridEvent);
+      this.removeOnceHandlers(toRemove);
+    }, priority);
+  }
+
+  /**
+   * Remove once handlers from the registry
+   */
+  private removeOnceHandlers(toRemove: number[]): void {
+    if (toRemove.length === 0) return;
+
+    // Group removals by event for efficiency
+    const removalsByEvent = new Map<string, number[]>();
+    
+    for (const id of toRemove) {
+      const mapped = this.handlerRegistry.getHandlerEvent(id);
+      if (mapped) {
+        let eventRemovals = removalsByEvent.get(mapped.event);
+        if (!eventRemovals) {
+          eventRemovals = [];
+          removalsByEvent.set(mapped.event, eventRemovals);
+        }
+        eventRemovals.push(mapped.entry.id);
+      }
+    }
+
+    // Remove handlers from the registry
+    for (const [event, ids] of removalsByEvent) {
+      const handlers = this.handlerRegistry.get(event);
+      if (handlers) {
+        for (const id of ids) {
+          const index = handlers.findIndex((h) => h.id === id);
+          if (index !== -1) {
+            handlers.splice(index, 1);
+            this.statsCollector.decrementTotalHandlers();
+          }
+        }
+        
+        // Clean up empty arrays
+        if (handlers.length === 0) {
+          this.handlerRegistry.clearForEvent(event);
+        }
       }
     }
   }
 
-  private removeHandlerAtIndex(event: string, index: number): void {
-    const handlers = this.handlers.get(event);
-    if (!handlers) return;
+  /**
+   * Remove handler at specific index
+   */
+  private removeHandler<T extends string>(event: T, index: number): void {
+    const handlers = this.handlerRegistry.get(event);
+    if (!handlers || index < 0 || index >= handlers.length) return;
 
     const [removed] = handlers.splice(index, 1);
 
-    this.handlerIdMap.delete(removed.id);
-    this.stats.totalHandlers--;
-    this.cleanupManager.untrack(removed.id);
+    // Remove from registry (this will update internal tracking)
+    this.handlerRegistry.remove(event, removed.id);
+    this.statsCollector.decrementTotalHandlers();
+    
+    const cleanupKey = `handler-${removed.id}`;
+    this.cleanupManager.untrack(cleanupKey as unknown as symbol);
 
     // Clean up empty arrays
     if (handlers.length === 0) {
-      this.handlers.delete(event);
-    }
-  }
-
-  private createEvent<T extends string>(
-    event: T,
-    payload: EventPayload<T>,
-    options?: {
-      priority?: EventPriority;
-      source?: string;
-      metadata?: Record<string, unknown>;
-    }
-  ): GridEvent<EventPayload<T>> {
-    return {
-      type: event,
-      payload,
-      timestamp: performance.now(),
-      source: options?.source,
-      metadata: options?.metadata,
-    } as GridEvent<EventPayload<T>>;
-  }
-
-  private executeHandlerList<T extends string>(
-    event: T,
-    handlers: HandlerEntry<string>[],
-    gridEvent: GridEvent<EventPayload<T>>
-  ): void {
-    const toRemove: number[] = [];
-    const startTime = performance.now();
-    const length = handlers.length;
-
-    // Optimized loop - pre-calculate length
-    for (let i = 0; i < length; i++) {
-      const entry = handlers[i];
-
-      // Skip if removed (checked via handlerIdMap)
-      if (!this.handlerIdMap.has(entry.id)) {
-        continue;
-      }
-
-      // Apply filter if present
-      if (entry.options.filter && !entry.options.filter(gridEvent)) {
-        continue;
-      }
-
-      try {
-        const result = entry.handler(gridEvent);
-
-        // Handle async handlers
-        if (result instanceof Promise) {
-          result.catch((error) => {
-            if (this.devMode) {
-              console.error(
-                `Async error in event handler for ${event}:`,
-                error
-              );
-            }
-          });
-        }
-      } catch (error) {
-        if (this.devMode) {
-          console.error(`Error in event handler for ${event}:`, error);
-        }
-      }
-
-      // Mark for removal if once
-      if (entry.options.once) {
-        toRemove.push(entry.id);
-      }
-    }
-
-    // Cleanup one-time handlers
-    if (toRemove.length > 0) {
-      for (let i = 0; i < toRemove.length; i++) {
-        const id = toRemove[i];
-        if (this.handlerIdMap.has(id)) {
-          this.removeHandler(event, id);
-        }
-      }
-    }
-
-    // Update execution time statistics
-    const executionTime = performance.now() - startTime;
-    const avgTime = this.stats.avgExecutionTime.get(event) ?? 0;
-    const count = this.stats.eventCounts.get(event) ?? 1;
-    this.stats.avgExecutionTime.set(
-      event,
-      (avgTime * (count - 1) + executionTime) / count
-    );
-
-    if (this.devMode && executionTime > 10) {
-      console.warn(
-        `[EventBus] Slow event handler for ${event}: ${executionTime.toFixed(2)}ms`
-      );
-    }
-  }
-
-  private executeHandlerListSync<T extends string>(
-    event: T,
-    handlers: HandlerEntry<string>[],
-    gridEvent: GridEvent<EventPayload<T>>
-  ): void {
-    const toRemove: number[] = [];
-    const startTime = performance.now();
-    const length = handlers.length;
-
-    // Sync execution for immediate events
-    for (let i = 0; i < length; i++) {
-      const entry = handlers[i];
-
-      if (!this.handlerIdMap.has(entry.id)) {
-        continue;
-      }
-
-      if (entry.options.filter && !entry.options.filter(gridEvent)) {
-        continue;
-      }
-
-      try {
-        entry.handler(gridEvent);
-      } catch (error) {
-        if (this.devMode) {
-          console.error(
-            `Error in immediate event handler for ${event}:`,
-            error
-          );
-        }
-      }
-
-      if (entry.options.once) {
-        toRemove.push(entry.id);
-      }
-    }
-
-    // Cleanup one-time handlers
-    if (toRemove.length > 0) {
-      for (let i = 0; i < toRemove.length; i++) {
-        const id = toRemove[i];
-        if (this.handlerIdMap.has(id)) {
-          this.removeHandler(event, id);
-        }
-      }
-    }
-
-    // Update stats
-    const executionTime = performance.now() - startTime;
-    const avgTime = this.stats.avgExecutionTime.get(event) ?? 0;
-    const count = this.stats.eventCounts.get(event) ?? 1;
-    this.stats.avgExecutionTime.set(
-      event,
-      (avgTime * (count - 1) + executionTime) / count
-    );
-  }
-
-  /**
-   * Checks if an event type matches a pattern (supports wildcard *)
-   */
-  private matchesPattern(event: string, pattern: string): boolean {
-    // Exact match
-    if (event === pattern) {
-      return true;
-    }
-    
-    // Global wildcard matches everything
-    if (pattern === '*') {
-      return true;
-    }
-    
-    // Pattern with wildcard (e.g., 'data:*' matches 'data:read')
-    if (pattern.endsWith(':*')) {
-      const prefix = pattern.slice(0, pattern.indexOf(':*'));
-      return event.startsWith(prefix + ':');
-    }
-    
-    return false;
-  }
-
-  /**
-   * Execute handlers for an event with pattern matching support (sync version)
-   */
-  private executeHandlersWithPatternSync<T extends string>(
-    event: T,
-    gridEvent: GridEvent<EventPayload<T>>
-  ): void {
-    this.executeHandlersWithPattern(event, gridEvent, (e, handlers, g) => this.executeHandlerListSync(e, handlers, g));
-  }
-
-  /**
-   * Execute handlers for an event with pattern matching support
-   */
-  private executeHandlersWithPattern<T extends string>(
-    event: T,
-    gridEvent: GridEvent<EventPayload<T>>,
-    executeList: (event: T, handlers: HandlerEntry<string>[], gridEvent: GridEvent<EventPayload<T>>) => void
-  ): void {
-    // Get exact match handlers
-    const exactHandlers = this.handlers.get(event);
-    
-    // Get wildcard handlers
-    const wildcardHandlers = this.handlers.get('*');
-    
-    // Get pattern-based handlers (e.g., 'data:*' for event 'data:read')
-    const patternHandlers: HandlerEntry<T>[] = [];
-    for (const [pattern, handlers] of this.handlers) {
-      if (pattern !== '*' && pattern !== event && pattern.endsWith(':*')) {
-        if (this.matchesPattern(event, pattern)) {
-          patternHandlers.push(...handlers);
-        }
-      }
-    }
-    
-    // Call exact match handlers
-    if (exactHandlers && exactHandlers.length > 0) {
-      executeList(event, exactHandlers, gridEvent);
-    }
-    
-    // Call pattern-based handlers if they exist
-    if (patternHandlers.length > 0) {
-      executeList(event, patternHandlers, gridEvent);
-    }
-    
-    // Call wildcard handlers if they exist
-    if (wildcardHandlers && wildcardHandlers.length > 0) {
-      executeList(event, wildcardHandlers, gridEvent);
-    }
-  }
-
-  private applyMiddlewareFast<T extends string>(
-    event: GridEvent<EventPayload<T>>,
-    eventType: T
-  ): GridEvent<EventPayload<T>> | null {
-    if (this.middlewares.length === 0) {
-      return event;
-    }
-
-    // Fast path for single middleware (common case)
-    if (this.middlewares.length === 1) {
-      const result = this.middlewares[0](event);
-      return result === null ? null : (result as GridEvent<EventPayload<T>>);
-    }
-
-    // For multiple middlewares
-    let currentEvent: any = event;
-
-    for (let i = 0; i < this.middlewares.length; i++) {
-      const result = this.middlewares[i](currentEvent);
-      if (result === null) {
-        // Don't cache cancellation - each event should be evaluated independently
-        return null;
-      }
-      currentEvent = result;
-    }
-
-    return currentEvent as GridEvent<EventPayload<T>>;
-  }
-
-  private scheduleProcessing(): void {
-    if (this.scheduledFlush) return;
-
-    this.scheduledFlush = true;
-
-    // Use the most efficient scheduling available
-    if (typeof queueMicrotask !== 'undefined') {
-      queueMicrotask(() => this.processQueue());
-    } else if (typeof setImmediate !== 'undefined') {
-      setImmediate(() => this.processQueue());
-    } else {
-      setTimeout(() => this.processQueue(), 0);
-    }
-  }
-
-  private processQueue(): void {
-    this.scheduledFlush = false;
-    this.flushScheduled = false;
-
-    try {
-      this.priorityQueue.process();
-    } finally {
-      // Check if more events were added during processing
-      if (this.priorityQueue.size() > 0) {
-        this.flushScheduled = true;
-        this.scheduleProcessing();
-      }
+      this.handlerRegistry.clearForEvent(event);
     }
   }
 }
 
-// ============================================
-// Singleton Instance
-// ============================================
-
-let instance: EventBus | null = null;
-
-export function getEventBus(): EventBus {
-  if (!instance) {
-    instance = new EventBus({
-      devMode:
-        typeof process !== 'undefined'
-          ? process.env.NODE_ENV !== 'production'
-          : false,
-    });
-  }
-  return instance;
-}
-
-export function resetEventBus(): void {
-  instance?.clear();
-  instance = null;
-}
-
+/**
+ * Create event bus instance
+ */
 export function createEventBus(options?: { devMode?: boolean }): EventBus {
   return new EventBus(options);
+}
+
+/**
+ * Get singleton event bus instance
+ */
+export function getEventBus(): EventBus {
+  return createEventBus();
+}
+
+/**
+ * Reset singleton event bus
+ */
+export function resetEventBus(): void {
+  // Note: This would need a singleton manager for proper cleanup
+  // For now, just a placeholder
 }

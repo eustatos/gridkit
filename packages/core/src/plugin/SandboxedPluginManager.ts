@@ -1,13 +1,13 @@
+import { CrossPluginBridge } from './events/CrossPluginBridge';
+import type { EventBus } from './events/PluginEventBus';
+import { PluginEventForwarder } from './events/PluginEventForwarder';
+import type { GridEvent } from './events/PluginEvents';
 import { EventSandbox } from './isolation/EventSandbox';
 import { PermissionManager } from './isolation/PermissionManager';
 import { QuotaManager } from './isolation/QuotaManager';
-import { EventValidator } from './security/EventValidator';
 import { ErrorBoundary } from './security/ErrorBoundary';
+import { EventValidator } from './security/EventValidator';
 import { ResourceMonitor } from './security/ResourceMonitor';
-import { PluginEventForwarder } from './events/PluginEventForwarder';
-import { CrossPluginBridge } from './events/CrossPluginBridge';
-import type { EventBus } from './events/PluginEventBus';
-import type { GridEvent } from './events/PluginEvents';
 
 /**
  * SandboxedPluginManager orchestrates the plugin isolation system,

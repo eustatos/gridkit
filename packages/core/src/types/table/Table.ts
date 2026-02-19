@@ -7,6 +7,12 @@
  * @template TData - Row data type (must extend RowData)
  */
 
+import type { Column } from './Column';
+import type { Row, RowModel } from './Row';
+import type { TableOptions } from './TableOptions';
+import type { TableState } from './TableState';
+
+import type { PerformanceMetrics } from '@/performance';
 import type {
   GridId,
   RowId,
@@ -16,11 +22,6 @@ import type {
   Listener,
   Unsubscribe,
 } from '@/types';
-import type { TableState } from './TableState';
-import type { TableOptions } from './TableOptions';
-import type { Row, RowModel } from './Row';
-import type { Column } from './Column';
-import type { PerformanceMetrics } from '@/performance';
 
 // ===================================================================
 // Table Instance Interface

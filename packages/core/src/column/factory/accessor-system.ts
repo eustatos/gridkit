@@ -1,7 +1,8 @@
 // Type-safe accessor system for column value extraction
-import type { RowData } from '@/types/base';
-import type { ValidatedColumnDef } from '../validation/validate-column';
 import { GridKitError } from '../../errors/grid-kit-error';
+import type { ValidatedColumnDef } from '@/types/column';
+
+import type { RowData } from '@/types';
 
 /**
  * Column accessor types.
@@ -31,7 +32,7 @@ export function createAccessor<TData extends RowData, TValue>(
 
     return {
       type: 'function',
-      getValue: (row: EnsureRowData<TData>, index: number): TValue => {
+      getValue: (row: TData, index: number): TValue => {
         // Check cache
         if (cache.has(row as object)) {
           return cache.get(row as object)!;
@@ -41,7 +42,7 @@ export function createAccessor<TData extends RowData, TValue>(
         cache.set(row as object, value);
         return value;
       },
-      clearCache: (row?: EnsureRowData<TData>) => {
+      clearCache: (row?: TData) => {
         if (row) {
           cache.delete(row as object);
         } else {
@@ -59,7 +60,7 @@ export function createAccessor<TData extends RowData, TValue>(
 
     return {
       type: 'key',
-      getValue: (row: EnsureRowData<TData>): TValue => {
+      getValue: (row: TData): TValue => {
         let value: unknown = row;
 
         for (const key of path) {

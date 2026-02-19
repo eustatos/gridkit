@@ -1,8 +1,8 @@
 // ConfigurablePlugin.ts - Enhanced plugin with config support
 
-import { Plugin } from './core/Plugin';
-import { ConfigSchema } from './config/ConfigSchema';
 import { ConfigManager } from './config/ConfigManager';
+import { ConfigSchema } from './config/ConfigSchema';
+import { Plugin } from './core/Plugin';
 import { DependencyResolver } from './dependencies/DependencyResolver';
 
 /**

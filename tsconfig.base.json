@@ -20,7 +20,10 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "composite": true
+    "composite": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "exclude": ["node_modules", "dist", "build", "coverage"]
 }

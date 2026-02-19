@@ -6,7 +6,7 @@ import type {
   ColumnDef,
   ValidatedColumnDef,
 } from '../../types';
-import { GridKitError, ValidationAggregateError } from '../../errors';
+
 import {
   normalizeColumns,
   normalizeDebugOptions,

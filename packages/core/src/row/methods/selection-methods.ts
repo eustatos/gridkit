@@ -8,8 +8,8 @@
  */
 
 import type { RowId } from '@/types';
-import type { Table } from '@/types/table/Table';
 import type { SelectionOptions } from '@/types/row/Row';
+import type { Table } from '@/types/table/Table';
 
 /**
  * Options for building selection methods.
@@ -84,7 +84,7 @@ export function buildSelectionMethods(
       const next = selected ?? !current;
 
       table.setState((prev) => {
-        const nextSelection = prev.rowSelection as any;
+        const nextSelection = prev.rowSelection;
 
         if (next) {
           nextSelection[idStr] = true;
@@ -125,7 +125,7 @@ export function buildSelectionMethods(
       const idStr = id.toString();
       
       table.setState((prev) => {
-        const nextSelection = prev.rowSelection as any;
+        const nextSelection = prev.rowSelection;
         delete nextSelection[idStr];
         return { ...prev, rowSelection: nextSelection };
       });

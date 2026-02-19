@@ -24,23 +24,6 @@ function buildInitialState<TData>(
     // Column sizing
     columnSizing: {},
 
-    // Column sizing info
-    columnSizingInfo: {
-      isResizingColumn: false,
-      startOffset: null,
-      startSize: null,
-      deltaOffset: null,
-      deltaPercentage: null,
-      columnSizingStart: [],
-      headerId: null,
-    },
-
-    // Pagination
-    pagination: {
-      pageIndex: 0,
-      pageSize: 10,
-    },
-
     // Column pinning
     columnPinning: {
       left: [],
@@ -52,6 +35,28 @@ function buildInitialState<TData>(
       top: [],
       bottom: [],
     },
+
+    // Pagination
+    pagination: {
+      pageIndex: 0,
+      pageSize: 10,
+    },
+
+    // Sorting (default empty)
+    sorting: [],
+
+    // Filtering (default empty)
+    filtering: [],
+
+    // Grouping (default empty)
+    grouping: [],
+
+    // Expanded rows (default empty)
+    expanded: {},
+
+    // Version and timestamp
+    version: 1,
+    updatedAt: Date.now(),
   } as TableState<TData>;
 }
 

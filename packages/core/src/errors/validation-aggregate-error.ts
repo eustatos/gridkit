@@ -41,7 +41,9 @@ export class ValidationAggregateError extends GridKitError {
       name: this.name,
       code: this.code,
       message: this.message,
-      errors: this.errors.map(error => error.toJSON()),
+      context: {
+        errors: this.errors.map(error => error.toJSON()),
+      },
     };
   }
 }

@@ -6,59 +6,11 @@
  * @module @gridkit/core/types/table/row
  */
 
-import type { RowId, ColumnId, RowData } from '@/types';
-import type { ColumnValue } from './Column';
+import type { RowData, RowId } from '@/types';
+import type { Row as RowType } from '@/types/row/Row';
 
-// ===================================================================
-// Row Interface
-// ===================================================================
-
-/**
- * Interface representing a single row.
- */
-export interface Row<TData extends RowData> {
-  /**
-   * Unique row identifier.
-   */
-  readonly id: RowId;
-
-  /**
-   * Original row data.
-   */
-  readonly original: TData;
-
-  /**
-   * Index in the original data array.
-   */
-  readonly index: number;
-
-  /**
-   * Sub-rows (for tree/grouped data).
-   */
-  readonly subRows?: Row<TData>[];
-
-  /**
-   * Row depth in tree structure.
-   */
-  readonly depth: number;
-
-  /**
-   * Get cell value by column ID.
-   */
-  getValue<TColumnId extends ColumnId>(
-    columnId: TColumnId
-  ): ColumnValue<TData, TColumnId>;
-
-  /**
-   * Check if row is selected.
-   */
-  getIsSelected(): boolean;
-
-  /**
-   * Check if row is expanded (for tree/grouped data).
-   */
-  getIsExpanded(): boolean;
-}
+// Re-export Row type from row module for convenience
+export type { RowType as Row };
 
 // ===================================================================
 // Row Model
@@ -71,10 +23,20 @@ export interface RowModel<TData extends RowData> {
   /**
    * Array of rows in the model.
    */
-  rows: Row<TData>[];
+  rows: RowType<TData>[];
+
+  /**
+   * Map of row ID to row instance for O(1) lookup.
+   */
+  rowsById: Map<RowId, RowType<TData>>;
 
   /**
    * Total number of rows (including filtered out).
    */
   totalCount: number;
+
+  /**
+   * Get row by ID with O(1) lookup.
+   */
+  getRow(id: RowId): RowType<TData> | undefined;
 }

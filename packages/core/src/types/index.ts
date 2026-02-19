@@ -20,14 +20,10 @@
  */
 
 // Branded types (type-only export)
-export type {
-  GridId,
-  ColumnId,
-  RowId,
-  CellId,
-  RowData,
-  Validator,
-} from './base';
+export type { GridId, RowId, CellId, RowData, Validator } from './base';
+
+// Re-export ColumnId from column module
+export type { ColumnId } from './column/SupportingTypes';
 
 // Re-export error codes for convenience
 export type { ErrorCode } from './base';
@@ -72,6 +68,7 @@ export type {
   ColumnDef,
   ColumnMeta,
   TableOptions,
+  ValidatedTableOptions,
   TableState,
   SortingState,
   FilteringState,
@@ -81,10 +78,11 @@ export type {
   ScrollPosition,
   CellCoordinate,
   GridKitError,
-  ColumnAccessor,
-  ColumnAccessorFn,
   ColumnValue,
 } from './table';
+
+// Re-export ValidatedColumnDef from column validation
+export type { ValidatedColumnDef } from '@/types/column';
 
 // Column interfaces (public API)
 export type {

@@ -1,6 +1,7 @@
 // MiddlewareEventBus.ts
 
 import type { GridEvent, EventMiddleware } from '../types';
+
 import { EventPipeline } from './core/EventPipeline';
 
 /**

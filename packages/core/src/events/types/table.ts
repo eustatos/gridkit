@@ -2,8 +2,8 @@
 // Implements CORE-005B requirement for table feature events
 
 import type { GridEvent } from './base';
-import type { GridId } from './grid';
 import type { ColumnId } from './column';
+import type { GridId } from './grid';
 import type { RowId } from './row';
 
 // Sorting events

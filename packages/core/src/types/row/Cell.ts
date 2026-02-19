@@ -1,6 +1,6 @@
-import type { RowData } from '../base';
+import type { RowData , CellId } from '../base';
 import type { Column } from '../column';
-import type { CellId } from '../base';
+
 import type { CellMeta, CellPosition } from './Metadata';
 import type { Row } from './Row';
 

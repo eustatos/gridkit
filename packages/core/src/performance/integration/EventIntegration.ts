@@ -6,8 +6,8 @@
  * @module @gridkit/core/performance/integration/events
  */
 
-import type { PerformanceConfig } from '../types';
 import { createPerformanceMonitor } from '../monitor/factory';
+import type { PerformanceConfig } from '../types';
 
 /**
  * Configuration for event performance monitoring.

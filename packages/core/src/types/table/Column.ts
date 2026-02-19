@@ -3,7 +3,5 @@ export type {
   Column,
   ColumnDef,
   ColumnMeta,
-  ColumnAccessor,
-  ColumnAccessorFn,
   ColumnValue,
 } from '@/types/column';

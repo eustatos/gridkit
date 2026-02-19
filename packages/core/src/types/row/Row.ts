@@ -1,7 +1,7 @@
 import type { RowData, RowId } from '../base';
-import type { Table } from '../table';
+import type { ColumnId, Table } from '../table';
+
 import type { Cell } from './Cell';
-import type { ColumnId } from '../base';
 import type { RowMeta } from './Metadata';
 
 /**

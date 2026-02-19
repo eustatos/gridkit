@@ -1,7 +1,8 @@
 // Size management methods for columns
-import type { EnsureRowData } from '@/types/helpers';
-import type { ValidatedColumnDef } from '../validation/validate-column';
-import type { Table } from '@/types/table/Table';
+import type { ValidatedColumnDef } from '@/types/column';
+
+import type { Table } from '@/types/table';
+import type { RowData } from '@/types';
 
 /**
  * Clamps a value between min and max.
@@ -13,9 +14,9 @@ export function clamp(value: number, min: number, max: number): number {
 /**
  * Builds size-related methods for column instance.
  */
-export function buildSizeMethods<TData, TValue>(
-  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
-  table: Table<EnsureRowData<TData>>
+export function buildSizeMethods<TData extends RowData, TValue>(
+  columnDef: ValidatedColumnDef<TData, TValue>,
+  table: Table<TData>
 ) {
   const tableState = () => table.getState();
 
@@ -23,7 +24,7 @@ export function buildSizeMethods<TData, TValue>(
     // Size management
     getSize: () => {
       const sizing = tableState().columnSizing;
-      return sizing[columnDef.id!] ?? columnDef.size ?? 150;
+      return sizing[columnDef.id] ?? columnDef.size ?? 150;
     },
 
     setSize: (size: number) => {
@@ -36,7 +37,7 @@ export function buildSizeMethods<TData, TValue>(
         ...prev,
         columnSizing: {
           ...prev.columnSizing,
-          [columnDef.id!]: clamped,
+          [columnDef.id]: clamped,
         },
       }));
     },
@@ -44,7 +45,7 @@ export function buildSizeMethods<TData, TValue>(
     resetSize: () => {
       table.setState((prev) => {
         const nextSizing = { ...prev.columnSizing };
-        delete nextSizing[columnDef.id!];
+        delete nextSizing[columnDef.id];
         return { ...prev, columnSizing: nextSizing };
       });
     },

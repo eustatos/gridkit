@@ -53,4 +53,88 @@ export type ErrorCode =
   | 'DATA_INVALID_RESPONSE'
   // Plugin errors
   | 'PLUGIN_NOT_FOUND'
-  | 'PLUGIN_REGISTRATION_FAILED';
+  | 'PLUGIN_REGISTRATION_FAILED'
+  // Validation errors
+  | 'COLUMNS_NOT_ARRAY'
+  | 'NO_COLUMNS'
+  | 'INVALID_COLUMN_DEF'
+  | 'NO_ACCESSOR'
+  | 'DATA_NOT_ARRAY'
+  | 'INVALID_ROW_DATA'
+  | 'INVALID_ROW_TYPE'
+  | 'INVALID_FIELD_VALUE'
+  | 'MIN_VALUE_VIOLATION'
+  | 'MAX_VALUE_VIOLATION'
+  | 'MIN_LENGTH_VIOLATION'
+  | 'MAX_LENGTH_VIOLATION'
+  | 'PATTERN_MISMATCH'
+  | 'ENUM_VIOLATION'
+  | 'INVALID_STATE_TRANSITION'
+  | 'CONCURRENT_MODIFICATION'
+  | 'STATE_CORRUPTION'
+  | 'PERFORMANCE_BUDGET_EXCEEDED'
+  | 'MEMORY_LIMIT_EXCEEDED'
+  | 'EXECUTION_TIMEOUT'
+  | 'CUSTOM_VALIDATION_FAILED';
+
+/**
+ * Validation error interface.
+ */
+export interface ValidationError {
+  /**
+   * Error code.
+   */
+  code: ErrorCode;
+
+  /**
+   * Human-readable error message.
+   */
+  message: string;
+
+  /**
+   * Field path that caused the error.
+   */
+  field: string;
+
+  /**
+   * The value that caused the error.
+   */
+  value: unknown;
+}
+
+/**
+ * Validation error code type for runtime validation.
+ */
+export type ValidationErrorCode =
+  // Schema errors
+  | 'INVALID_SCHEMA'
+  | 'MISSING_REQUIRED_FIELD'
+  | 'FIELD_TYPE_MISMATCH'
+  | 'INVALID_FIELD_VALUE'
+
+  // Data errors
+  | 'INVALID_ROW_DATA'
+  | 'DUPLICATE_ROW_ID'
+  | 'INVALID_COLUMN_ACCESSOR'
+  | 'INVALID_CELL_VALUE'
+
+  // Constraint errors
+  | 'MIN_VALUE_VIOLATION'
+  | 'MAX_VALUE_VIOLATION'
+  | 'MIN_LENGTH_VIOLATION'
+  | 'MAX_LENGTH_VIOLATION'
+  | 'PATTERN_MISMATCH'
+  | 'ENUM_VIOLATION'
+
+  // State errors
+  | 'INVALID_STATE_TRANSITION'
+  | 'CONCURRENT_MODIFICATION'
+  | 'STATE_CORRUPTION'
+
+  // Performance errors
+  | 'PERFORMANCE_BUDGET_EXCEEDED'
+  | 'MEMORY_LIMIT_EXCEEDED'
+  | 'EXECUTION_TIMEOUT'
+
+  // Custom errors
+  | 'CUSTOM_VALIDATION_FAILED';

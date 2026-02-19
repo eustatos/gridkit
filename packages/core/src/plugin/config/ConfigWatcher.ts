@@ -30,7 +30,7 @@ export class ConfigWatcher {
     const debouncedCallback = (config: unknown) => {
       // Clear any existing timeout for this plugin
       if (this.timeouts.has(pluginId)) {
-        clearTimeout(this.timeouts.get(pluginId)!);
+        clearTimeout(this.timeouts.get(pluginId));
       }
       
       // Set a new timeout
@@ -51,7 +51,7 @@ export class ConfigWatcher {
     return () => {
       watchers.delete(debouncedCallback);
       if (this.timeouts.has(pluginId)) {
-        clearTimeout(this.timeouts.get(pluginId)!);
+        clearTimeout(this.timeouts.get(pluginId));
         this.timeouts.delete(pluginId);
       }
     };

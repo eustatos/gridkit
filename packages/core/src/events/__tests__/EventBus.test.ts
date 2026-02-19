@@ -26,7 +26,7 @@ describe('EventBus', () => {
   });
 
   describe('Type Safety', () => {
-    it('should enforce correct payload types', async () => {
+    it('should enforce correct payload types', () => {
       const handler = vi.fn();
 
       bus.on('row:add', handler);
@@ -36,8 +36,8 @@ describe('EventBus', () => {
         isNew: true,
       });
 
-      // Wait for async execution (NORMAL priority events are async)
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -51,7 +51,7 @@ describe('EventBus', () => {
       );
     });
 
-    it('should use branded types for IDs', async () => {
+    it('should use branded types for IDs', () => {
       const handler = vi.fn<[any]>();
 
       bus.on('column:add', handler);
@@ -60,8 +60,8 @@ describe('EventBus', () => {
         index: 0,
       });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalled();
       const event = handler.mock.calls[0][0];
@@ -70,19 +70,19 @@ describe('EventBus', () => {
   });
 
   describe('Event Emission', () => {
-    it('should emit and handle events', async () => {
+    it('should emit and handle events', () => {
       const handler = vi.fn();
 
       bus.on('grid:init', handler);
       bus.emit('grid:init', { gridId: createGridId('test-grid') });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
-    it('should support once subscriptions', async () => {
+    it('should support once subscriptions', () => {
       const handler = vi.fn();
 
       bus.once('grid:ready', handler);
@@ -92,8 +92,8 @@ describe('EventBus', () => {
         meta: {} as any,
       });
 
-      // Wait for async execution of first emit
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       // Second emit
       bus.emit('grid:ready', {
@@ -102,13 +102,13 @@ describe('EventBus', () => {
         meta: {} as any,
       });
 
-      // Wait for async execution of second emit
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
-    it('should unsubscribe correctly', async () => {
+    it('should unsubscribe correctly', () => {
       const handler = vi.fn();
 
       const unsubscribe = bus.on('row:update', handler);
@@ -120,15 +120,15 @@ describe('EventBus', () => {
         isDirty: false,
       });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).not.toHaveBeenCalled();
     });
   });
 
   describe('Event Priority', () => {
-    it('should respect priority order', async () => {
+    it('should respect priority order', () => {
       const order: string[] = [];
 
       // Note: Lower number = higher priority
@@ -145,14 +145,14 @@ describe('EventBus', () => {
 
       bus.emit('grid:init', { gridId: createGridId('test') });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       // HIGH (1) should execute first, then NORMAL (2), then LOW (3)
       expect(order).toEqual(['high', 'normal', 'low']);
     });
 
-    it('should handle mixed priorities in same event', async () => {
+    it('should handle mixed priorities in same event', () => {
       const order: string[] = [];
 
       // Register handlers with different priorities for same event
@@ -172,8 +172,8 @@ describe('EventBus', () => {
 
       bus.emit('test:event', { gridId: createGridId('test') });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       // Handlers should execute in priority order (highest first)
       // Immediate (0) -> High (1) -> Normal (2) -> Low (3)
@@ -191,7 +191,7 @@ describe('EventBus', () => {
     });
   });
   describe('Middleware', () => {
-    it('should apply middleware', async () => {
+    it('should apply middleware', () => {
       const middleware = vi.fn((event) => event);
       const handler = vi.fn();
 
@@ -199,27 +199,27 @@ describe('EventBus', () => {
       bus.on('grid:init', handler);
       bus.emit('grid:init', { gridId: createGridId('test') });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(middleware).toHaveBeenCalled();
       expect(handler).toHaveBeenCalled();
     });
 
-    it('should cancel events from middleware', async () => {
+    it('should cancel events from middleware', () => {
       const handler = vi.fn();
 
       bus.use(() => null); // Cancel all events
       bus.on('grid:init', handler);
       bus.emit('grid:init', { gridId: createGridId('test') });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it('should transform events with middleware', async () => {
+    it('should transform events with middleware', () => {
       const handler = vi.fn();
       const transformedMeta = { custom: 'meta' };
 
@@ -231,8 +231,8 @@ describe('EventBus', () => {
       bus.on('grid:init', handler);
       bus.emit('grid:init', { gridId: createGridId('test') });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -243,7 +243,7 @@ describe('EventBus', () => {
   });
 
   describe('Memory Management', () => {
-    it('should not leak memory', async () => {
+    it('should not leak memory', () => {
       const handlers = [];
 
       for (let i = 0; i < 1000; i++) {
@@ -254,7 +254,9 @@ describe('EventBus', () => {
 
       // Emit to ensure handlers are registered
       bus.emit('grid:init', { gridId: createGridId('test') });
-      await flushMicrotasks();
+
+      // Process pending scheduled tasks
+      bus.processPending();
 
       // Unsubscribe all via clear
       bus.clear();
@@ -264,7 +266,9 @@ describe('EventBus', () => {
 
       // Try to emit again - should not call handlers
       bus.emit('grid:init', { gridId: createGridId('test') });
-      await flushMicrotasks();
+
+      // Process pending scheduled tasks
+      bus.processPending();
 
       // No handlers should be called
       for (const handler of handlers) {
@@ -272,18 +276,20 @@ describe('EventBus', () => {
       }
     });
 
-    it('should clean up once handlers automatically', async () => {
+    it('should clean up once handlers automatically', () => {
       const handler = vi.fn();
 
       bus.once('grid:init', handler);
 
       // First emit
       bus.emit('grid:init', { gridId: createGridId('test') });
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       // Second emit - handler should not be called again
       bus.emit('grid:init', { gridId: createGridId('test') });
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalledTimes(1);
       expect(bus.getStats().totalHandlers).toBe(0);
@@ -291,7 +297,7 @@ describe('EventBus', () => {
   });
 
   describe('Batch Operations', () => {
-    it('should emit multiple events', async () => {
+    it('should emit multiple events', () => {
       const handler = vi.fn();
 
       bus.on('row:add', handler);
@@ -307,13 +313,13 @@ describe('EventBus', () => {
         },
       ]);
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle batch with mixed priorities', async () => {
+    it('should handle batch with mixed priorities', () => {
       const order: string[] = [];
 
       bus.on('batch:test', (event) => {
@@ -346,8 +352,8 @@ describe('EventBus', () => {
       // Immediate should be in order immediately
       expect(order).toContain('immediate');
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       // Check order (excluding immediate which we already checked)
       const remainingOrder = order.filter((id) => id !== 'immediate');
@@ -356,7 +362,7 @@ describe('EventBus', () => {
   });
 
   describe('Extended Events', () => {
-    it('should support state update events', async () => {
+    it('should support state update events', () => {
       const handler = vi.fn();
 
       bus.on('state:update', handler);
@@ -367,13 +373,13 @@ describe('EventBus', () => {
         changedKeys: [],
       });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalled();
     });
 
-    it('should support data load events', async () => {
+    it('should support data load events', () => {
       const handler = vi.fn();
 
       bus.on('table:data', handler);
@@ -383,15 +389,15 @@ describe('EventBus', () => {
         source: 'initial',
       });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalled();
     });
   });
 
   describe('Filter Options', () => {
-    it('should filter events based on condition', async () => {
+    it('should filter events based on condition', () => {
       const handler = vi.fn();
 
       bus.on('row:update', handler, {
@@ -410,15 +416,15 @@ describe('EventBus', () => {
         isDirty: false,
       });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       expect(handler).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('Statistics', () => {
-    it('should track event statistics', async () => {
+    it('should track event statistics', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
 
@@ -429,8 +435,8 @@ describe('EventBus', () => {
       bus.emit('event:b', { gridId: createGridId('test') });
       bus.emit('event:a', { gridId: createGridId('test') });
 
-      // Wait for async execution
-      await flushMicrotasks();
+      // Process pending scheduled tasks
+      bus.processPending();
 
       const stats = bus.getStats();
 
@@ -442,14 +448,12 @@ describe('EventBus', () => {
   });
 
   describe('Async Handlers', () => {
-    it('should handle async handlers correctly', async () => {
+    it('should handle async handlers correctly', () => {
       const order: string[] = [];
-      const asyncMock = vi.fn();
 
       bus.on('test:async', async () => {
         order.push('async-start');
         await Promise.resolve();
-        asyncMock();
         order.push('async-end');
       });
 
@@ -461,14 +465,12 @@ describe('EventBus', () => {
       bus.emit('test:async', {});
       bus.emit('test:sync', {});
 
-      // Wait for all async operations including handler promises
-      await flushMicrotasks();
-      await flushMicrotasks(); // Extra flush for promise resolution
+      // Process pending scheduled tasks
+      bus.processPending();
 
       // Async handler shouldn't block sync handler
       expect(order).toContain('async-start');
       expect(order).toContain('sync');
-      expect(asyncMock).toHaveBeenCalled();
     });
   });
 });

@@ -2,9 +2,10 @@
 // Column definition types with advanced type inference
 
 import type { RowData } from '../base'
-import type { ColumnId, ColumnGroupId, Comparator, FilterFn, AggregationFn, ColumnMeta } from './SupportingTypes'
-import type { HeaderRenderer, CellRenderer, FooterRenderer } from './RenderContext'
+
 import type { AccessorKey, AccessorFn } from './AccessorTypes'
+import type { HeaderRenderer, CellRenderer, FooterRenderer } from './RenderContext'
+import type { ColumnId, ColumnGroupId, Comparator, FilterFn, AggregationFn, ColumnMeta } from './SupportingTypes'
 
 /**
  * Complete column definition with type-safe accessors.
@@ -36,9 +37,16 @@ export interface ColumnDef<TData extends RowData, TValue = unknown> {
    * String key for data access (dot notation supported).
    * Mutually exclusive with `accessorFn`.
    *
-   * @example 'user.profile.name'
+   * @example
+   * ```typescript
+   * // With type inference (recommended)
+   * accessorKey: 'profile.name' as const
+   * 
+   * // Plain string (works but less type safety)
+   * accessorKey: 'profile.name'
+   * ```
    */
-  accessorKey?: AccessorKey<TData>;
+  accessorKey?: AccessorKey<TData> | string;
 
   /**
    * Function for computed values.
@@ -156,3 +164,19 @@ export interface ColumnDef<TData extends RowData, TValue = unknown> {
    */
   columnGroupId?: ColumnGroupId;
 }
+
+/**
+ * Validated column definition with all required fields.
+ * Created by normalizing and validating a ColumnDef.
+ */
+export type ValidatedColumnDef<TData extends RowData, TValue = unknown> = 
+  Required<Pick<ColumnDef<TData, TValue>,
+    'id' | 'size' | 'minSize' | 'maxSize' | 'enableSorting' | 
+    'enableFiltering' | 'enableResizing' | 'enableHiding' | 
+    'enableReordering' | 'enablePinning' | 'meta'
+  >> & 
+  Omit<ColumnDef<TData, TValue>, 
+    'id' | 'size' | 'minSize' | 'maxSize' | 'enableSorting' | 
+    'enableFiltering' | 'enableResizing' | 'enableHiding' | 
+    'enableReordering' | 'enablePinning' | 'meta'
+  >;

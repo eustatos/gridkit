@@ -1,15 +1,15 @@
 // Filtering methods for columns
-import type { EnsureRowData } from '@/types/helpers';
-import type { ValidatedColumnDef } from '../validation/validate-column';
-import type { Table } from '@/types/table/Table';
-import type { FilteringState } from '@/types/table/TableState';
+import type { ValidatedColumnDef } from '@/types/column';
+
+import type { RowData } from '@/types';
+import type { Table , FilteringState } from '@/types/table';
 
 /**
  * Builds filtering-related methods for column instance.
  */
-export function buildFilteringMethods<TData, TValue>(
-  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
-  table: Table<EnsureRowData<TData>>
+export function buildFilteringMethods<TData extends RowData, TValue>(
+  columnDef: ValidatedColumnDef<TData, TValue>,
+  table: Table<TData>
 ) {
   const tableState = () => table.getState();
 
@@ -55,7 +55,7 @@ export function buildFilteringMethods<TData, TValue>(
           nextFiltering = [
             ...currentFiltering,
             {
-              id: columnDef.id!,
+              id: columnDef.id,
               value,
               operator: columnDef.filterFn ? 'custom' : 'equals',
             },

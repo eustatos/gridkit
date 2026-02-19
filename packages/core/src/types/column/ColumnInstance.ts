@@ -1,11 +1,12 @@
 // ColumnInstance.ts
 // Runtime column instance with state and methods
 
-import type { RowData } from '../base'
-import type { ColumnDef } from './ColumnDef'
-import type { Table } from '../table/Table'
-import type { ColumnId, ColumnMeta, ColumnUtils } from './SupportingTypes'
 import type { ColumnAccessor } from '../../column/factory/accessor-system'
+import type { RowData } from '../base'
+import type { Table } from '../table/Table'
+
+import type { ColumnDef } from './ColumnDef'
+import type { ColumnId, ColumnMeta, ColumnUtils } from './SupportingTypes'
 
 /**
  * Internal feature flags for column.
@@ -36,7 +37,7 @@ interface ColumnInternal<TData extends RowData, TValue> {
   /**
    * State watchers for reactive updates.
    */
-  stateWatchers: Set<Function>;
+  stateWatchers: Set<() => void>;
 }
 
 /**

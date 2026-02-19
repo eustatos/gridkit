@@ -7,9 +7,8 @@
  * @module @gridkit/core/row/factory/row-registry
  */
 
-import type { RowData } from '@/types';
+import type { RowData , RowId } from '@/types';
 import type { Row } from '@/types/row/Row';
-import type { RowId } from '@/types';
 
 /**
  * Row registry with multiple indexing strategies.

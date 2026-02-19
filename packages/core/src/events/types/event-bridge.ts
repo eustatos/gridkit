@@ -8,6 +8,7 @@
  */
 
 import type { EventBus } from '../EventBus';
+
 import type {
   EventType,
   EventPayload,
@@ -15,6 +16,7 @@ import type {
   EventHandlerOptions,
   GridEvent,
 } from './base';
+
 import type { TableState, RowId } from '@/types';
 import type { GridId } from '@/types/base';
 

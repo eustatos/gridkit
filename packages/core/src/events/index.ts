@@ -17,6 +17,32 @@ export {
   createEventBus,
 } from './EventBus';
 
+// Component creators
+export {
+  createHandlerRegistry,
+  type HandlerRegistry,
+  createPatternMatcher,
+  type PatternMatcher,
+  createHandlerProcessor,
+  type HandlerProcessor,
+} from './HandlerRegistry';
+
+export {
+  createMiddlewarePipeline,
+  type MiddlewarePipeline,
+} from './MiddlewarePipeline';
+
+export {
+  createStatsCollector,
+  type StatsCollector,
+  type EventBusStats,
+} from './StatsCollector';
+
+export {
+  createScheduler,
+  type Scheduler,
+} from './Scheduler';
+
 // Middleware
 export { createSimpleBatchMiddleware as createBatchMiddleware } from './middleware/simple-batch';
 export { createSimpleDebounceMiddleware as createDebounceMiddleware } from './middleware/simple-debounce';
@@ -34,7 +60,7 @@ export {
 export type {
   TableEventBridge,
   DataChangeType,
-} from './integration';
+} from './types/event-bridge';
 
 // Emitters
 export {

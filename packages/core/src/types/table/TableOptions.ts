@@ -1,19 +1,55 @@
+import { DeepPartial, RowData, RowId } from '../base';
+
+import { ColumnDef } from './Column';
+import { GridKitError } from './Errors';
+import { TableMeta } from './support/Metadata';
+import { TableState } from './TableState';
+
 /**
- * Table options types.
- *
- * Contains all types related to table configuration.
- *
- * @module @gridkit/core/types/table/options
+ * Debug configuration options for debugging features.
  */
+export interface DebugOptions {
+  /** Log state changes to console */
+  readonly logStateChanges?: boolean;
 
-import type { RowId, RowData, DeepPartial } from '@/types';
-import type { TableState } from './TableState';
-import type { ColumnDef } from './Column';
-import type { PerformanceBudgets as CorePerformanceBudgets } from '@/performance';
+  /** Log performance metrics */
+  readonly logPerformance?: boolean;
 
-// ===================================================================
-// Table Options (Configuration)
-// ===================================================================
+  /** Validate state on every change */
+  readonly validateState?: boolean;
+
+  /** Enable DevTools integration */
+  readonly devTools?: boolean;
+}
+
+/**
+ * Internal debug configuration with normalized boolean flags.
+ */
+export interface DebugConfig {
+  /** Log state changes to console */
+  readonly logStateChanges?: boolean;
+
+  /** Log performance metrics */
+  readonly logPerformance?: boolean;
+
+  /** Validate state on every change */
+  readonly validateState?: boolean;
+
+  /** Enable DevTools integration */
+  readonly devTools?: boolean;
+
+  /** Debug performance */
+  readonly performance?: boolean;
+
+  /** Debug events */
+  readonly events?: boolean;
+
+  /** Debug validation */
+  readonly validation?: boolean;
+
+  /** Debug memory */
+  readonly memory?: boolean;
+}
 
 /**
  * Complete table configuration.
@@ -98,5 +134,42 @@ export interface TableOptions<TData extends RowData> {
   meta?: TableMeta;
 }
 
-// Use actual types from performance module
-type PerformanceBudgets = CorePerformanceBudgets;
+/**
+ * Complete validated table configuration with all defaults applied.
+ * This is the normalized version of TableOptions after validation.
+ *
+ * @template TData - Row data type
+ */
+export interface ValidatedTableOptions<
+  TData extends RowData,
+> extends TableOptions<TData> {
+  /**
+   * Normalized columns with all defaults applied.
+   */
+  columns: ColumnDef<TData>[];
+
+  /**
+   * Normalized data array (always has a value, defaults to empty array).
+   */
+  data: TData[];
+
+  /**
+   * Normalized getRowId function (always has a value).
+   */
+  getRowId: (row: TData, index: number) => RowId;
+
+  /**
+   * Normalized debug configuration.
+   */
+  debug: DebugConfig;
+
+  /**
+   * Normalized metadata (always has a value, defaults to empty object).
+   */
+  meta: Record<string, unknown>;
+
+  /**
+   * Normalized initial state (always has a value, defaults to empty object).
+   */
+  initialState: DeepPartial<TableState<TData>>;
+}

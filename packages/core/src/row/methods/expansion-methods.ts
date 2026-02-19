@@ -105,7 +105,7 @@ export function buildExpansionMethods(
       if (!hasChildren) return;
       
       table.setState((prev) => {
-        const expanded = prev.expanded as any;
+        const expanded = prev.expanded;
         delete expanded[idStr];
         return { ...prev, expanded };
       });

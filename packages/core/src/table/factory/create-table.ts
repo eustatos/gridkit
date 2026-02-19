@@ -1,9 +1,9 @@
 import type { Table, TableOptions, RowData } from '../../types';
-import { validateAndNormalize } from './validation';
-import { wrapCreationError } from './error-handling';
-import { createTableInstance } from '../instance/TableInstance';
 import { initializeTableInstance } from '../instance/initialization';
-import { logCreationMetrics } from './error-handling';
+import { createTableInstance } from '../instance/TableInstance';
+
+import { wrapCreationError , logCreationMetrics } from './error-handling';
+import { validateAndNormalize } from './validation';
 
 /**
  * Creates a production-ready table instance with comprehensive validation,

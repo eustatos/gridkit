@@ -47,7 +47,7 @@ export function createDebounceMiddleware(
 
     // Clear existing timer if any
     if (timers.has(key)) {
-      clearTimeout(timers.get(key)!);
+      clearTimeout(timers.get(key));
     }
 
     // Set up new timer

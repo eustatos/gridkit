@@ -8,9 +8,9 @@
  */
 
 import type { RowData } from '@/types';
+import type { Column } from '@/types/column/ColumnInstance';
 import type { Cell } from '@/types/row/Cell';
 import type { Row } from '@/types/row/Row';
-import type { Column } from '@/types/column/ColumnInstance';
 
 /**
  * Create a cell instance for a row/column pair.

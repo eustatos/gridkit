@@ -1,10 +1,10 @@
-import type { Row, Column, ValidatedColumnDef, RowData } from '../../types';
+import type { Row, Column, ValidatedColumnDef, RowData, RowId } from '../../types';
 
 interface RowModel<TData> {
   rows: Row<TData>[];
-  rowsById: Map<string, Row<TData>>;
+  rowsById: Map<RowId, Row<TData>>;
   flatRows: Row<TData>[];
-  rowsByIdMap: Map<string, Row<TData>>;
+  rowsByIdMap: Map<RowId, Row<TData>>;
 }
 
 /**
@@ -19,13 +19,13 @@ function buildRowModel<TData>(params: {
   const { data, rowFactory, columnRegistry, table } = params;
   
   const rows: Row<TData>[] = [];
-  const rowsById = new Map<string, Row<TData>>();
+  const rowsById = new Map<RowId, Row<TData>>();
   
   // Create rows from data
   data.forEach((rowData, index) => {
     // Create a simple row object for now
     const row: Row<TData> = {
-      id: index.toString(),
+      id: String(index) as RowId,
       original: rowData,
       index,
       getIsSelected: () => false,
@@ -45,7 +45,7 @@ function buildRowModel<TData>(params: {
     rowsById,
     flatRows: rows,
     rowsByIdMap: rowsById,
-  };
+  } as RowModel<TData>;
 }
 
 export { buildRowModel };

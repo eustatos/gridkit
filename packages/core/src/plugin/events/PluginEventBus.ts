@@ -1,4 +1,5 @@
 import { createEventBus, type EventBus } from '../../events';
+
 import type { PluginEventType } from './PluginEvents';
 
 /**

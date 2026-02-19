@@ -1,31 +1,31 @@
 // Column registry for managing column instances
 import { GridKitError } from '../../errors/grid-kit-error';
-import type { EnsureRowData } from '@/types/helpers';
-import type { Column } from '@/types/column/ColumnInstance';
+
+import type { Column , RowData } from '@/types';
 import type { ColumnId, ColumnGroupId } from '@/types/column/SupportingTypes';
-import type { Table } from '@/types/table/Table';
+import type { Table } from '@/types/table';
 
 /**
  * Manages all columns in a table with O(1) lookups.
  */
-export class ColumnRegistry<TData> {
+export class ColumnRegistry<TData extends RowData> {
   private columns = new Map<ColumnId, Column<TData>>();
   private columnOrder: ColumnId[] = [];
   private columnGroups = new Map<ColumnGroupId, ColumnId[]>();
-  private table: Table<EnsureRowData<TData>> | null = null;
+  private table: Table<TData> | null = null;
 
   /**
    * Set the table instance for this registry.
    * Used for circular dependencies.
    */
-  setTable(table: Table<EnsureRowData<TData>>): void {
+  setTable(table: Table<TData>): void {
     this.table = table;
   }
 
   /**
    * Get the table instance.
    */
-  getTable(): Table<EnsureRowData<TData>> | null {
+  getTable(): Table<TData> | null {
     return this.table;
   }
 
@@ -53,11 +53,11 @@ export class ColumnRegistry<TData> {
     }
   }
 
-  /**
-   * Get column by ID with type-safe value inference.
-   */
+/**
+ * Get column by ID with type-safe value inference.
+ */
   get<TValue = unknown>(id: ColumnId): Column<TData, TValue> | undefined {
-    return this.columns.get(id);
+    return this.columns.get(id) as Column<TData, TValue> | undefined;
   }
 
   /**
@@ -91,7 +91,7 @@ export class ColumnRegistry<TData> {
  * Creates a new column registry instance.
  */
 export function createColumnRegistry<
-  TData,
+  TData extends RowData,
 >(): ColumnRegistry<TData> {
   return new ColumnRegistry<TData>();
 }

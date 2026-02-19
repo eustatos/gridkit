@@ -8,10 +8,6 @@
  * @module CoreTypes
  */
 
-// Re-export helper types for convenience
-export type { EnsureRowData, RowDataConstraint } from './helpers';
-export { isColumnId, isRowData, isRowId, isCellId, isGridId } from './helpers';
-
 // ===================================================================
 // Branded ID Types
 // ===================================================================
@@ -22,13 +18,6 @@ export { isColumnId, isRowData, isRowId, isCellId, isGridId } from './helpers';
  */
 declare const __gridId: unique symbol;
 export type GridId = string & { readonly [__gridId]: never };
-
-/**
- * Branded type for Column IDs with structure validation.
- * Ensures consistent ID format and prevents collisions.
- */
-declare const __columnId: unique symbol;
-export type ColumnId = string & { readonly [__columnId]: never };
 
 /**
  * Branded type for Row IDs with flexible but safe typing.
@@ -185,3 +174,50 @@ export type ErrorCode =
   // Plugin errors
   | 'PLUGIN_NOT_FOUND'
   | 'PLUGIN_REGISTRATION_FAILED';
+
+// ===================================================================
+// Validation Error Codes (for validation system)
+// ===================================================================
+
+/**
+ * Validation error code type for runtime validation.
+ */
+export type ValidationErrorCode =
+  // Schema errors
+  | 'INVALID_SCHEMA'
+  | 'MISSING_REQUIRED_FIELD'
+  | 'FIELD_TYPE_MISMATCH'
+  | 'INVALID_FIELD_VALUE'
+
+  // Data errors
+  | 'INVALID_ROW_DATA'
+  | 'DUPLICATE_ROW_ID'
+  | 'INVALID_COLUMN_ACCESSOR'
+  | 'INVALID_CELL_VALUE'
+
+  // Constraint errors
+  | 'MIN_VALUE_VIOLATION'
+  | 'MAX_VALUE_VIOLATION'
+  | 'MIN_LENGTH_VIOLATION'
+  | 'MAX_LENGTH_VIOLATION'
+  | 'PATTERN_MISMATCH'
+  | 'ENUM_VIOLATION'
+
+  // State errors
+  | 'INVALID_STATE_TRANSITION'
+  | 'CONCURRENT_MODIFICATION'
+  | 'STATE_CORRUPTION'
+
+  // Performance errors
+  | 'PERFORMANCE_BUDGET_EXCEEDED'
+  | 'MEMORY_LIMIT_EXCEEDED'
+  | 'EXECUTION_TIMEOUT'
+
+  // Custom errors
+  | 'CUSTOM_VALIDATION_FAILED';
+
+// ===================================================================
+// Re-export all types from base
+// ===================================================================
+
+

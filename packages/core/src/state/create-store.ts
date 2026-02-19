@@ -1,8 +1,7 @@
-import { Store, StoreOptions, Updater, StateListener, SubscribeOptions, Unsubscribe } from './types';
+import { Store, StoreOptions, Updater, StateListener } from './types';
 import { deepClone } from './utils/clone';
 import { shallowEqual } from './utils/equality';
 import { validateNotDestroyed } from './utils/validation';
-import { GridKitError } from '../errors/grid-kit-error';
 
 /**
  * Computes new state with immutability guarantees.

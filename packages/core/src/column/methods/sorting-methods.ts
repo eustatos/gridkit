@@ -1,15 +1,15 @@
 // Sorting methods for columns
-import type { EnsureRowData } from '@/types/helpers';
-import type { ValidatedColumnDef } from '../validation/validate-column';
-import type { Table } from '@/types/table/Table';
-import type { SortingState } from '@/types/table/TableState';
+import type { ValidatedColumnDef } from '@/types/column';
+
+import type { RowData } from '@/types';
+import type { Table , SortingState } from '@/types/table';
 
 /**
  * Builds sorting-related methods for column instance.
  */
-export function buildSortingMethods<TData, TValue>(
-  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
-  table: Table<EnsureRowData<TData>>
+export function buildSortingMethods<TData extends RowData, TValue>(
+  columnDef: ValidatedColumnDef<TData, TValue>,
+  table: Table<TData>
 ) {
   const tableState = () => table.getState();
 
@@ -52,7 +52,7 @@ export function buildSortingMethods<TData, TValue>(
           // Add new sort
           nextSorting = [
             ...currentSorting,
-            { id: columnDef.id!, desc: desc ?? false },
+            { id: columnDef.id, desc: desc ?? false },
           ];
         }
 

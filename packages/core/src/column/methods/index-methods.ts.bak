@@ -1,0 +1,23 @@
+// Index methods for columns
+import type { ValidatedColumnDef } from '../validation/validate-column';
+
+import type { EnsureRowData } from '@/types/helpers';
+import type { Table } from '@/types/table/Table';
+
+/**
+ * Builds index-related methods for column instance.
+ */
+export function buildIndexMethods<TData, TValue>(
+  columnDef: ValidatedColumnDef<EnsureRowData<TData>, TValue>,
+  table: Table<EnsureRowData<TData>>
+) {
+  const tableState = () => table.getState();
+
+  return {
+    // Index
+    getIndex: () => {
+      const order = tableState().columnOrder;
+      return order.indexOf(columnDef.id as string);
+    },
+  };
+}
