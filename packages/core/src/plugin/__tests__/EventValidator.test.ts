@@ -124,7 +124,13 @@ describe('EventValidator', () => {
       const sanitizedEvent = eventValidator.sanitizeEvent(event as any);
 
       expect(sanitizedEvent).toBeDefined();
-      expect(sanitizedEvent!.metadata).toEqual({ key: 'value' });
+      expect(sanitizedEvent!.metadata).toHaveProperty('key', 'value');
+      
+      // Check that dangerous properties are not present using Object.keys
+      const keys = Object.keys(sanitizedEvent!.metadata);
+      expect(keys).not.contains('__proto__');
+      expect(keys).not.contains('constructor');
+      expect(keys).not.contains('prototype');
     });
 
     it('should handle array payloads', () => {

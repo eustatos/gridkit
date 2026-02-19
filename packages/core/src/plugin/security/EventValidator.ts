@@ -122,19 +122,29 @@ export class EventValidator {
    * @returns Sanitized event or null if the event should be rejected
    */
   sanitizeEvent(event: GridEvent): GridEvent | null {
+    // Handle null and undefined payload
     if (event.payload === undefined || event.payload === null) {
+      const sanitizedMetadata = event.metadata
+        ? this.sanitizeObject(event.metadata)
+        : event.metadata;
+      
       return {
         ...event,
         payload: event.payload,
+        metadata: sanitizedMetadata,
       };
     }
 
     // Deep clone to avoid mutation
     const sanitizedPayload = this.sanitizeObject(event.payload);
+    const sanitizedMetadata = event.metadata
+      ? this.sanitizeObject(event.metadata)
+      : event.metadata;
 
     return {
       ...event,
       payload: sanitizedPayload,
+      metadata: sanitizedMetadata,
     };
   }
 

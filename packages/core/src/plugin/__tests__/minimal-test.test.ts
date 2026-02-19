@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createEventBus, EventPriority } from '../../core/PluginEventForwarder';
+import { createEventBus, EventPriority } from '../../events';
 import { EventSandbox } from '../isolation/EventSandbox';
-import { PluginEventForwarder } from '../../core/PluginEventForwarder';
-import { CrossPluginBridge } from '../../core/CrossPluginBridge';
+import { PluginEventForwarder } from '../core/PluginEventForwarder';
+import { CrossPluginBridge } from '../core/CrossPluginBridge';
 
 describe('Minimal Test', () => {
   it('should test EventSandbox forwarding', () => {
