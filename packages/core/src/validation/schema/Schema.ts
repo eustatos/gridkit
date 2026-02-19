@@ -8,12 +8,17 @@
 
 // Import types from validation module (after base types)
 
-import { ValidationError } from '../../table';
-import { RowData, ValidationResult } from '../../types';
-import {
+import type { RowData } from '../../types';
+import { createCellId, createRowId, createColumnId } from '../../types/factory';
+import type {
+  ValidationResult,
   RowValidationResult,
   ValidationWarning,
+  ValidationError,
+  CellValidationError,
+  CellValidationWarning,
 } from '../result/ValidationResult';
+import type { Validator } from '../validators/ValidatorTypes';
 
 import type {
   Schema,
@@ -72,9 +77,15 @@ export function createSchema<T extends RowData = RowData>(
 
   return {
     fields: normalizedFields,
-    validate: (data: unknown) => validateData(data, normalizedFields, meta),
+    validate: (data: unknown) =>
+      validateData<T>(data as T, normalizedFields, meta),
     validatePartial: (data: Partial<unknown>) =>
-      validateData(data, normalizedFields, meta, true),
+      validateData<Partial<T>>(
+        data as Partial<T>,
+        normalizedFields,
+        meta,
+        true
+      ),
     validateRow: (row: unknown, rowIndex: number) =>
       validateRow(row, rowIndex, normalizedFields, meta),
     isOptional,
@@ -92,7 +103,7 @@ export function field(
     nullable?: boolean;
     defaultValue?: unknown;
     constraints?: FieldConstraints;
-    validators?: readonly any[];
+    validators?: readonly Validator[];
     normalize?: (value: unknown) => unknown;
     isOptional?: boolean;
   } = {}
@@ -155,7 +166,7 @@ function validateData<T extends RowData = RowData>(
       warnings,
       startTime,
       meta
-    );
+    ) as ValidationResult<T>;
   }
 
   // Normalize data
@@ -188,9 +199,11 @@ function validateData<T extends RowData = RowData>(
     }
 
     // Normalize value
-    let normalizedValue = fieldValue;
+    let normalizedValue: unknown = fieldValue;
     if (fieldSchema.normalize) {
-      normalizedValue = fieldSchema.normalize(fieldValue);
+      const normalizeFn = fieldSchema.normalize as (value: unknown) => unknown;
+      const normalizedResult = normalizeFn(fieldValue as unknown);
+      normalizedValue = normalizedResult;
       (normalizedData as Record<string, unknown>)[fieldName] = normalizedValue;
     }
 
@@ -223,7 +236,10 @@ function validateData<T extends RowData = RowData>(
       };
 
       for (const validator of fieldSchema.validators) {
-        const error = validator.validate(normalizedValue, validatorContext);
+        const error = (validator as Validator).validate(
+          normalizedValue,
+          validatorContext
+        );
         if (error) {
           errors.push(error);
         }
@@ -243,7 +259,7 @@ function validateData<T extends RowData = RowData>(
     startTime,
     meta,
     duration
-  );
+  ) as ValidationResult<T>;
 }
 
 /**
@@ -255,8 +271,8 @@ function validateRow(
   fields: Record<string, FieldSchema>,
   meta?: SchemaMeta
 ): RowValidationResult {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationWarning[] = [];
+  const errors: CellValidationError[] = [];
+  const warnings: CellValidationWarning[] = [];
 
   // Validate each field
   for (const [fieldName, fieldSchema] of Object.entries(fields)) {
@@ -279,6 +295,8 @@ function validateRow(
         fixable: false,
         rowIndex,
         field: fieldName,
+        cellId: createCellId(createRowId(rowIndex), createColumnId(fieldName)),
+        cellValue: undefined,
       });
       continue;
     }
@@ -300,6 +318,8 @@ function validateRow(
         path: [rowIndex.toString(), fieldName],
         rowIndex,
         field: fieldName,
+        cellId: createCellId(createRowId(rowIndex), createColumnId(fieldName)),
+        cellValue: fieldValue,
       });
     }
 
@@ -316,6 +336,11 @@ function validateRow(
           path: [rowIndex.toString(), fieldName],
           rowIndex,
           field: fieldName,
+          cellId: createCellId(
+            createRowId(rowIndex),
+            createColumnId(fieldName)
+          ),
+          cellValue: fieldValue,
         });
       }
     }
@@ -429,7 +454,7 @@ function validateFieldType(
       // Custom type validation - check validators
       if (fieldSchema.validators) {
         for (const validator of fieldSchema.validators) {
-          const error = validator.validate(value, {
+          const error = (validator as Validator).validate(value, {
             path: [],
             rowIndex: undefined,
             meta: {},
@@ -535,7 +560,7 @@ function validateConstraints(
   if (constraints.enum !== undefined && !constraints.enum.includes(value)) {
     errors.push({
       code: 'ENUM_VIOLATION',
-      message: `Value must be one of: ${constraints.enum.join(', ')}, got ${value}`,
+      message: `Value must be one of: ${constraints.enum.join(', ')}, got ${String(value)}`,
       path: [fieldName],
       value,
       severity: 'error',
@@ -562,7 +587,7 @@ function createResult(
   return {
     success,
     valid,
-    data: data as any,
+    data: data,
     errors,
     warnings,
     duration: duration || performance.now() - startTime,
