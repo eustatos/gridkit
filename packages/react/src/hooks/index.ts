@@ -65,6 +65,11 @@ export {
   type UseFilteringResult,
 } from './useFiltering';
 
+export {
+  usePagination,
+  type UsePaginationResult,
+} from './usePagination';
+
 export type { UseTableOptions, UseTableResult } from '../types';
 export type { StateSelector } from './useTableState';
 export type { UseEventOptions } from './useTableEvents';

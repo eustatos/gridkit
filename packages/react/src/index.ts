@@ -51,6 +51,10 @@ export {
   useColumn,
   useColumnVisibility,
 } from './hooks/useColumns';
+export {
+  usePagination,
+  type UsePaginationResult,
+} from './hooks/usePagination';
 
 export type { UseTableOptions, StateSelector } from './types';
 
