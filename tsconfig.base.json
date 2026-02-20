@@ -17,7 +17,6 @@
     "sourceMap": true,
     "composite": true,
     "incremental": true,
-    "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo.json",
     "paths": {
       "@/*": ["./*"]
     },

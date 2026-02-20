@@ -2,6 +2,10 @@
 
 import type { GridEvent } from '../events/PluginEvents';
 
+interface SanitizedObject extends Record<string, unknown> {
+  [key: string]: unknown;
+}
+
 /**
  * Event validation results
  */
@@ -125,7 +129,7 @@ export class EventValidator {
     // Handle null and undefined payload
     if (event.payload === undefined || event.payload === null) {
       const sanitizedMetadata = event.metadata
-        ? (this.sanitizeObject(event.metadata) as Record<string, unknown> | undefined)
+        ? (this.sanitizeObject(event.metadata) as SanitizedObject | undefined)
         : event.metadata;
       
       return {
@@ -136,15 +140,16 @@ export class EventValidator {
     }
 
     // Deep clone to avoid mutation
-    const sanitizedPayload = this.sanitizeObject(event.payload) as Record<string, unknown>;
+    const sanitizedPayload = this.sanitizeObject(event.payload);
     const sanitizedMetadata = event.metadata
-      ? (this.sanitizeObject(event.metadata) as Record<string, unknown> | undefined)
+      ? this.sanitizeObject(event.metadata)
       : event.metadata;
 
+    // Type assertion needed for sanitized payload
     return {
       ...event,
-      payload: sanitizedPayload,
-      metadata: sanitizedMetadata,
+      payload: sanitizedPayload as Record<string, unknown>,
+      metadata: sanitizedMetadata as Record<string, unknown> | undefined,
     };
   }
 
@@ -170,7 +175,7 @@ export class EventValidator {
     }
 
     // Sanitize objects
-    const sanitized: Record<string, unknown> = {};
+    const sanitized: SanitizedObject = {};
 
     for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       // Check for dangerous properties
@@ -181,7 +186,7 @@ export class EventValidator {
       
       if (value && typeof value === 'object') {
         // Recursively sanitize nested objects
-        sanitized[key] = this.sanitizeObject(value) as unknown;
+        sanitized[key] = this.sanitizeObject(value);
       } else {
         sanitized[key] = value;
       }
