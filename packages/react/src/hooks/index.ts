@@ -32,6 +32,13 @@ export {
   useSelectionEvents,
 } from './useTableEvents';
 
+export {
+  useColumns,
+  useAllColumns,
+  useColumn,
+  useColumnVisibility,
+} from './useColumns';
+
 export type { UseTableOptions, UseTableResult } from '../types';
 export type { StateSelector } from './useTableState';
 export type { UseEventOptions } from './useTableEvents';

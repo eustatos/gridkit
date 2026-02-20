@@ -45,6 +45,13 @@ export {
   useSelectionEvents,
 } from './hooks/useTableEvents';
 
+export {
+  useColumns,
+  useAllColumns,
+  useColumn,
+  useColumnVisibility,
+} from './hooks/useColumns';
+
 export type { UseTableOptions, StateSelector } from './types';
 
 // Context exports (to be implemented in future tasks)

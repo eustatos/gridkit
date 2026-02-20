@@ -1,4 +1,4 @@
-import { createColumnRegistry } from '../../column';
+import { createColumnRegistry, createColumns } from '../../column';
 import { createEventBus } from '../../events/core';
 import { createPerformanceMonitor, type PerformanceMetrics } from '../../performance';
 import { createRowFactory } from '../../row';
@@ -25,11 +25,6 @@ function createTableInstance<TData extends RowData>(
 
   // === Column System ===
   const columnRegistry = createColumnRegistry<TData>();
-  // const columns = createColumns(options.columns, {
-  //   table: null as any, // Will be set later
-  //   registry: columnRegistry,
-  //   defaultOptions: options.defaultColumn,
-  // });
 
   // === Row System ===
   const rowFactory = createRowFactory({
@@ -211,7 +206,15 @@ function createTableInstance<TData extends RowData>(
   };
 
   // Wire up circular dependencies
+  // Set table reference on registry
   columnRegistry.setTable(instance as any);
+
+  // Now create and register all columns (after table instance is created)
+  const columns = createColumns({
+    columnDefs: options.columns,
+    table: instance,
+    registry: columnRegistry,
+  });
 
   return instance;
 }
