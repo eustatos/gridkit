@@ -50,6 +50,11 @@ export {
   useIsRowSelected,
 } from './useRows';
 
+export {
+  useSelection,
+  type UseSelectionResult,
+} from './useSelection';
+
 export type { UseTableOptions, UseTableResult } from '../types';
 export type { StateSelector } from './useTableState';
 export type { UseEventOptions } from './useTableEvents';
