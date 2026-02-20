@@ -39,6 +39,17 @@ export {
   useColumnVisibility,
 } from './useColumns';
 
+export {
+  useRows,
+  usePaginatedRows,
+  useRow,
+  useRowCount,
+  useRowModel,
+  useSelectedRows,
+  useSelectedRowCount,
+  useIsRowSelected,
+} from './useRows';
+
 export type { UseTableOptions, UseTableResult } from '../types';
 export type { StateSelector } from './useTableState';
 export type { UseEventOptions } from './useTableEvents';

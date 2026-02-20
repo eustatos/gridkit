@@ -118,4 +118,25 @@ export interface RowModel<TData extends RowData> {
    * Get rows that are currently expanded.
    */
   getExpandedRows(): RowType<TData>[];
+
+  // ===================================================================
+  // Reactive Count Properties
+  // ===================================================================
+
+  /**
+   * Array of all rows (same as rows). Included for compatibility.
+   */
+  allRows?: RowType<TData>[];
+
+  /**
+   * Number of currently selected rows (reactive).
+   * Returns the count by checking state.rowSelection.
+   */
+  selectedRowCount: number;
+
+  /**
+   * Number of currently expanded rows (reactive).
+   * Returns the count by checking state.expanded.
+   */
+  expandedRowCount: number;
 }

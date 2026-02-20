@@ -186,6 +186,17 @@ export function buildRowModel<TData extends RowData>(
       
       return expandedRows;
     },
+
+    // Reactive count properties
+    allRows: rows,
+    get selectedRowCount() {
+      const state = table.getState();
+      return Object.keys(state.rowSelection || {}).filter(k => state.rowSelection?.[k]).length;
+    },
+    get expandedRowCount() {
+      const state = table.getState();
+      return Object.keys(state.expanded || {}).filter(k => state.expanded?.[k]).length;
+    },
   };
 
   return model;

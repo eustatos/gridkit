@@ -42,6 +42,7 @@ function buildRowModel<TData extends RowData>(params: {
 
     // Extended properties
     flatRows: rows,
+    allRows: rows,
     rowsByOriginalIndex: new Map(rows.map((row, index) => [row.originalIndex, row])),
     totalFlatRowCount: rows.length,
     meta: {
@@ -97,6 +98,16 @@ function buildRowModel<TData extends RowData>(params: {
       }
       
       return expandedRows;
+    },
+
+    // Reactive count properties
+    get selectedRowCount() {
+      const state = table.getState();
+      return Object.keys(state.rowSelection || {}).filter(k => state.rowSelection?.[k]).length;
+    },
+    get expandedRowCount() {
+      const state = table.getState();
+      return Object.keys(state.expanded || {}).filter(k => state.expanded?.[k]).length;
     },
   };
 
