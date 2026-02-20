@@ -60,3 +60,10 @@ export interface UseEventOptions {
    */
   throttle?: number;
 }
+
+/**
+ * Selector function type for extracting specific state
+ */
+export type StateSelector<TData extends RowData, TSelected = any> = (
+  state: import('@gridkit/core').TableState<TData>
+) => TSelected;

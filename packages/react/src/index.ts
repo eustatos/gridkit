@@ -16,7 +16,21 @@ export type {
 
 // Hook exports
 export { useTable } from './hooks/useTable';
-export type { UseTableOptions } from './types';
+export {
+  useTableState,
+  useTableStateProperty,
+  useHasState,
+  useTableData,
+  useTableSorting,
+  useTableFiltering,
+  useTablePagination,
+  useTableColumnVisibility,
+  useTableColumnOrder,
+  useTableExpanded,
+  useTableRowSelection,
+} from './hooks/useTableState';
+
+export type { UseTableOptions, StateSelector } from './types';
 
 // Context exports (to be implemented in future tasks)
 // export * from './context';
