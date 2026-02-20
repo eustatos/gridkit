@@ -7,8 +7,6 @@
 export type {
   TableOptions,
   TableState,
-  Column,
-  ColumnDef,
   Row,
   RowData,
 } from '@gridkit/core';
@@ -59,6 +57,7 @@ export type { UseTableOptions, StateSelector } from './types';
 
 // Component exports
 export { Table, type TableProps } from './components';
+export { Column, type ColumnProps, extractColumns, hasColumnChildren } from './components';
 
 // Context exports (to be implemented in future tasks)
 // export * from './context';

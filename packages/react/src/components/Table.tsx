@@ -1,7 +1,9 @@
 import React from 'react';
-import type { RowData } from '@gridkit/core';
+import type { ReactNode } from 'react';
+import type { RowData, ColumnDef } from '@gridkit/core';
 import { useTable } from '../hooks/useTable';
 import type { UseTableOptions } from '../types';
+import { Column, extractColumns, hasColumnChildren } from './Column';
 
 /**
  * Table component for rendering data in a table format.
@@ -13,6 +15,12 @@ import type { UseTableOptions } from '../types';
  * ```tsx
  * // Basic usage
  * <Table data={users} columns={columns} />
+ * 
+ * // With JSX columns
+ * <Table data={users}>
+ *   <Column accessorKey="name" header="Name" />
+ *   <Column accessorKey="email" header="Email" />
+ * </Table>
  * 
  * // With custom classes
  * <Table 
@@ -51,11 +59,17 @@ export interface TableProps<TData extends RowData> extends UseTableOptions<TData
    * CSS class for table cells (td elements)
    */
   cellClassName?: string;
+  
+  /**
+   * JSX children containing Column components for declarative column definitions
+   */
+  children?: ReactNode;
 }
 
 /**
  * React Table component that provides a quick start for basic tables.
  * Uses the useTable hook internally and provides a component-based API.
+ * Supports both prop-based and JSX-based column definitions.
  * 
  * @template TData - The row data type
  * @param props - Table props including data, columns, and styling options
@@ -66,9 +80,18 @@ export function Table<TData extends RowData>({
   headerClassName,
   rowClassName,
   cellClassName,
-  ...tableOptions
+  children,
+  ...props
 }: TableProps<TData>) {
-  const { table } = useTable(tableOptions);
+  // Extract columns from Column children if provided, otherwise use columns prop
+  const columns = hasColumnChildren(children)
+    ? extractColumns<TData>(children)
+    : (props as any).columns;
+
+  const { table } = useTable({ 
+    ...props,
+    columns,
+  } as any);
 
   // Don't render anything if table is not created yet
   if (!table) {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Table } from '../Table';
+import { Column } from '../Column';
 import { testUsers, testColumns } from '../../__tests__/fixtures';
 
 describe('Table', () => {
@@ -140,3 +141,120 @@ describe('Table', () => {
 });
 
 export {};
+
+describe('Table with JSX columns', () => {
+  it('should support Column JSX children', () => {
+    const { container } = render(
+      <Table data={testUsers}>
+        <Column accessorKey="name" header="Name" />
+        <Column accessorKey="email" header="Email" />
+      </Table>
+    );
+
+    expect(container.querySelector('table')).not.toBeNull();
+    expect(container.querySelector('thead')).not.toBeNull();
+    expect(container.querySelector('tbody')).not.toBeNull();
+    
+    // Check that headers are rendered
+    const headers = container.querySelectorAll('th');
+    expect(headers).toHaveLength(2);
+    expect(headers[0].textContent).toBe('Name');
+    expect(headers[1].textContent).toBe('Email');
+    
+    // Check that data rows are rendered (count tbody rows only)
+    const tbody = container.querySelector('tbody');
+    expect(tbody).not.toBeNull();
+    const dataRows = tbody?.querySelectorAll('tr');
+    expect(dataRows).toHaveLength(5); // 5 data rows from testUsers
+  });
+
+  it('should support mixed props and JSX columns', () => {
+    const { container } = render(
+      <Table data={testUsers} className="custom-table">
+        <Column accessorKey="name" header="Name" />
+        <Column accessorKey="email" header="Email" />
+      </Table>
+    );
+
+    expect(container.querySelector('table')?.className).toContain('custom-table');
+  });
+
+  it('should support complex cell renderers in JSX columns', () => {
+    const { container } = render(
+      <Table data={testUsers}>
+        <Column accessorKey="name" header="Name" />
+        <Column
+          accessorKey="email"
+          header="Email"
+          cell={({ value }) => <a href={`mailto:${value}`}>{value}</a>}
+        />
+      </Table>
+    );
+
+    // Check that email links are rendered (5 users = 5 links)
+    const links = container.querySelectorAll('a');
+    expect(links).toHaveLength(5);
+    expect(links[0].getAttribute('href')).toBe('mailto:alice@example.com');
+    expect(links[1].getAttribute('href')).toBe('mailto:bob@example.com');
+    expect(links[4].getAttribute('href')).toBe('mailto:eve@example.com');
+  });
+
+  it('should handle Column with enableSorting', () => {
+    const { container } = render(
+      <Table data={testUsers}>
+        <Column accessorKey="name" header="Name" enableSorting />
+        <Column accessorKey="email" header="Email" />
+      </Table>
+    );
+
+    expect(container.querySelector('table')).not.toBeNull();
+  });
+
+  it('should handle nested Column in JSX structure', () => {
+    const { container } = render(
+      <Table data={testUsers}>
+        <div>
+          <Column accessorKey="name" header="Name" />
+        </div>
+        <Column accessorKey="email" header="Email" />
+      </Table>
+    );
+
+    expect(container.querySelector('table')).not.toBeNull();
+    const headers = container.querySelectorAll('th');
+    expect(headers).toHaveLength(2);
+  });
+});
+
+  it('should render header with JSX columns', () => {
+    const { container } = render(
+      <Table data={testUsers}>
+        <Column accessorKey="name" header="Name" />
+        <Column accessorKey="email" header="Email" />
+      </Table>
+    );
+
+    const headers = container.querySelectorAll('th');
+    expect(headers).toHaveLength(2);
+    expect(headers[0].textContent).toBe('Name');
+    expect(headers[1].textContent).toBe('Email');
+  });
+
+  it('should render data with JSX columns', () => {
+    const { container } = render(
+      <Table data={testUsers}>
+        <Column accessorKey="name" header="Name" />
+        <Column accessorKey="email" header="Email" />
+      </Table>
+    );
+
+    // Find all tbody tr elements (data rows only)
+    const tbody = container.querySelector('tbody');
+    expect(tbody).not.toBeNull();
+    
+    const dataRows = tbody?.querySelectorAll('tr');
+    expect(dataRows).toHaveLength(5); // 5 data rows from testUsers
+    expect(container.querySelector('tbody')?.textContent).toContain('Alice');
+    expect(container.querySelector('tbody')?.textContent).toContain('Bob');
+    expect(container.querySelector('tbody')?.textContent).toContain('Charlie');
+  });
