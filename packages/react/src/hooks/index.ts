@@ -55,6 +55,11 @@ export {
   type UseSelectionResult,
 } from './useSelection';
 
+export {
+  useSorting,
+  type UseSortingResult,
+} from './useSorting';
+
 export type { UseTableOptions, UseTableResult } from '../types';
 export type { StateSelector } from './useTableState';
 export type { UseEventOptions } from './useTableEvents';
