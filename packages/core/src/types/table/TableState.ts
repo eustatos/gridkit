@@ -150,6 +150,11 @@ export interface SortingState {
 }
 
 /**
+ * Filter value type - supports multiple data types.
+ */
+export type FilterValue = string | number | boolean | Date | { min?: number; max?: number } | unknown;
+
+/**
  * Filtering configuration.
  */
 export interface FilteringState {
@@ -159,9 +164,9 @@ export interface FilteringState {
   id: ColumnId;
 
   /**
-   * Filter value.
+   * Filter value (type depends on operator and column type).
    */
-  value: string;
+  value: FilterValue;
 
   /**
    * Filter operator.

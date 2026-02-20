@@ -73,6 +73,7 @@ export type {
   SortingState,
   FilteringState,
   FilterOperator,
+  FilterValue,
   PaginationState,
   GroupingState,
   ScrollPosition,

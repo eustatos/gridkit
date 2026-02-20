@@ -21,5 +21,8 @@ export type {
   ValidatedTableOptions,
 } from '../types';
 
+// Helper functions
+export * from './helpers';
+
 // Error types
 export type { ValidationError, ValidationAggregateError } from '../errors';

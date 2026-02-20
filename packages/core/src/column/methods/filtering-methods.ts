@@ -2,7 +2,7 @@
 import type { RowData } from '@/types';
 import type { ValidatedColumnDef } from '@/types/column';
 import type { ColumnId } from '@/types/column/SupportingTypes';
-import type { Table , FilteringState, FilterOperator } from '@/types/table';
+import type { Table , FilteringState, FilterOperator, FilterValue } from '@/types/table';
 
 /**
  * Builds filtering-related methods for column instance.
@@ -47,7 +47,7 @@ export function buildFilteringMethods<TData extends RowData, TValue>(
           nextFiltering = [...currentFiltering];
           nextFiltering[existingIndex] = {
             id: columnDef.id,
-            value: value as string,
+            value: value as FilterValue,
             operator: columnDef.filterFn ? ('custom' as FilterOperator) : ('equals' as FilterOperator),
           };
         } else {
@@ -56,7 +56,7 @@ export function buildFilteringMethods<TData extends RowData, TValue>(
             ...currentFiltering,
             {
               id: columnDef.id,
-              value: value as string,
+              value: value as FilterValue,
               operator: columnDef.filterFn ? ('custom' as FilterOperator) : ('equals' as FilterOperator),
             },
           ];
