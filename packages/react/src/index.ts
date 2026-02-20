@@ -11,7 +11,6 @@ export type {
   Column,
   ColumnDef,
   Row,
-  Cell,
   RowData,
 } from '@gridkit/core';
 

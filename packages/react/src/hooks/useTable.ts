@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, type DependencyList } from 'react';
 import { createTable, type Table, type TableOptions, type RowData } from '@gridkit/core';
 import type { UseTableOptions } from '../types';
 
@@ -19,6 +19,8 @@ import type { UseTableOptions } from '../types';
  * // Use table.getState(), table.setState(), etc.
  * ```
  */
+const EMPTY_DEPS: DependencyList = [];
+
 export function useTable<TData extends RowData>(
   options: UseTableOptions<TData>
 ): {
@@ -26,7 +28,8 @@ export function useTable<TData extends RowData>(
   isLoading: boolean;
   error: Error | null;
 } {
-  const { deps = [], debug = false, ...tableOptions } = options;
+  const { deps, debug = false, ...tableOptions } = options;
+  const dependencyList = deps ?? EMPTY_DEPS;
   
   // Track errors
   const [error, setError] = useState<Error | null>(null);
@@ -73,7 +76,7 @@ export function useTable<TData extends RowData>(
       return null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, debug, ...Object.values(tableOptions)]);
+  }, dependencyList);
   
   // Subscribe to table state changes
   useEffect(() => {
