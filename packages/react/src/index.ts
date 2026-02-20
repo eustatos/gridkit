@@ -5,7 +5,6 @@
 
 // Re-export core types that are useful in React
 export type {
-  Table,
   TableOptions,
   TableState,
   Column,
@@ -57,6 +56,9 @@ export {
 } from './hooks/usePagination';
 
 export type { UseTableOptions, StateSelector } from './types';
+
+// Component exports
+export { Table, type TableProps } from './components';
 
 // Context exports (to be implemented in future tasks)
 // export * from './context';

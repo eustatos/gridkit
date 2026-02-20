@@ -2,6 +2,7 @@ import type { ColumnRegistry } from '../column/factory/column-registry';
 import type { Row, RowData, RowId } from '../types';
 import type { Cell } from '../types/row/Cell';
 import type { Table, ColumnId } from '../types/table';
+import { createRow } from './factory/create-row';
 
 interface RowFactory<TData extends RowData> {
   create(rowData: TData, index: number, table: Table<TData>): Row<TData>;
@@ -11,61 +12,21 @@ function createRowFactory<TData extends RowData>(params: {
   getRowId: (row: TData, index: number) => string;
   columnRegistry: ColumnRegistry<TData>;
 }): RowFactory<TData> {
-  const { getRowId } = params;
+  const { getRowId, columnRegistry } = params;
 
   return {
     create(rowData: TData, index: number, table: Table<TData>): Row<TData> {
-      const rowId = getRowId(rowData, index) as RowId;
+      // Get columns from registry for this row's data
+      const columns = columnRegistry.getAll();
 
-      // Create a proper Row implementation
-      const row: Row<TData> = {
-        id: rowId,
-        original: rowData,
-        index,
-        table,
+      // Create a proper Row implementation using createRow which handles cells
+      const row = createRow({
+        originalData: rowData,
         originalIndex: index,
-        depth: 0,
-        parentRow: undefined,
-        subRows: [],
-        hasChildren: false,
-        isExpanded: false,
-        getAllCells: (): readonly Cell<TData>[] => [],
-        getVisibleCells: (): readonly Cell<TData>[] => [],
-        getCell: (columnId: ColumnId): Cell<TData> | undefined => {
-          // Suppress unused parameter warning
-          columnId;
-          return undefined;
-        },
-        getValue: <TValue = unknown>(columnId: ColumnId): TValue => {
-          // Suppress unused parameter warning
-          columnId;
-          return undefined as unknown as TValue;
-        },
-        getOriginalValue: (columnId: ColumnId): unknown => {
-          // Suppress unused parameter warning
-          columnId;
-          return undefined;
-        },
-        getIsSelected: () => false,
-        toggleSelected: () => {},
-        getIsExpanded: () => false,
-        toggleExpanded: () => {},
-        getParentRows: (): readonly Row<TData>[] => [],
-        getLeafRows: (): readonly Row<TData>[] => [],
-        getPath: (): readonly RowId[] => [],
-        isAncestorOf: (row: Row<TData>) => {
-          // Suppress unused parameter warning
-          row;
-          return false;
-        },
-        isDescendantOf: (row: Row<TData>) => {
-          // Suppress unused parameter warning
-          row;
-          return false;
-        },
-        meta: {},
-        isVisible: true,
-      };
+        columns,
+        getRowId: getRowId as (row: TData, index: number) => RowId,
+        table,
+      });
 
       return row;
     },

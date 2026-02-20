@@ -115,6 +115,16 @@ export interface Column<TData extends RowData, TValue = unknown> {
   /** Custom utilities */
   readonly utils: ColumnUtils<TData, TValue>;
 
+  // === Rendering ===
+
+  /**
+   * Render column header using column's header renderer.
+   * Returns framework-agnostic representation.
+   *
+   * @returns Rendered header content
+   */
+  renderHeader?(): unknown;
+
   // === Internal (Performance) ===
 
   /**

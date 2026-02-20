@@ -99,6 +99,16 @@ export interface Table<TData extends RowData> {
    */
   getColumn(id: ColumnId): Column<TData> | undefined;
 
+  // === Header Groups ===
+
+  /**
+   * Get header groups for rendering table headers.
+   * Returns an array of header group arrays for nested headers.
+   *
+   * @returns Array of header groups, where each group is an array of columns
+   */
+  getHeaderGroups(): Column<TData>[][];
+
   // === Lifecycle ===
 
   /**

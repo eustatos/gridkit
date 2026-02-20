@@ -110,6 +110,9 @@ export function createColumn<TData extends RowData, TValue = unknown>(
     meta: metadata.columnMeta,
     utils: metadata.columnUtils as ColumnUtils<TData, TValue>,
 
+    // Rendering
+    renderHeader: methods.renderHeader,
+
     // Internal (for performance)
     _internal: {
       accessor: accessor,

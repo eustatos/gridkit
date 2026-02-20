@@ -159,19 +159,19 @@ function buildBasicRowMethods<TData extends RowData>(
       return cells;
     },
 
-    getVisibleCells: () => {
-      const state = table.getState();
-      const cells: Cell<TData>[] = [];
+      getVisibleCells: () => {
+    const state = table.getState();
+    const cells: Cell<TData>[] = [];
 
-      columns.forEach((column) => {
-        if (state.columnVisibility?.[column.id] !== false) {
-          const cell = cellCache.get(column.id);
-          if (cell) cells.push(cell);
-        }
-      });
+    columns.forEach((column) => {
+      if (state.columnVisibility?.[column.id] !== false) {
+        const cell = cellCache.get(column.id);
+        if (cell) cells.push(cell);
+      }
+    });
 
-      return cells;
-    },
+    return cells;
+  },
 
     getCell: (columnId: string | ColumnId): Cell<TData> | undefined => {
       return cellCache.get(columnId as string);
@@ -216,14 +216,44 @@ function initializeCellCache<TData extends RowData>(
     // Create cell ID: ${rowId}_${columnId} (CellId is branded type)
     const cellId = `${row.id}_${column.id}` as CellId;
 
+    // Get the raw value using the column accessor
+    const value = column._internal.accessor.getValue(row.original, row.originalIndex);
+
+    // Define renderValue function
+    const renderValue = () => {
+      const cellRenderer = column.columnDef.cell;
+      
+      if (cellRenderer) {
+        const context: any = {
+          getValue: () => value,
+          getRow: () => row,
+          column,
+          table: row.table,
+          rowIndex: row.index,
+          cellIndex: column.getIndex(),
+          getIsSelected: () => false,
+          renderValue: () => value,
+          meta: column.columnDef.meta?.cell || {},
+        };
+
+        if (typeof cellRenderer === 'function') {
+          return cellRenderer(context);
+        }
+        // If cellRenderer is a string, return it as-is
+        return cellRenderer;
+      }
+      
+      return value;
+    };
+
     // Create cell with basic properties
-    // Cell needs TValue from column, but column is Column<TData> with default unknown
-    const cell = {
+    const cell: any = {
       id: cellId,
       rowId: row.id as string,
       column,
-      getValue: () => column._internal.accessor.getValue(row.original, row.originalIndex),
-      renderValue: () => column._internal.accessor.getValue(row.original, row.originalIndex),
+      getValue: () => value,
+      renderValue: renderValue,
+      renderCell: renderValue, // renderCell is the same as renderValue for now
       getIsFocused: () => false,
       getIsSelected: () => false,
       getIsEditable: () => false,
@@ -232,7 +262,6 @@ function initializeCellCache<TData extends RowData>(
     };
 
     // Cache the cell for O(1) lookups
-    // Use type assertion since we know the cell has the right structure
-    cellCache.set(column.id, cell as any);
+    cellCache.set(column.id, cell);
   });
 }

@@ -26,12 +26,6 @@ function createTableInstance<TData extends RowData>(
   // === Column System ===
   const columnRegistry = createColumnRegistry<TData>();
 
-  // === Row System ===
-  const rowFactory = createRowFactory({
-    getRowId: options.getRowId as (row: RowData, index: number) => string,
-    columnRegistry,
-  });
-
   // === Event System ===
   // Enable devMode for debugging features
   const eventBus = createEventBus({
@@ -51,7 +45,71 @@ function createTableInstance<TData extends RowData>(
   // Table ID (can be nullified on destroy for memory safety)
   let tableId: GridId | null = `table-${Date.now()}` as GridId;
 
-  // === Build the Instance ===
+  // === Build a partial instance first (for column creation) ===
+  // We need to create columns BEFORE the full instance so that
+  // the row factory has access to registered columns
+  const partialInstance: Table<TData> = {
+    // Identification
+    get id(): GridId {
+      return tableId as GridId;
+    },
+
+    // State Management (stubbed for now)
+    getState: () => stateStore.getState(),
+    setState: () => {},
+    subscribe: () => () => {},
+
+    // Data Access (stubbed for now)
+    getRowModel: () => {
+      throw new Error('getRowModel not yet initialized - columns not created');
+    },
+    getRow: () => undefined,
+
+    // Column Access (stubbed for now)
+    getAllColumns: () => [],
+    getVisibleColumns: () => [],
+    getColumn: () => undefined,
+
+    // Header Groups
+    getHeaderGroups: () => [],
+
+    // Lifecycle
+    reset: () => {},
+    destroy: () => {},
+
+    // Metadata
+    get options(): Readonly<Table<TData>['options']> {
+      return Object.freeze(options);
+    },
+    get metrics(): PerformanceMetrics | undefined {
+      return performanceMonitor?.getMetrics() as PerformanceMetrics | undefined;
+    },
+
+    // Internal properties
+    _internal: {
+      eventBus,
+      performanceMonitor,
+    },
+  };
+
+  // Wire up circular dependencies
+  // Set table reference on registry
+  columnRegistry.setTable(partialInstance as any);
+
+  // === Row System ===
+  const rowFactory = createRowFactory({
+    getRowId: options.getRowId as (row: RowData, index: number) => string,
+    columnRegistry,
+  });
+
+  // Now create and register all columns (before building full instance)
+  const columns = createColumns({
+    columnDefs: options.columns,
+    table: partialInstance,
+    registry: columnRegistry,
+  });
+
+  // === Build the Full Instance (with columns now registered) ===
   const instance: Table<TData> = {
     // Identification
     get id(): GridId {
@@ -174,6 +232,14 @@ function createTableInstance<TData extends RowData>(
     },
     getColumn: (id: ColumnId) => columnRegistry.get<TData>(id),
 
+    // Header Groups
+    getHeaderGroups: (): Column<TData>[][] => {
+      // For now, return all visible columns as a single header group
+      // Header grouping support can be added later
+      const visibleColumns = instance.getVisibleColumns();
+      return [visibleColumns];
+    },
+
     // Lifecycle
     reset: () => {
       stateStore.reset();
@@ -208,13 +274,6 @@ function createTableInstance<TData extends RowData>(
   // Wire up circular dependencies
   // Set table reference on registry
   columnRegistry.setTable(instance as any);
-
-  // Now create and register all columns (after table instance is created)
-  const columns = createColumns({
-    columnDefs: options.columns,
-    table: instance,
-    registry: columnRegistry,
-  });
 
   return instance;
 }

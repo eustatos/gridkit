@@ -55,6 +55,14 @@ export interface Cell<TData extends RowData, TValue = unknown> {
    */
   renderValue(): unknown;
 
+  /**
+   * Render cell using column's cell renderer with context.
+   * Returns framework-agnostic representation.
+   *
+   * @returns Rendered cell content
+   */
+  renderCell?(): unknown;
+
   // === State ===
 
   /**

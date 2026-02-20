@@ -10,6 +10,32 @@ import { buildSizeMethods } from '../methods/size-methods';
 import { buildSortingMethods } from '../methods/sorting-methods';
 import { buildVisibilityMethods } from '../methods/visibility-methods';
 
+/**
+ * Builds renderHeader method for column instance.
+ */
+function buildRenderHeaderMethod<TData extends RowData, TValue>(
+  columnDef: ValidatedColumnDef<TData, TValue>,
+  table: Table<TData>
+) {
+  // Return a function that calls the header renderer
+  return () => {
+    // If header is a function (renderer), call it
+    if (typeof columnDef.header === 'function') {
+      return columnDef.header({
+        column: null as any,
+        table,
+        header: String(columnDef.header),
+        getIsSorted: () => false,
+        getSortDirection: () => false,
+        toggleSorting: () => {},
+      });
+    }
+    
+    // Otherwise return the header string directly
+    return columnDef.header;
+  };
+}
+
 
 /**
  * Combined column methods interface.
@@ -40,6 +66,9 @@ export interface ColumnMethods<TData extends RowData, TValue = unknown> {
 
   // Index
   getIndex: () => number;
+
+  // Rendering
+  renderHeader?: () => unknown;
 }
 
 /**
@@ -83,5 +112,8 @@ export function buildColumnMethods<TData extends RowData, TValue = unknown>(
 
     // Index
     getIndex: indexMethods.getIndex,
+
+    // Rendering
+    renderHeader: buildRenderHeaderMethod(columnDef, table),
   };
 }

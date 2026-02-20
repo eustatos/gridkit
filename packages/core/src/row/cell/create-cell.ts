@@ -68,6 +68,10 @@ export function createCell<TData extends RowData, TValue = unknown>(
       return value;
     },
 
+    renderCell: () => {
+      return cell.renderValue();
+    },
+
     getIsFocused: () => {
       const state = row.table.getState();
       return (
