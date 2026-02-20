@@ -30,6 +30,21 @@ export {
   useTableRowSelection,
 } from './hooks/useTableState';
 
+export {
+  useTableEvent,
+  useTableEvents,
+  useTableStateChange,
+  useRowSelection,
+  useColumnEvents,
+  useDataEvents,
+  useGridEvents,
+  useSortingEvents,
+  useFilteringEvents,
+  usePaginationEvents,
+  useExpansionEvents,
+  useSelectionEvents,
+} from './hooks/useTableEvents';
+
 export type { UseTableOptions, StateSelector } from './types';
 
 // Context exports (to be implemented in future tasks)

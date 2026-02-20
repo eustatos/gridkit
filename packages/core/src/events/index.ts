@@ -5,6 +5,9 @@ export type {
   EventNamespace,
   EventMiddleware,
   EventSubscription,
+  GridEvent,
+  EventHandler,
+  EventHandlerOptions,
 } from './types';
 
 export { EventPriority } from './types';

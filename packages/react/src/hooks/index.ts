@@ -17,5 +17,21 @@ export {
   useTableRowSelection,
 } from './useTableState';
 
-export type { UseTableOptions, UseTableResult, UseEventOptions } from '../types';
+export {
+  useTableEvent,
+  useTableEvents,
+  useTableStateChange,
+  useRowSelection,
+  useColumnEvents,
+  useDataEvents,
+  useGridEvents,
+  useSortingEvents,
+  useFilteringEvents,
+  usePaginationEvents,
+  useExpansionEvents,
+  useSelectionEvents,
+} from './useTableEvents';
+
+export type { UseTableOptions, UseTableResult } from '../types';
 export type { StateSelector } from './useTableState';
+export type { UseEventOptions } from './useTableEvents';

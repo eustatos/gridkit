@@ -6,6 +6,7 @@ import { createStore } from '../../state';
 import type { Table, ValidatedTableOptions, TableState, RowData, Column, GridId, RowId, RowModel, ColumnId, Row } from '../../types';
 import { buildRowModel } from '../builders/model-builder';
 import { buildInitialState } from '../builders/state-builder';
+import { shallowEqual } from '../../state/utils/equality';
 
 /**
  * Creates the table instance with proper memory management.
@@ -71,7 +72,73 @@ function createTableInstance<TData extends RowData>(
       });
 
       try {
-        stateStore.setState(updater);
+        const prev = stateStore.getState();
+        const newState = stateStore.setState(updater);
+        const updatedState = stateStore.getState();
+        
+        // Emit state update event
+        eventBus.emit('state:update', {
+          tableId: instance.id,
+          timestamp: Date.now(),
+          newState: updatedState,
+        });
+
+        // Emit specific events for changed properties
+        if (!shallowEqual(prev.sorting, updatedState.sorting)) {
+          eventBus.emit('sorting:change', {
+            tableId: instance.id,
+            timestamp: Date.now(),
+            sorting: updatedState.sorting,
+          });
+        }
+
+        if (!shallowEqual(prev.filtering, updatedState.filtering)) {
+          eventBus.emit('filtering:change', {
+            tableId: instance.id,
+            timestamp: Date.now(),
+            filtering: updatedState.filtering,
+          });
+        }
+
+        if (!shallowEqual(prev.pagination, updatedState.pagination)) {
+          eventBus.emit('pagination:change', {
+            tableId: instance.id,
+            timestamp: Date.now(),
+            pagination: updatedState.pagination,
+          });
+        }
+
+        if (!shallowEqual(prev.columnVisibility, updatedState.columnVisibility)) {
+          eventBus.emit('column:visibility', {
+            tableId: instance.id,
+            timestamp: Date.now(),
+            columnVisibility: updatedState.columnVisibility,
+          });
+        }
+
+        if (!shallowEqual(prev.columnOrder, updatedState.columnOrder)) {
+          eventBus.emit('column:reorder', {
+            tableId: instance.id,
+            timestamp: Date.now(),
+            columnOrder: updatedState.columnOrder,
+          });
+        }
+
+        if (!shallowEqual(prev.rowSelection, updatedState.rowSelection)) {
+          eventBus.emit('row:select', {
+            tableId: instance.id,
+            timestamp: Date.now(),
+            rowSelection: updatedState.rowSelection,
+          });
+        }
+
+        if (!shallowEqual(prev.expanded, updatedState.expanded)) {
+          eventBus.emit('expanded:change', {
+            tableId: instance.id,
+            timestamp: Date.now(),
+            expanded: updatedState.expanded,
+          });
+        }
       } finally {
         stop?.();
       }
