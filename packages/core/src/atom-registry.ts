@@ -68,10 +68,14 @@ export class AtomRegistry {
     // Generate fallback name if not provided
     const displayName = name || `atom-${++this.counter}`;
     
-    // Determine atom type
-    let type: AtomType = 'primitive';
-    if (atom.read) {
+    // Determine atom type - use type property if available, otherwise infer from methods
+    let type: AtomType;
+    if (atom.type) {
+      type = atom.type;
+    } else if (atom.read) {
       type = atom.write ? 'writable' : 'computed';
+    } else {
+      type = 'primitive';
     }
 
     // Store atom and metadata

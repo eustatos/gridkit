@@ -150,6 +150,11 @@ Thumbs.db
 # TurboRepo
 .turbo/
 
+# Backup and temporary files
+*.bak
+*.backup.*
+*.2026*.bak
+
 # VitePress
 docs/.vitepress/dist/
 docs/.vitepress/cache/

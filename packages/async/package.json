@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
-    "test": "echo \"No tests yet - TODO: add tests for async\"",
+    "test": "vitest run src",
+    "test:coverage": "vitest run --coverage src",
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {

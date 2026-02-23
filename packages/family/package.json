@@ -5,11 +5,12 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
-    "test": "echo \"No tests yet - TODO: add tests for family\"",
+    "test": "vitest run src",
+    "test:coverage": "vitest run --coverage src",
     "lint": "eslint . --ext .ts"
   },
   "dependencies": {
-    "@nexus-state/core": "*"
+    "@nexus-state/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
