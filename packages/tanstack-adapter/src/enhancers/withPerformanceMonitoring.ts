@@ -1,66 +1,34 @@
 // Performance monitoring enhancer for TanStack Table adapter
-// Simplified - creates basic performance tracking without core dependencies
+// Uses GridKit core PerformanceMonitor for accurate tracking and budget checking
 
-import type { Table as TanStackTable } from '@tanstack/react-table'
+import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
 import type { EnhancedTable, PerformanceConfig } from '../types/enhanced'
-
-// Basic performance monitor
-interface PerformanceMonitor {
-  getOperationStats(operation: string): any
-  getMemoryMetrics(): any
-  track<T>(operation: string, fn: () => T): T
-}
-
-class SimplePerformanceMonitor implements PerformanceMonitor {
-  private stats: Map<string, { count: number; totalTime: number }> = new Map()
-
-  track<T>(operation: string, fn: () => T): T {
-    const start = performance.now()
-    const result = fn()
-    const duration = performance.now() - start
-
-    const stats = this.stats.get(operation) || { count: 0, totalTime: 0 }
-    this.stats.set(operation, {
-      count: stats.count + 1,
-      totalTime: stats.totalTime + duration
-    })
-
-    return result
-  }
-
-  getOperationStats(operation: string): any {
-    const stats = this.stats.get(operation)
-    if (!stats) return null
-
-    return {
-      operation,
-      count: stats.count,
-      avgTime: stats.totalTime / stats.count,
-      totalTime: stats.totalTime
-    }
-  }
-
-  getMemoryMetrics(): any {
-    // Simplified - would use performance.memory in browser
-    return {
-      heapUsed: 0,
-      heapTotal: 0,
-      external: 0
-    }
-  }
-}
+import { createPerformanceMonitor, type PerformanceMonitor as CorePerformanceMonitor } from '@gridkit/core/performance'
 
 /**
  * High-order function to add performance monitoring to TanStack Table
  */
-export function withPerformanceMonitoring<TData>(
+export function withPerformanceMonitoring<TData extends RowData>(
   table: TanStackTable<TData>,
-  _config?: PerformanceConfig | boolean
+  config?: PerformanceConfig | boolean
 ): EnhancedTable<TData> {
-  // Create performance monitor
-  const monitor = new SimplePerformanceMonitor()
+  // Create performance monitor from core
+  const perfConfig = typeof config === 'boolean' ? {} : config
+  const performanceConfig: any = {
+    enabled: true,
+    budgets: {
+      tableCreation: 100,
+      stateUpdate: 50,
+      renderCycle: 16,
+      rowModelBuild: 30,
+      eventProcessing: 10,
+      ...perfConfig.budgets,
+    },
+    onViolation: perfConfig.onViolation,
+  }
+  const monitor = createPerformanceMonitor(performanceConfig)
 
-  // Track operations
+  // Track operations - wrap key methods
   const trackedMethods = ['getRowModel', 'getSortedRowModel', 'getFilteredRowModel']
   const enhancedTable = { ...table } as EnhancedTable<TData>
 
@@ -71,22 +39,47 @@ export function withPerformanceMonitoring<TData>(
     }) as any
   })
 
-  // Add metrics access
-  enhancedTable.metrics = monitor
+  // Add metrics access with core performance monitor methods
+  enhancedTable.metrics = {
+    ...monitor,
+    getMetrics: () => monitor.getMetrics(),
+    checkBudgets: () => monitor.checkBudgets(),
+    setBudgets: (budgets: any) => monitor.setBudgets(budgets),
+  }
 
   return enhancedTable
 }
 
 /**
- * Create enhanced table with performance monitoring
+ * Create enhanced table with performance monitoring from options
  */
-export function createEnhancedTableWithPerformance<TData>(
+export function createEnhancedTableWithPerformance<TData extends RowData>(
   options: any,
-  _performanceConfig?: PerformanceConfig | boolean
+  config?: PerformanceConfig | boolean
 ): EnhancedTable<TData> {
-  // Create TanStack table
-  const tanstackTable = options.useTable(options)
+  // First create TanStack table
+  const { useReactTable } = require('@tanstack/react-table')
+  const tanstackTable = useReactTable(options)
 
   // Add performance monitoring
-  return withPerformanceMonitoring(tanstackTable, _performanceConfig)
+  return withPerformanceMonitoring(tanstackTable, config)
+}
+
+/**
+ * Enhanced version of TanStack useTable with performance monitoring
+ */
+export function useTableWithPerformance<TData extends RowData>(
+  options: any,
+  config?: PerformanceConfig | boolean
+): EnhancedTable<TData> {
+  const { useMemo } = require('react')
+  const { useReactTable } = require('@tanstack/react-table')
+  
+  // First create TanStack table
+  const tanstackTable = useReactTable(options)
+
+  // Add performance monitoring using useMemo for stability
+  return useMemo(() => {
+    return withPerformanceMonitoring(tanstackTable, config)
+  }, [tanstackTable, config])
 }

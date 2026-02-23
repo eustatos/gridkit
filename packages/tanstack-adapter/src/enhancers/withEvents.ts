@@ -1,59 +1,31 @@
 // Event enhancer for TanStack Table adapter
-// Simplified - creates basic event bus without core dependencies
+// Uses GridKit core EventBus for full event system features
 
-import type { Table as TanStackTable } from '@tanstack/react-table'
+import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
 import type { EnhancedTable, EventConfig } from '../types/enhanced'
-
-// Minimal event bus implementation
-interface EventBus {
-  on<T extends string>(event: T, handler: (event: any) => void): () => void
-  off<T extends string>(event: T, handler: (event: any) => void): void
-  emit<T extends string>(event: T, payload: any, options?: any): void
-  use(middleware: any): () => void
-}
-
-class SimpleEventBus implements EventBus {
-  private handlers: Map<string, Set<(event: any) => void>> = new Map()
-
-  on<T extends string>(event: T, handler: (event: any) => void): () => void {
-    if (!this.handlers.has(event)) {
-      this.handlers.set(event, new Set())
-    }
-    this.handlers.get(event)!.add(handler)
-    return () => this.off(event, handler)
-  }
-
-  off<T extends string>(event: T, handler: (event: any) => void): void {
-    const handlers = this.handlers.get(event)
-    if (handlers) {
-      handlers.delete(handler)
-    }
-  }
-
-  emit<T extends string>(event: T, payload: any, options?: any): void {
-    const handlers = this.handlers.get(event)
-    if (handlers) {
-      handlers.forEach(handler => handler({ type: event, payload, ...options }))
-    }
-  }
-
-  use(_middleware: any): () => void {
-    // Middleware not implemented in simplified version
-    return () => {}
-  }
-}
+import { EventBus, createEventBus } from '@gridkit/core/events'
 
 /**
  * High-order function to add event features to TanStack Table
  */
-export function withEvents<TData>(
+export function withEvents<TData extends RowData>(
   table: TanStackTable<TData>,
-  _config?: EventConfig | boolean
+  config?: EventConfig | boolean
 ): EnhancedTable<TData> {
-  // Create event bus
-  const eventBus = new SimpleEventBus()
+  // Create event bus from core
+  const eventConfig = typeof config === 'boolean' ? {} : config ?? {}
+  const eventBus = createEventBus({
+    devMode: eventConfig.devMode ?? true,
+  })
 
-  // Wrap table with event methods
+  // Add middleware if provided
+  if (eventConfig.middleware) {
+    eventConfig.middleware.forEach(middleware => {
+      eventBus.use(middleware)
+    })
+  }
+
+  // Wrap table with event methods from GridKit core
   const enhancedTable = {
     ...table,
     on: (event: string, handler: (event: any) => void) => {
@@ -68,21 +40,42 @@ export function withEvents<TData>(
     use: (middleware: any) => {
       return eventBus.use(middleware)
     },
+    getStats: () => eventBus.getStats(),
   } as EnhancedTable<TData>
 
   return enhancedTable
 }
 
 /**
- * Enhanced version of TanStack useTable with events
+ * Create enhanced table with events from options
  */
-export function useTableWithEvents(options: any) {
+export function createEnhancedTableWithEvents<TData extends RowData>(
+  options: any,
+  config?: EventConfig | boolean
+): EnhancedTable<TData> {
   // First create TanStack table
-  const table = options.useTable(options)
+  const { useReactTable } = require('@tanstack/react-table')
+  const tanstackTable = useReactTable(options)
 
   // Add events
-  const enhanced = withEvents(table, options.features?.events)
+  return withEvents(tanstackTable, config)
+}
 
-  // Track table for cleanup
-  return enhanced
+/**
+ * Enhanced version of TanStack useTable with events
+ */
+export function useTableWithEvents<TData extends RowData>(
+  options: any,
+  config?: EventConfig | boolean
+): EnhancedTable<TData> {
+  const { useMemo } = require('react')
+  const { useReactTable } = require('@tanstack/react-table')
+  
+  // First create TanStack table
+  const tanstackTable = useReactTable(options)
+
+  // Add events using useMemo for stability
+  return useMemo(() => {
+    return withEvents(tanstackTable, config)
+  }, [tanstackTable, config])
 }

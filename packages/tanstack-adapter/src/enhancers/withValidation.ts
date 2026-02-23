@@ -1,76 +1,34 @@
 // Validation enhancer for TanStack Table adapter
-// Simplified - self-contained without core dependencies
+// Uses GridKit core ValidationManager for schema-based validation
 
-import type { Table as TanStackTable } from '@tanstack/react-table'
-import type { EnhancedTable, ValidationConfig, ValidationManager } from '../types/enhanced'
-
-// Basic validation result type
-interface ValidationResult {
-  isValid: boolean
-  errors: ValidationError[]
-  warnings: ValidationError[]
-}
-
-interface ValidationError {
-  field: string
-  message: string
-  severity: 'error' | 'warning'
-  code: string
-}
-
-// Simplified validation manager
-class SimpleValidationManager implements ValidationManager {
-  private mode: 'strict' | 'normal' | 'minimal' | 'none'
-
-  constructor(config?: ValidationConfig) {
-    this.mode = config?.mode || 'normal'
-  }
-
-  async validateRow(_row: any, _index: number): Promise<ValidationResult> {
-    const errors: ValidationError[] = []
-    const warnings: ValidationError[] = []
-
-    // Check required fields (simple example)
-    if (this.mode !== 'none') {
-      // Simplified validation logic
-    }
-
-    const isValid = errors.length === 0
-
-    return {
-      isValid,
-      errors,
-      warnings
-    }
-  }
-
-  async validateAll(_rows: any[]): Promise<ValidationResult[]> {
-    // Simplified - would validate all rows
-    return []
-  }
-}
+import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
+import type { EnhancedTable, ValidationConfig } from '../types/enhanced'
+import { ValidationManager } from '@gridkit/core/validation'
 
 /**
  * High-order function to add validation to TanStack Table
  */
-export function withValidation<TData>(
+export function withValidation<TData extends RowData>(
   table: TanStackTable<TData>,
   config?: ValidationConfig
 ): EnhancedTable<TData> {
-  // Create validation manager
-  const validator = new SimpleValidationManager(config)
+  // Create validation manager from core
+  const validationManager = new ValidationManager({
+    defaultMode: config?.mode || 'normal',
+    cacheEnabled: config?.cache ?? true,
+    throwOnError: config?.throwOnError ?? false,
+  })
 
   // Add validation methods
-  // @ts-ignore - adding new methods to table
   const enhancedTable = {
     ...table,
-    validator,
+    validator: validationManager,
     validateRow: async (row: TData, index: number) => {
-      return validator.validateRow(row, index)
+      return validationManager.validateRow(row, index)
     },
     validateAll: async () => {
       const rows = (table as any).getRowModel?.().rows || []
-      return validator.validateAll(rows)
+      return validationManager.validateArray(rows)
     },
   } as EnhancedTable<TData>
 
@@ -78,15 +36,35 @@ export function withValidation<TData>(
 }
 
 /**
- * Create enhanced table with validation
+ * Create enhanced table with validation from options
  */
-export function createEnhancedTableWithValidation<TData>(
+export function createEnhancedTableWithValidation<TData extends RowData>(
   options: any,
-  validationConfig?: ValidationConfig
+  config?: ValidationConfig
 ): EnhancedTable<TData> {
-  // Create TanStack table
-  const tanstackTable = options.useTable(options)
+  // First create TanStack table
+  const { useReactTable } = require('@tanstack/react-table')
+  const tanstackTable = useReactTable(options)
 
   // Add validation
-  return withValidation(tanstackTable, validationConfig)
+  return withValidation(tanstackTable, config)
+}
+
+/**
+ * Enhanced version of TanStack useTable with validation
+ */
+export function useTableWithValidation<TData extends RowData>(
+  options: any,
+  config?: ValidationConfig
+): EnhancedTable<TData> {
+  const { useMemo } = require('react')
+  const { useReactTable } = require('@tanstack/react-table')
+  
+  // First create TanStack table
+  const tanstackTable = useReactTable(options)
+
+  // Add validation using useMemo for stability
+  return useMemo(() => {
+    return withValidation(tanstackTable, config)
+  }, [tanstackTable, config])
 }

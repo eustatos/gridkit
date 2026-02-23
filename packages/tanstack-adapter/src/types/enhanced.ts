@@ -1,35 +1,32 @@
 // Enhanced types for TanStack Table adapter
 
 import type { Table as TanStackTable } from '@tanstack/react-table'
+import type {
+  EventBus,
+  EventBusStats,
+} from '@gridkit/core/events'
+import type {
+  PerformanceMonitor,
+  PerformanceMetrics,
+  PerformanceBudgets,
+} from '@gridkit/core/performance'
+import type {
+  ValidationManager,
+  ValidationResult,
+  ValidationReport,
+  ValidationMode,
+} from '@gridkit/core/validation'
+import type {
+  Plugin,
+  PluginManager,
+} from '@gridkit/core/plugin'
 
-// GridKit types (will be imported from @gridkit/core)
-export interface EventBus {
-  on<T extends string>(event: T, handler: (event: any) => void): () => void
-  off<T extends string>(event: T, handler: (event: any) => void): void
-  emit<T extends string>(event: T, payload: any, options?: any): void
-  use(middleware: any): () => void
-}
-
-export interface PerformanceMonitor {
-  getOperationStats(operation: string): any
-  getMemoryMetrics(): any
-}
-
-export interface ValidationManager {
-  validateRow(row: any, index: number): Promise<any>
-  validateAll(rows?: any[]): Promise<any>
-}
-
-export interface Plugin {
-  id: string
-  initialize(context: any): Promise<void>
-  destroy?(): Promise<void>
-}
-
-export interface PluginManager {
-  register(plugin: Plugin): void
-  unregister(pluginId: string): void
-  get(pluginId: string): Plugin | undefined
+export type {
+  EventBus,
+  PerformanceMonitor,
+  ValidationManager,
+  Plugin,
+  PluginManager,
 }
 
 // Enhanced table interface that extends TanStack Table
@@ -39,19 +36,28 @@ export interface EnhancedTable<TData> extends TanStackTable<TData> {
   off: EventBus['off']
   emit: EventBus['emit']
   use: EventBus['use']
+  getStats?: () => EventBusStats
 
   // Performance features
-  metrics?: PerformanceMonitor
+  metrics?: PerformanceMonitor & {
+    getMetrics: () => PerformanceMetrics
+    checkBudgets: () => any[]
+    setBudgets: (budgets: PerformanceBudgets) => void
+  }
 
   // Validation features
-  validator?: ValidationManager
-  validateRow?: (row: TData, index: number) => Promise<any>
-  validateAll?: () => Promise<any>
+  validator?: ValidationManager & {
+    validateRow: (row: TData, index: number) => Promise<ValidationResult>
+    validateAll: () => Promise<ValidationReport>
+  }
+  validateRow?: (row: TData, index: number) => Promise<ValidationResult>
+  validateAll?: () => Promise<ValidationReport>
 
   // Plugin features
   registerPlugin?: (plugin: Plugin) => void
   unregisterPlugin?: (pluginId: string) => void
   getPlugin?: (pluginId: string) => Plugin | undefined
+  pluginManager?: PluginManager
 }
 
 // Configuration interfaces
@@ -65,20 +71,24 @@ export interface EnhancedTableFeatures {
 
 export interface EventConfig {
   middleware?: any[]
+  devMode?: boolean
 }
 
 export interface PerformanceConfig {
-  budgets?: Record<string, number>
+  budgets?: PerformanceBudgets
   alerts?: {
     enabled: boolean
     destinations?: string[]
   }
+  enabled?: boolean
+  onViolation?: (violation: any) => void
 }
 
 export interface ValidationConfig {
-  mode?: 'strict' | 'normal' | 'minimal' | 'none'
+  mode?: ValidationMode
   autoFix?: boolean
   cache?: boolean
+  throwOnError?: boolean
 }
 
 export interface DebugConfig {

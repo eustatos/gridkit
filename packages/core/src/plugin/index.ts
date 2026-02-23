@@ -25,7 +25,7 @@ export type {
   ResourceLimits,
   Permission,
   PluginHealth,
-  ValidationResult,
+  PluginValidationResult,
   ResourceUsage,
   PluginUpdate,
   PluginSearchQuery,

@@ -1,12 +1,15 @@
 // Enhanced plugin interface with marketplace and hot-reload support
 import type { Plugin, PluginMetadata } from '../core/Plugin';
 
+// Define PluginConfig type for enhanced plugins
+export type PluginConfig = Record<string, unknown>;
+
 export interface EnhancedPlugin<TConfig = PluginConfig> extends Plugin<TConfig> {
   // Enhanced metadata
   metadata: EnhancedPluginMetadata;
 
   // Configuration validation
-  validateConfig?(config: TConfig): ValidationResult;
+  validateConfig?(config: TConfig): PluginValidationResult;
 
   // Default configuration
   getDefaultConfig?(): TConfig;
@@ -126,7 +129,7 @@ export interface PluginHealth {
 /**
  * Plugin configuration validation result
  */
-export interface ValidationResult {
+export interface PluginValidationResult {
   /** Whether validation passed */
   isValid: boolean;
 

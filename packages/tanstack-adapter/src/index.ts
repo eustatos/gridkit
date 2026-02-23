@@ -7,6 +7,7 @@ import { createEnhancedTable, createEnhancedTableFromOptions, createDefaultEnhan
 import { withEvents } from './enhancers/withEvents'
 import { withPerformanceMonitoring } from './enhancers/withPerformanceMonitoring'
 import { withValidation } from './enhancers/withValidation'
+import { withPlugins } from './enhancers/withPlugins'
 
 /**
  * Enhanced useTable hook that adds GridKit features to TanStack Table
@@ -96,7 +97,8 @@ export {
   createDefaultEnhancedTable,
   withEvents,
   withPerformanceMonitoring,
-  withValidation
+  withValidation,
+  withPlugins,
 }
 
 export type { EnhancedTable, EnhancedTableFeatures }
