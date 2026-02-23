@@ -63,8 +63,9 @@ export function atom<Value>(
 // Implementation with optional name parameter for DevTools
 export function atom<Value>(...args: any[]): Atom<Value> {
   // Extract optional name parameter if provided
+  // Only extract name if there are 2+ arguments (name is the last argument)
   let name: string | undefined;
-  if (args.length > 0 && typeof args[args.length - 1] === "string") {
+  if (args.length >= 2 && typeof args[args.length - 1] === "string") {
     name = args.pop() as string;
   }
 

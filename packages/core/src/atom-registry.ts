@@ -228,6 +228,29 @@ export class AtomRegistry {
     return atom;
   }
 
+  /**
+   * Get all stores that contain the specified atom
+   * @param atomId Symbol ID of the atom
+   * @returns Array of stores that contain the atom
+   */
+  getAllStoresForAtom(atomId: symbol): Store[] {
+    const stores: Store[] = [];
+    for (const [store, registry] of this.stores) {
+      if (registry.atoms.has(atomId)) {
+        stores.push(store);
+      }
+    }
+    return stores;
+  }
+
+  /**
+   * Get the stores map for internal use
+   * @returns Map of stores
+   */
+  getStoresMap(): Map<Store, StoreRegistry> {
+    return this.stores;
+  }
+
   // Additional methods for time-travel functionality
 
   /**

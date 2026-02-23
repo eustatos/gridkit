@@ -1,11 +1,14 @@
 // Web Worker integration for nexus-state
-import { atom, Atom, Store, createStore } from '@nexus-state/core';
+import { atom, Atom, Store, createStore, atomRegistry } from '@nexus-state/core';
 
 // Type definitions for web worker atom
 export type WorkerAtomOptions<T> = {
   worker: Worker;
   initialValue: T;
 };
+
+// Global map to track worker atoms and their current values
+const workerAtomValues = new Map<Atom<any>, any>();
 
 /**
  * Creates an atom that is managed in a Web Worker.
@@ -25,15 +28,27 @@ export function workerAtom<T>(options: WorkerAtomOptions<T>): Atom<T> {
   // Create a regular atom to hold the value
   const internalAtom = atom(initialValue);
   
+  // Store the initial value
+  workerAtomValues.set(internalAtom, initialValue);
+  
   // Listen for messages from the worker
   worker.onmessage = (event) => {
-    const { type } = event.data;
+    const { type, value } = event.data;
     
     switch (type) {
       case 'UPDATE':
-        // Update the internal atom with the value from the worker
-        // In a real implementation, we would need a way to update the store
-        // This is a simplified example
+        // Update our local value map
+        workerAtomValues.set(internalAtom, value);
+        
+        // Update the atom's value in all stores that contain it
+        const stores = atomRegistry.getAllStoresForAtom(internalAtom.id);
+        for (const store of stores) {
+          try {
+            store.set(internalAtom, value);
+          } catch (e) {
+            // Ignore errors - atom might not be settable in this store
+          }
+        }
         break;
       default:
         console.warn(`Unknown message type: ${type}`);
@@ -42,7 +57,7 @@ export function workerAtom<T>(options: WorkerAtomOptions<T>): Atom<T> {
   
   // Handle errors from the worker
   worker.onerror = (error) => {
-    console.error('Web Worker error:', error);
+    console.error('Web Worker error:', error.error);
   };
   
   return internalAtom;

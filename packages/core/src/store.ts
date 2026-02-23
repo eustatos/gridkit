@@ -69,6 +69,14 @@ export function createStore(plugins: Plugin[] = []): Store {
     // Get or create atom state
     let atomState = atomStates.get(atom) as AtomState<Value> | undefined;
     if (!atomState) {
+      // Register atom with the global registry (if not already registered)
+      // and add it to this store's atom set
+      const storesMap = atomRegistry.getStoresMap();
+      const registry = storesMap.get(store);
+      if (registry && !registry.atoms.has(atom.id)) {
+        registry.atoms.add(atom.id);
+      }
+      
       // Determine atom type and get initial value
       let initialValue: Value;
       if (isPrimitiveAtom(atom)) {
@@ -114,6 +122,14 @@ export function createStore(plugins: Plugin[] = []): Store {
   };
 
   const set: Setter = <Value>(atom: Atom<Value>, update: Value | ((prev: Value) => Value)): void => {
+    // Register atom with the global registry (if not already registered)
+    // and add it to this store's atom set
+    const storesMap = atomRegistry.getStoresMap();
+    const registry = storesMap.get(store);
+    if (registry && !registry.atoms.has(atom.id)) {
+      registry.atoms.add(atom.id);
+    }
+    
     // For primitive atoms, we create state if it doesn't exist
     let atomState = atomStates.get(atom) as AtomState<Value> | undefined;
     if (!atomState) {
@@ -219,6 +235,14 @@ export function createStore(plugins: Plugin[] = []): Store {
   };
 
   const subscribe = <Value>(atom: Atom<Value>, subscriber: Subscriber<Value>): (() => void) => {
+    // Register atom with the global registry (if not already registered)
+    // and add it to this store's atom set
+    const storesMap = atomRegistry.getStoresMap();
+    const registry = storesMap.get(store);
+    if (registry && !registry.atoms.has(atom.id)) {
+      registry.atoms.add(atom.id);
+    }
+    
     // Get or create atom state
     let atomState = atomStates.get(atom) as AtomState<Value> | undefined;
     if (!atomState) {
