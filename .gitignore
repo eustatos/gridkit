@@ -152,8 +152,16 @@ Thumbs.db
 
 # Backup and temporary files
 *.bak
+*.backup
 *.backup.*
+*.old
+*.orig
+*~
 *.2026*.bak
+*.ts.20*
+*.tsx.20*
+*.js.20*
+*.jsx.20*
 
 # VitePress
 docs/.vitepress/dist/
