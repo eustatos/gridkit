@@ -1,0 +1,66 @@
+{
+  "name": "@gridkit/tanstack-adapter",
+  "version": "0.1.0",
+  "description": "GridKit Enhanced adapter for TanStack Table - adds enterprise features to TanStack Table",
+  "keywords": [
+    "tanstack",
+    "table",
+    "gridkit",
+    "adapter",
+    "enterprise",
+    "events",
+    "validation",
+    "performance",
+    "plugins"
+  ],
+  "author": "GridKit Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gridkit/gridkit.git",
+    "directory": "packages/tanstack-adapter"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./react": {
+      "import": "./dist/react/index.mjs",
+      "require": "./dist/react/index.js",
+      "types": "./dist/react/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "clean": "rm -rf dist .turbo node_modules"
+  },
+  "peerDependencies": {
+    "@gridkit/core": "workspace:*",
+    "@tanstack/react-table": "^8.0.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-table": "^8.20.5",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^18.2.0",
+    "jsdom": "^28.1.0",
+    "react": "^18.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
