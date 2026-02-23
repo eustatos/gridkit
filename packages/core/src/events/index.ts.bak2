@@ -34,9 +34,13 @@ export type {
   EnhancedTableSnapshot,
   EnhancedEventStoreOptions,
   EnhancedReplayOptions,
-  EventMapping,
+  MiddlewareContext,
+  EnhancedMiddleware,
+  EnhancedMiddlewareFunction,
   CorrelationManagerOptions,
   CorrelationRecord,
+  EventMapping,
+  AnalyticsMiddlewareOptions,
   EventTransformer,
   EnhancedEventHandler,
   EnhancedEventFilter,
@@ -92,11 +96,7 @@ export type {
   ThrottleMiddlewareOptions,
   ValidationMiddlewareOptions,
   AnalyticsMiddlewareOptions,
-  LoggingMiddlewareOptions,
-  MiddlewareContext,
-  EnhancedMiddleware,
-  EnhancedMiddlewareFunction,
-} from './middleware/enhanced';
+} from './middleware/enhanced/types';
 
 // Utilities
 export { extractNamespace } from './utils/namespace';

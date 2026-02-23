@@ -1,0 +1,541 @@
+/**
+ * Enhanced Event Types
+ * 
+ * Extended event types with metadata, correlation IDs, and structured payloads
+ * for GridKit's enterprise event system.
+ * 
+ * @module @gridkit/core/events/types/enhanced
+ */
+
+import type { GridEvent, EventPayload } from './base';
+
+// ===================================================================
+// Enhanced Event Payload Base
+// ===================================================================
+
+/**
+ * Enhanced event payload with metadata and correlation support
+ */
+export interface EnhancedEventPayload<T = unknown> {
+  /**
+   * Original payload
+   */
+  data: T;
+  /**
+   * Timestamp when event was created
+   */
+  timestamp: number;
+  /**
+   * Source of the event (component ID, user ID, etc.)
+   */
+  source?: string;
+  /**
+   * Metadata for the event
+   */
+  metadata?: Record<string, unknown>;
+  /**
+   * Correlation ID for tracking related events
+   */
+  correlationId?: string;
+}
+
+// ===================================================================
+// Enhanced Grid Event
+// ===================================================================
+
+/**
+ * Enhanced grid event with full metadata
+ */
+export interface EnhancedGridEvent<T = unknown> extends GridEvent<EnhancedEventPayload<T>> {
+  /**
+   * Unique event ID
+   */
+  eventId: string;
+  /**
+   * Event version
+   */
+  version: number;
+  /**
+   * Event source (component, user, system)
+   */
+  source: string;
+  /**
+   * Priority for processing
+   */
+  priority?: 'immediate' | 'high' | 'normal' | 'low';
+}
+
+// ===================================================================
+// Event Types with Enhanced Payloads
+// ===================================================================
+
+/**
+ * Row selection event
+ */
+export interface RowSelectEvent extends EnhancedEventPayload<{
+  rowId: string;
+  rowIndex: number;
+  selected: boolean;
+  previousSelected: boolean;
+}> {
+  type: 'row:select';
+}
+
+/**
+ * Multiple row selection event
+ */
+export interface RowsSelectEvent extends EnhancedEventPayload<{
+  rowIds: string[];
+  selected: boolean;
+  previousSelected: boolean;
+}> {
+  type: 'rows:select';
+}
+
+/**
+ * Sorting change event
+ */
+export interface SortingChangeEvent extends EnhancedEventPayload<{
+  sorting: Array<{ id: string; desc: boolean }>;
+  previousSorting: Array<{ id: string; desc: boolean }>;
+  changedColumn?: string;
+}> {
+  type: 'sorting:change';
+}
+
+/**
+ * Filtering change event
+ */
+export interface FilteringChangeEvent extends EnhancedEventPayload<{
+  filtering: string;
+  previousFiltering: string;
+  columnId?: string;
+}> {
+  type: 'filtering:change';
+}
+
+/**
+ * Pagination change event
+ */
+export interface PaginationChangeEvent extends EnhancedEventPayload<{
+  pageIndex: number;
+  pageSize: number;
+  previousPageIndex: number;
+  previousPageSize: number;
+}> {
+  type: 'pagination:change';
+}
+
+/**
+ * Column pinning event
+ */
+export interface ColumnPinEvent extends EnhancedEventPayload<{
+  columnId: string;
+  pinned: 'left' | 'right' | null;
+  previousPinned: 'left' | 'right' | null;
+}> {
+  type: 'column:pin';
+}
+
+/**
+ * Column visibility change event
+ */
+export interface ColumnVisibilityEvent extends EnhancedEventPayload<{
+  columnId: string;
+  visible: boolean;
+  previousVisible: boolean;
+}> {
+  type: 'column:visibility';
+}
+
+/**
+ * Column resize event
+ */
+export interface ColumnResizeEvent extends EnhancedEventPayload<{
+  columnId: string;
+  size: number;
+  previousSize: number;
+}> {
+  type: 'column:resize';
+}
+
+/**
+ * Column sort event
+ */
+export interface ColumnSortEvent extends EnhancedEventPayload<{
+  columnId: string;
+  direction: 'asc' | 'desc' | null;
+  previousDirection: 'asc' | 'desc' | null;
+}> {
+  type: 'column:sort';
+}
+
+/**
+ * Cell edit event
+ */
+export interface CellEditEvent extends EnhancedEventPayload<{
+  rowId: string;
+  columnId: string;
+  value: unknown;
+  previousValue: unknown;
+}> {
+  type: 'cell:edit';
+}
+
+/**
+ * Row expand event
+ */
+export interface RowExpandEvent extends EnhancedEventPayload<{
+  rowId: string;
+  expanded: boolean;
+  previousExpanded: boolean;
+}> {
+  type: 'row:expand';
+}
+
+/**
+ * State change event
+ */
+export interface StateChangeEvent extends EnhancedEventPayload<{
+  state: Record<string, unknown>;
+  previousState: Record<string, unknown>;
+  changedKeys: string[];
+}> {
+  type: 'state:change';
+}
+
+/**
+ * Data fetch event
+ */
+export interface DataFetchEvent extends EnhancedEventPayload<{
+  filters: Record<string, unknown>;
+  sorting: Array<{ id: string; desc: boolean }>;
+  pagination: { pageIndex: number; pageSize: number };
+}> {
+  type: 'data:fetch';
+}
+
+/**
+ * Data fetched event
+ */
+export interface DataFetchedEvent extends EnhancedEventPayload<{
+  data: unknown[];
+  total: number;
+  filters: Record<string, unknown>;
+}> {
+  type: 'data:fetched';
+}
+
+// ===================================================================
+// Composite Event Types
+// ===================================================================
+
+/**
+ * Any enhanced table event
+ */
+export type EnhancedTableEvent =
+  | RowSelectEvent
+  | RowsSelectEvent
+  | SortingChangeEvent
+  | FilteringChangeEvent
+  | PaginationChangeEvent
+  | ColumnPinEvent
+  | ColumnVisibilityEvent
+  | ColumnResizeEvent
+  | ColumnSortEvent
+  | CellEditEvent
+  | RowExpandEvent
+  | StateChangeEvent
+  | DataFetchEvent
+  | DataFetchedEvent;
+
+// ===================================================================
+// Event Sourcing Types
+// ===================================================================
+
+/**
+ * Enhanced table snapshot for time-travel debugging
+ */
+export interface EnhancedTableSnapshot {
+  /**
+   * Timestamp when snapshot was created
+   */
+  timestamp: number;
+  /**
+   * Event index when snapshot was created
+   */
+  eventIndex: number;
+  /**
+   * Full table state
+   */
+  state: Record<string, unknown>;
+  /**
+   * Snapshot metadata
+   */
+  metadata: {
+    rowCount: number;
+    columnCount: number;
+    memory: number;
+    eventId: string;
+  };
+}
+
+/**
+ * Enhanced event store options
+ */
+export interface EnhancedEventStoreOptions {
+  /**
+   * Maximum number of events to store
+   */
+  maxEvents?: number;
+  /**
+   * Enable snapshot creation
+   */
+  enableSnapshots?: boolean;
+  /**
+   * Snapshot interval (in events)
+   */
+  snapshotInterval?: number;
+}
+
+/**
+ * Enhanced replay options
+ */
+export interface EnhancedReplayOptions {
+  /**
+   * Start event index (inclusive)
+   */
+  from?: number;
+  /**
+   * End event index (exclusive)
+   */
+  to?: number;
+  /**
+   * Speed multiplier (1 = real-time)
+   */
+  speed?: number;
+  /**
+   * Pause between events (ms)
+   */
+  pause?: number;
+}
+
+// ===================================================================
+// Middleware Types
+// ===================================================================
+
+/**
+ * Middleware context for enhanced middleware
+ */
+export interface MiddlewareContext<T extends EnhancedGridEvent = EnhancedGridEvent> {
+  /**
+   * Current event
+   */
+  event: T;
+  /**
+   * Cancel the event
+   */
+  cancel: () => void;
+  /**
+   * Check if event is cancelled
+   */
+  isCancelled: () => boolean;
+  /**
+   * Get correlation ID
+   */
+  getCorrelationId: () => string | undefined;
+  /**
+   * Set correlation ID
+   */
+  setCorrelationId: (id: string) => void;
+}
+
+/**
+ * Enhanced middleware interface
+ */
+export interface EnhancedMiddleware<T extends EnhancedGridEvent = EnhancedGridEvent> {
+  /**
+   * Middleware name
+   */
+  name: string;
+  /**
+   * Middleware version
+   */
+  version: string;
+  /**
+   * Middleware priority (lower = executed first)
+   */
+  priority?: number;
+  /**
+   * Handle event
+   */
+  handle(
+    event: T,
+    context: MiddlewareContext<T>,
+    next: () => Promise<T | null>
+  ): Promise<T | null>;
+  /**
+   * Initialize middleware
+   */
+  initialize?(): Promise<void>;
+  /**
+   * Destroy middleware
+   */
+  destroy?(): Promise<void>;
+}
+
+/**
+ * Async middleware function
+ */
+export type EnhancedMiddlewareFunction<T extends EnhancedGridEvent = EnhancedGridEvent> = (
+  event: T,
+  context: MiddlewareContext<T>,
+  next: () => Promise<T | null>
+) => Promise<T | null>;
+
+// ===================================================================
+// Correlation Types
+// ===================================================================
+
+/**
+ * Correlation manager configuration
+ */
+export interface CorrelationManagerOptions {
+  /**
+   * Maximum correlation IDs to track
+   */
+  maxCorrelations?: number;
+  /**
+   * Correlation ID header name
+   */
+  correlationHeader?: string;
+}
+
+/**
+ * Correlation record
+ */
+export interface CorrelationRecord {
+  /**
+   * Correlation ID
+   */
+  correlationId: string;
+  /**
+   * Events associated with this correlation
+   */
+  events: EnhancedTableEvent[];
+  /**
+   * Creation timestamp
+   */
+  createdAt: number;
+  /**
+   * Last activity timestamp
+   */
+  lastActivity: number;
+  /**
+   * Metadata
+   */
+  metadata?: Record<string, unknown>;
+}
+
+// ===================================================================
+// Analytics Types
+// ===================================================================
+
+/**
+ * Analytics event mapping
+ */
+export interface EventMapping {
+  /**
+   * GridKit event type
+   */
+  gridEvent: string;
+  /**
+   * Analytics event name
+   */
+  analyticsEvent: string;
+  /**
+   * Payload transformation function
+   */
+  transform?: (payload: unknown) => unknown;
+}
+
+/**
+ * Analytics middleware options
+ */
+export interface AnalyticsMiddlewareOptions {
+  /**
+   * Analytics provider name
+   */
+  provider: 'mixpanel' | 'amplitude' | 'ga' | 'custom';
+  /**
+   * Event mappings
+   */
+  eventMap?: EventMapping[];
+  /**
+   * User identifier
+   */
+  userId?: string;
+  /**
+   * Track all events
+   */
+  trackAll?: boolean;
+}
+
+// ===================================================================
+// Utility Types
+// ===================================================================
+
+/**
+ * Enhanced event filter function
+ */
+export type EnhancedEventFilter<T extends EnhancedTableEvent = EnhancedTableEvent> = (event: T) => boolean;
+
+/**
+ * Event transformer function
+ */
+export type EventTransformer<T extends EnhancedTableEvent = EnhancedTableEvent> = (
+  event: T
+) => T | null;
+
+/**
+ * Event handler with enhanced event
+ */
+export type EnhancedEventHandler<T extends EnhancedTableEvent = EnhancedTableEvent> = (
+  event: T
+) => void | Promise<void>;
+
+/**
+ * Throttle options
+ */
+export interface ThrottleOptions {
+  /**
+   * Wait time in milliseconds
+   */
+  wait?: number;
+  /**
+   * Leading edge
+   */
+  leading?: boolean;
+  /**
+   * Trailing edge
+   */
+  trailing?: boolean;
+}
+
+/**
+ * Debounce options
+ */
+export interface DebounceOptions {
+  /**
+   * Wait time in milliseconds
+   */
+  wait?: number;
+  /**
+   * Leading edge
+   */
+  leading?: boolean;
+  /**
+   * Trailing edge
+   */
+  trailing?: boolean;
+}
