@@ -47,6 +47,10 @@ lerna-debug.log*
 .changeset/*.md
 !.changeset/README.md
 
+# Demo applications (excluded from build)
+apps/*/dist/
+!apps/.gitkeep
+
 # OS
 .DS_Store
 Thumbs.db

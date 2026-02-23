@@ -50,14 +50,18 @@ export function buildPinningMethods<TData extends RowData, TValue>(
             );
           }
         } else if (position === 'left') {
-          // Pin to left (remove from right if present)
-          nextPinning.left = [...(nextPinning.left ?? []), colId];
+          // Pin to left (remove from right if present, avoid duplicates)
+          if (!isLeft) {
+            nextPinning.left = [...(nextPinning.left ?? []), colId];
+          }
           nextPinning.right = nextPinning.right?.filter(
             (id) => id !== colId
           );
         } else if (position === 'right') {
-          // Pin to right (remove from left if present)
-          nextPinning.right = [...(nextPinning.right ?? []), colId];
+          // Pin to right (remove from left if present, avoid duplicates)
+          if (!isRight) {
+            nextPinning.right = [...(nextPinning.right ?? []), colId];
+          }
           nextPinning.left = nextPinning.left?.filter(
             (id) => id !== colId
           );

@@ -15,6 +15,7 @@ Welcome to the GridKit documentation.
 ## Guides
 
 - [Getting Started](guides/getting-started.md)
+- [Column Pinning](guides/column-pinning.md) - Keep important columns visible while scrolling
 - [Plugin Development](guides/plugin-development.md)
 
 ## API Reference

@@ -12,6 +12,9 @@
                 "dist/**",
                 ".next/**",
                 "!.next/cache/**"
+            ],
+            "inputs": [
+                "!apps/**"
             ]
         },
         "test": {

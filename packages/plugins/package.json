@@ -1,0 +1,52 @@
+{
+  "name": "@gridkit/plugins",
+  "version": "1.0.0-alpha.1",
+  "description": "Official plugins for GridKit Enhanced",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./audit-log": {
+      "import": "./dist/audit-log.mjs",
+      "require": "./dist/audit-log.js",
+      "types": "./dist/audit-log.d.ts"
+    },
+    "./analytics": {
+      "import": "./dist/analytics.mjs",
+      "require": "./dist/analytics.js",
+      "types": "./dist/analytics.d.ts"
+    },
+    "./export": {
+      "import": "./dist/export.mjs",
+      "require": "./dist/export.js",
+      "types": "./dist/export.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext ts,tsx",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "@gridkit/core": "^1.0.0"
+  },
+  "devDependencies": {
+    "@gridkit/core": "workspace:*",
+    "@types/node": "^20.0.0",
+    "tsup": "^7.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}

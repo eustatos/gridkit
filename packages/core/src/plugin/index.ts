@@ -16,6 +16,35 @@ export type {
 
 export { PluginManager } from './core/PluginManager';
 
+// Enhanced plugin types
+export type {
+  EnhancedPlugin,
+  EnhancedPluginMetadata,
+  PluginCategory,
+  PluginPricing,
+  ResourceLimits,
+  Permission,
+  PluginHealth,
+  ValidationResult,
+  ResourceUsage,
+  PluginUpdate,
+  PluginSearchQuery,
+  PluginSearchResult,
+  PluginAnalytics,
+  PluginStorage,
+  PluginMessage,
+  MarketplaceConfig,
+  PublishMetadata,
+  HotReloadConfig,
+  PluginError,
+  PluginNotFoundError,
+  PluginValidationError,
+  PluginDependencyError,
+  PluginHealthCheckError,
+  PluginMarketplaceError,
+  HotReloadError,
+} from './types/enhanced';
+
 // Plugin isolation exports
 export { EventSandbox } from './isolation/EventSandbox';
 
@@ -26,6 +55,9 @@ export type { PluginEventForwarder as IPluginEventForwarder } from './core/Plugi
 // Cross-plugin communication exports
 export { CrossPluginBridge } from './core/CrossPluginBridge';
 export type { CrossPluginBridge as ICrossPluginBridge } from './core/CrossPluginBridge';
+
+// Enhanced plugin context
+export { EnhancedPluginContext, PluginContextFactory } from './context/EnhancedPluginContext';
 
 // Plugin lifecycle exports
 export { initializePlugin, initializePlugins, PluginInitializationError } from './lifecycle/index';
@@ -54,6 +86,15 @@ export { EventValidator } from './security/EventValidator';
 
 // Configurable plugin exports
 export { ConfigurablePlugin } from './ConfigurablePlugin';
+
+// Enhanced plugin manager exports
+export { EnhancedPluginManager } from './manager/EnhancedPluginManager';
+
+// Plugin marketplace exports
+export { PluginMarketplace } from './marketplace/PluginMarketplace';
+
+// Hot reload exports
+export { HotReloadManager } from './hot-reload/HotReloadManager';
 
 // Plugin config exports
 export { ConfigManager } from './config/ConfigManager';

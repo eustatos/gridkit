@@ -83,6 +83,24 @@ export interface ColumnFilterEvent extends GridEvent<{
   readonly type: 'column:filter';
 }
 
+// Column pinning events
+export interface ColumnPinEvent extends GridEvent<{
+  readonly gridId: GridId;
+  readonly columnId: ColumnId;
+  readonly position: 'left' | 'right' | false;
+  readonly previousPosition: 'left' | 'right' | false;
+}> {
+  readonly type: 'column:pin';
+}
+
+// Column reorder events
+export interface ColumnReorderEvent extends GridEvent<{
+  readonly gridId: GridId;
+  readonly columnOrder: readonly ColumnId[];
+}> {
+  readonly type: 'column:reorder';
+}
+
 // Union type of all column events
 export type ColumnEventType = 
   | ColumnAddEvent
@@ -92,7 +110,9 @@ export type ColumnEventType =
   | ColumnStateChangeEvent
   | ColumnVisibilityEvent
   | ColumnSortEvent
-  | ColumnFilterEvent;
+  | ColumnFilterEvent
+  | ColumnPinEvent
+  | ColumnReorderEvent;
 
 // Type mapping for column event payloads
 export interface ColumnEventPayloadMap {
@@ -104,6 +124,8 @@ export interface ColumnEventPayloadMap {
   'column:visibility': ColumnVisibilityEvent['payload'];
   'column:sort': ColumnSortEvent['payload'];
   'column:filter': ColumnFilterEvent['payload'];
+  'column:pin': ColumnPinEvent['payload'];
+  'column:reorder': ColumnReorderEvent['payload'];
 }
 
 // Helper type to get payload type by event type

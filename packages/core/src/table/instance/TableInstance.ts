@@ -177,6 +177,14 @@ function createTableInstance<TData extends RowData>(
           });
         }
 
+        if (!shallowEqual(prev.columnPinning, updatedState.columnPinning)) {
+          eventBus.emit('column:pin', {
+            tableId: instance.id,
+            timestamp: Date.now(),
+            columnPinning: updatedState.columnPinning,
+          });
+        }
+
         if (!shallowEqual(prev.rowSelection, updatedState.rowSelection)) {
           eventBus.emit('row:select', {
             tableId: instance.id,
@@ -227,7 +235,9 @@ function createTableInstance<TData extends RowData>(
     getVisibleColumns: () => {
       const state = stateStore.getState();
       return columnRegistry.getVisible(
-        state.columnVisibility
+        state.columnVisibility,
+        state.columnOrder as ColumnId[],
+        state.columnPinning
       );
     },
     getColumn: (id: ColumnId) => columnRegistry.get<TData>(id),

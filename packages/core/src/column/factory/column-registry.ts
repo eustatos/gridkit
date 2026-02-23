@@ -71,9 +71,41 @@ export class ColumnRegistry<TData extends RowData> {
   /**
    * Get visible columns considering state.
    */
-  getVisible(visibilityState: Record<ColumnId, boolean>): Column<TData>[] {
-    return this.columnOrder
-      .filter((id) => visibilityState[id] !== false)
+  getVisible(visibilityState: Record<ColumnId, boolean>, columnOrder?: ColumnId[], columnPinning?: { left?: readonly ColumnId[]; right?: readonly ColumnId[] }): Column<TData>[] {
+    const order = columnOrder || this.columnOrder;
+    
+    if (!columnPinning || (!columnPinning.left?.length && !columnPinning.right?.length)) {
+      // No pinning - return in order
+      return order
+        .filter((id) => visibilityState[id] !== false)
+        .map((id) => this.columns.get(id));
+    }
+    
+    // Apply pinning order:
+    // 1. Left-pinned columns (in their pinned order)
+    // 2. Non-pinned visible columns (in columnOrder)
+    // 3. Right-pinned columns (in their pinned order)
+    
+    const leftPinned = (columnPinning.left ?? []).filter(id => visibilityState[id] !== false);
+    const rightPinned = (columnPinning.right ?? []).filter(id => visibilityState[id] !== false);
+    const unpinned = order.filter(id => 
+      visibilityState[id] !== false &&
+      !leftPinned.includes(id) &&
+      !rightPinned.includes(id)
+    );
+    
+    // Debug: log when pinning changes
+    if (process.env.DEBUG_PINNING === '1') {
+      console.log('getVisible:', { 
+        leftPinned, 
+        unpinned, 
+        rightPinned, 
+        order: order?.slice(0, 5),
+        columnPinning 
+      });
+    }
+    
+    return [...leftPinned, ...unpinned, ...rightPinned]
       .map((id) => this.columns.get(id));
   }
 
