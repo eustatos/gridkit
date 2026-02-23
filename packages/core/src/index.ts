@@ -94,7 +94,7 @@ export { StateRestorer } from "./time-travel/state-restorer";
 export { ComputedAtomHandler } from "./time-travel/computed-atom-handler";
 
 // Export utility functions
-export { serializeState } from "./utils/serialization";
+export { serializeState, serializeMap, serializeSet } from "./utils/serialization";
 export {
   ActionTracker,
   globalActionTracker,
@@ -123,6 +123,8 @@ export type {
   Setter,
   Subscriber,
 } from "./types";
+// Export type guards
+export { isPrimitiveAtom, isComputedAtom, isWritableAtom } from "./types";
 export type { EnhancedStore, StoreEnhancementOptions } from "./enhanced-store";
 export type { SerializationOptions } from "./utils/serialization";
 export type {

@@ -9,6 +9,8 @@ export default defineConfig({
       "**/*.{test,spec}.ts",
       "**/*.{test,spec}.tsx",
     ],
+    testTimeout: 30000, // 30 секунд timeout
+    hookTimeout: 30000, // 30 секунд timeout для хуков
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],

@@ -69,6 +69,7 @@ export function createStore(plugins: Plugin[] = []): Store {
     // Get or create atom state
     let atomState = atomStates.get(atom) as AtomState<Value> | undefined;
     if (!atomState) {
+      console.log('[GET] Creating state for atom:', (atom as any).name || 'unnamed', 'type:', atom.type);
       // Register atom with the global registry (if not already registered)
       // and add it to this store's atom set
       const storesMap = atomRegistry.getStoresMap();
@@ -87,7 +88,9 @@ export function createStore(plugins: Plugin[] = []): Store {
         const previousAtom = currentAtom;
         currentAtom = atom;
         try {
+          console.log('[GET] Evaluating computed atom:', (atom as any).name, 'currentAtom:', currentAtom ? (currentAtom as any).name : 'null');
           initialValue = (atom as ComputedAtom<Value>).read(get);
+          console.log('[GET] Computed atom:', (atom as any).name, 'value:', initialValue);
         } finally {
           currentAtom = previousAtom;
         }
@@ -115,19 +118,38 @@ export function createStore(plugins: Plugin[] = []): Store {
     // Track dependency if we're currently evaluating another atom
     if (currentAtom && currentAtom !== atom) {
       // Add currentAtom as a dependent of atom
-      atomState.dependents.add(currentAtom);
+      console.log('[GET] Adding dependency:', (atom as any).name, '->', (currentAtom as any).name);
+      const added = atomState.dependents.add(currentAtom);
+      console.log('[GET] Added dependency:', (atom as any).name, '->', (currentAtom as any).name, 'size now:', atomState.dependents.size, 'was new?', added);
     }
 
     return atomState.value as Value;
   };
 
   const set: Setter = <Value>(atom: Atom<Value>, update: Value | ((prev: Value) => Value)): void => {
+    console.log('[SET] Setting atom:', (atom as any).name, 'to:', update);
     // Register atom with the global registry (if not already registered)
     // and add it to this store's atom set
     const storesMap = atomRegistry.getStoresMap();
     const registry = storesMap.get(store);
     if (registry && !registry.atoms.has(atom.id)) {
       registry.atoms.add(atom.id);
+    }
+    
+    // Check if this atom can be set
+    if (isComputedAtom(atom)) {
+      throw new Error('Cannot set value of computed atom');
+    }
+    
+    // For writable atoms, call the write function
+    if (isWritableAtom(atom)) {
+      const write = atom.write;
+      if (write) {
+        // Create a setter function that updates the store
+        const storeSetter: Setter = (a, u) => set(a, u);
+        write(get, storeSetter, update as Value);
+        return; // Write function handles the update
+      }
     }
     
     // For primitive atoms, we create state if it doesn't exist
@@ -139,9 +161,6 @@ export function createStore(plugins: Plugin[] = []): Store {
       if (isPrimitiveAtom(atom)) {
         // This is a primitive atom - read() takes no parameters
         initialValue = (atom as PrimitiveAtom<Value>).read();
-      } else if (isComputedAtom(atom)) {
-        // Computed atoms cannot be set directly
-        throw new Error('Cannot set value of computed atom');
       } else if (isWritableAtom(atom)) {
         // This is a writable atom - we can set it
         initialValue = (atom as WritableAtom<Value>).read(get);
@@ -157,11 +176,6 @@ export function createStore(plugins: Plugin[] = []): Store {
       atomStates.set(atom, atomState as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     }
 
-    // Check if this atom can be set
-    if (isComputedAtom(atom)) {
-      throw new Error('Cannot set value of computed atom');
-    }
-
     // Calculate new value
     const newValue =
       typeof update === 'function'
@@ -171,42 +185,67 @@ export function createStore(plugins: Plugin[] = []): Store {
     // Update value
     const previousValue = atomState.value;
     atomState.value = newValue;
+    console.log('[SET] Updated atom:', (atom as any).name, 'from:', previousValue, 'to:', newValue);
 
     // Notify subscribers
     atomState.subscribers.forEach((subscriber) => {
       subscriber(newValue);
     });
 
-    // Notify dependents
-    atomState.dependents.forEach((dependent) => {
+    // Notify dependents using BFS to handle nested computed atoms
+    console.log('[SET] Notifying dependents of:', (atom as any).name, 'count:', atomState.dependents.size);
+    const toNotify = new Set<Atom<any>>(atomState.dependents);
+    const notified = new Set<Atom<any>>();
+    
+    while (toNotify.size > 0) {
+      const current = toNotify.values().next().value;
+      toNotify.delete(current);
+      
+      if (notified.has(current)) continue;
+      notified.add(current);
+      
+      console.log('[SET] Notifying dependent:', (current as any).name, 'dependents size:', (atomStates.get(current) as any)?.dependents?.size);
+      
       // For computed atoms, we need to recompute their values
-      // eslint-disable-line @typescript-eslint/no-explicit-any
-      const dependentState = atomStates.get(dependent) as AtomState<any> | undefined;
-      if (dependentState && (isComputedAtom(dependent) || isWritableAtom(dependent))) {
+      const currentState = atomStates.get(current) as AtomState<any> | undefined;
+      if (currentState && (isComputedAtom(current) || isWritableAtom(current))) {
+        console.log('[SET] Dependent found, type:', current.type);
         // Track which atom is being evaluated
         const previousAtom = currentAtom;
-        currentAtom = dependent;
+        currentAtom = current;
         try {
           // Recompute the value
-          // eslint-disable-line @typescript-eslint/no-explicit-any
           let newValue: any;
-          if (isComputedAtom(dependent)) {
-            newValue = (dependent as ComputedAtom<any>).read(get);
-          } else if (isWritableAtom(dependent)) {
-            newValue = (dependent as WritableAtom<any>).read(get);
+          if (isComputedAtom(current)) {
+            console.log('[SET] Recomputing:', (current as any).name);
+            newValue = (current as ComputedAtom<any>).read(get);
+            console.log('[SET] Recomputed:', (current as any).name, 'value:', newValue);
+          } else if (isWritableAtom(current)) {
+            newValue = (current as WritableAtom<any>).read(get);
           }
           
-          if (dependentState.value !== newValue) {
-            dependentState.value = newValue;
-            dependentState.subscribers.forEach((subscriber) => {
+          if (currentState.value !== newValue) {
+            console.log('[SET] Value changed, updating dependent:', (current as any).name);
+            currentState.value = newValue;
+            currentState.subscribers.forEach((subscriber) => {
               subscriber(newValue);
             });
+            // Add dependents to queue
+            currentState.dependents.forEach((dep) => {
+              if (!notified.has(dep)) {
+                toNotify.add(dep);
+              }
+            });
+          } else {
+            console.log('[SET] Value not changed, skipping update for:', (current as any).name);
           }
         } finally {
           currentAtom = previousAtom;
         }
+      } else {
+        console.log('[SET] Dependent state not found or not computed/writable:', (current as any).name, 'found:', !!currentState, 'isComputedOrWritable:', currentState ? (isComputedAtom(current) || isWritableAtom(current)) : 'N/A');
       }
-    });
+    }
 
     // Track state change for DevTools
     if (isDevToolsEnabled) {

@@ -31,9 +31,15 @@ export interface SerializationContext {
  * Handles circular references, functions, and special objects
  * @param obj - Object to serialize
  * @param context - Serialization context for handling references
+ * @param depth - Current depth to prevent infinite recursion (internal use)
  * @returns Serializable representation of the object
  */
-export function snapshotSerialization(obj: any, context?: SerializationContext): SerializableValue {
+export function snapshotSerialization(obj: any, context?: SerializationContext, depth = 0): SerializableValue {
+  const maxDepth = 50;
+  if (depth > maxDepth) {
+    return { __type: 'MaxDepthExceeded', __value: `Max depth ${maxDepth} reached` };
+  }
+  
   const ctx = context || {
     references: new Map(),
     serialized: new Map(),
@@ -68,7 +74,7 @@ export function snapshotSerialization(obj: any, context?: SerializationContext):
   
   // Handle arrays
   if (Array.isArray(obj)) {
-    return obj.map(item => snapshotSerialization(item, ctx)) as SerializableValue[];
+    return obj.map(item => snapshotSerialization(item, ctx, depth + 1)) as SerializableValue[];
   }
   
   // Handle objects
@@ -100,7 +106,7 @@ export function snapshotSerialization(obj: any, context?: SerializationContext):
     
     for (const [key, value] of Object.entries(obj)) {
       try {
-        result[key] = snapshotSerialization(value, ctx);
+        result[key] = snapshotSerialization(value, ctx, depth + 1);
       } catch (error) {
         // Handle unserializable properties
         result[key] = {
@@ -195,31 +201,91 @@ export function deserializeSnapshot(data: SerializableValue, context?: Map<strin
 
 /**
  * Generate unique ID for objects
+ * Uses simple random ID generation to avoid infinite loops
  * @param obj - Object to generate ID for
  * @returns Unique ID string
  */
 function generateObjectId(obj: any): string {
-  // In a real implementation, this would generate a proper unique ID
-  // For now, we'll use a simple approach based on object properties
-  try {
-    const str = JSON.stringify(obj, Object.keys(obj).sort());
-    return btoa(str).slice(0, 16); // Simple base64 encoding
-  } catch {
-    // Fallback for unserializable objects
-    return Math.random().toString(36).substring(2, 10);
-  }
+  // Use simple random ID to avoid any potential infinite loops with JSON.stringify
+  return `obj_${Math.random().toString(36).substring(2, 10)}_${Date.now()}`;
 }
 
 /**
  * Check if value is serializable
+ * Uses lightweight check without full serialization to avoid infinite loops
  * @param value - Value to check
+ * @param depth - Current depth to prevent infinite recursion (internal use)
+ * @param seen - Set of already seen objects to detect circular references
  * @returns True if value is serializable
  */
-export function isSerializable(value: any): boolean {
-  try {
-    snapshotSerialization(value);
-    return true;
-  } catch {
+export function isSerializable(value: any, depth = 0, seen = new WeakSet<object>()): boolean {
+  const maxDepth = 50;
+  if (depth > maxDepth) {
     return false;
   }
+  
+  // Quick primitive checks
+  if (value === null || value === undefined) {
+    return true;
+  }
+  
+  if (typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string') {
+    return true;
+  }
+  
+  // Date and RegExp are serializable
+  if (value instanceof Date || value instanceof RegExp) {
+    return true;
+  }
+  
+  // Handle objects
+  if (typeof value === 'object') {
+    // Check for circular reference
+    if (seen.has(value)) {
+      // Circular reference detected - treat as serializable (handled by snapshotSerialization)
+      return true;
+    }
+    
+    // Mark this object as seen
+    seen.add(value);
+    
+    // Arrays are serializable if their contents are
+    if (Array.isArray(value)) {
+      const result = value.every(item => isSerializable(item, depth + 1, seen));
+      seen.delete(value); // Clean up
+      return result;
+    }
+    
+    // For plain objects, check if they have simple structure
+    try {
+      const keys = Object.keys(value);
+      // Check if all keys are valid and values are primitives
+      for (const key of keys.slice(0, 50)) { // Limit to first 50 keys
+        const v = value[key];
+        if (v === null || v === undefined) continue;
+        if (typeof v === 'function') {
+          seen.delete(value); // Clean up
+          return false;
+        }
+        if (typeof v === 'object') {
+          if (!isSerializable(v, depth + 1, seen)) {
+            seen.delete(value); // Clean up
+            return false;
+          }
+        }
+      }
+      seen.delete(value); // Clean up
+      return true;
+    } catch {
+      seen.delete(value); // Clean up
+      return false;
+    }
+  }
+  
+  // Functions are not serializable
+  if (typeof value === 'function') {
+    return false;
+  }
+  
+  return false;
 }
