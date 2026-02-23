@@ -202,6 +202,9 @@ export interface PluginSearchQuery {
   /** Minimum rating filter */
   minRating?: number;
 
+  /** Filter by featured */
+  featured?: boolean;
+
   /** Sort by */
   sortBy?: 'downloads' | 'rating' | 'updated' | 'name';
 
@@ -213,6 +216,9 @@ export interface PluginSearchQuery {
 
   /** Page offset */
   offset?: number;
+
+  /** Allow additional properties */
+  [key: string]: unknown;
 }
 
 /**
@@ -296,6 +302,9 @@ export interface PluginMessage {
 
   /** Timestamp */
   timestamp: number;
+
+  /** Allow additional properties */
+  [key: string]: unknown;
 }
 
 /**

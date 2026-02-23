@@ -4,8 +4,6 @@
  */
 
 import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
-import type { EventBus } from '@gridkit/core/events'
-import type { PerformanceMonitor } from '@gridkit/core/performance'
 
 /**
  * Interceptor for TanStack Table methods
@@ -13,13 +11,13 @@ import type { PerformanceMonitor } from '@gridkit/core/performance'
  */
 export class MethodInterceptor<TData> {
   private table: TanStackTable<TData>
-  private eventBus: EventBus
-  private performanceMonitor?: PerformanceMonitor
+  private eventBus?: any
+  private performanceMonitor?: any
 
   constructor(
     table: TanStackTable<TData>,
-    eventBus: EventBus,
-    performanceMonitor?: PerformanceMonitor
+    eventBus?: any,
+    performanceMonitor?: any
   ) {
     this.table = table
     this.eventBus = eventBus
@@ -40,7 +38,7 @@ export class MethodInterceptor<TData> {
       options?.before?.(args)
 
       // Emit start event if configured
-      if (options?.emitStart) {
+      if (options?.emitStart && this.eventBus) {
         this.eventBus.emit(`${String(methodName)}:start`, { args })
       }
 
@@ -53,7 +51,7 @@ export class MethodInterceptor<TData> {
       options?.after?.(result)
 
       // Emit complete event if configured
-      if (options?.emitComplete) {
+      if (options?.emitComplete && this.eventBus) {
         this.eventBus.emit(`${String(methodName)}:complete`, { result })
       }
 
@@ -74,7 +72,7 @@ export interface MethodInterceptorOptions<TData, K extends keyof TanStackTable<T
   /**
    * Hook after method execution
    */
-  after?: (result: ReturnType<TanStackTable<TData>[K]>) => void
+  after?: (result: any) => void
 
   /**
    * Emit 'method:start' event before execution
@@ -92,8 +90,8 @@ export interface MethodInterceptorOptions<TData, K extends keyof TanStackTable<T
  */
 export function createMethodInterceptor<TData>(
   table: TanStackTable<TData>,
-  eventBus: EventBus,
-  performanceMonitor?: PerformanceMonitor
+  eventBus?: any,
+  performanceMonitor?: any
 ): MethodInterceptor<TData> {
   return new MethodInterceptor(table, eventBus, performanceMonitor)
 }

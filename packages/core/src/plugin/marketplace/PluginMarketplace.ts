@@ -1,4 +1,4 @@
-import type { EnhancedPlugin, EnhancedPluginMetadata, PluginSearchQuery, PluginSearchResult, MarketplaceConfig, PluginAnalytics, PublishMetadata } from '../types/enhanced';
+import type { EnhancedPlugin, EnhancedPluginMetadata, PluginSearchQuery, PluginSearchResult, MarketplaceConfig, PluginAnalytics, PublishMetadata, PluginCategory } from '../types/enhanced';
 
 export class PluginMarketplace {
   private config: MarketplaceConfig;
@@ -46,7 +46,7 @@ export class PluginMarketplace {
         total: 0,
         page: 0,
         pageSize: query.limit || 10,
-        filters: query
+        filters: query as Record<string, unknown>
       };
     }
   }
@@ -85,8 +85,8 @@ export class PluginMarketplace {
    */
   async getFeatured(): Promise<EnhancedPluginMetadata[]> {
     const result = await this.search({
-      sortBy: 'rating',
-      sortOrder: 'desc',
+      sortBy: 'rating' as const,
+      sortOrder: 'desc' as const,
       featured: true,
       limit: 10
     });
@@ -111,8 +111,18 @@ export class PluginMarketplace {
    * Get plugins by category
    */
   async getByCategory(category: string): Promise<EnhancedPluginMetadata[]> {
+    // Validate category value
+    const validCategories: PluginCategory[] = [
+      'data', 'ui', 'export', 'analytics', 'collaboration',
+      'security', 'utility', 'integration', 'development'
+    ];
+    
+    if (!validCategories.includes(category as PluginCategory)) {
+      console.warn(`Invalid category: ${category}`);
+    }
+    
     const result = await this.search({
-      category: category as any,
+      category: category as PluginCategory,
       limit: 20
     });
 

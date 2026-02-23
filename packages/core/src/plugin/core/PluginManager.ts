@@ -6,8 +6,8 @@ import type { Plugin, PluginContext, PluginMetadata } from './Plugin';
 /**
  * Plugin manager for centralized plugin management
  */
-export class PluginManager {
-  private plugins = new Map<string, Plugin<Record<string, unknown>>>();
+export class PluginManager<TConfig = Record<string, unknown>> {
+  private plugins = new Map<string, Plugin<TConfig>>();
   private contexts = new Map<string, PluginContext>();
   private eventBus: EventBus;
   private isInitialized = false;
@@ -23,7 +23,7 @@ export class PluginManager {
    * @throws {Error} If plugin with same ID already registered
    * @throws {Error} If plugin dependencies are not met
    */
-  register(plugin: Plugin<Record<string, unknown>>): void {
+  register(plugin: Plugin<TConfig>): void {
     const { metadata } = plugin;
     
     // Check if plugin already registered
@@ -83,7 +83,7 @@ export class PluginManager {
    */
   async initializePlugin(
     pluginId: string, 
-    config: Record<string, unknown> = {}
+    config?: TConfig
   ): Promise<void> {
     const plugin = this.plugins.get(pluginId);
     if (!plugin) {
@@ -93,7 +93,7 @@ export class PluginManager {
     // Create plugin context
     const context: PluginContext = {
       eventBus: createEventBus(),
-      config,
+      config: config as Record<string, unknown>,
       metadata: plugin.metadata
     };
 
@@ -102,7 +102,7 @@ export class PluginManager {
 
     try {
       // Initialize plugin
-      const result = plugin.initialize(config, context);
+      const result = plugin.initialize(config as TConfig, context);
       if (result instanceof Promise) {
         await result;
       }
@@ -170,7 +170,7 @@ export class PluginManager {
    * @throws {Error} If plugin is not registered
    * @throws {Error} If plugin doesn't support updates
    */
-  updatePlugin(pluginId: string, config: Record<string, unknown>): void {
+  updatePlugin(pluginId: string, config: TConfig): void {
     const plugin = this.plugins.get(pluginId);
     if (!plugin) {
       throw new Error(`Plugin ${pluginId} not registered`);
@@ -180,7 +180,7 @@ export class PluginManager {
       throw new Error(`Plugin ${pluginId} does not support configuration updates`);
     }
 
-    plugin.update(config);
+    plugin.update(config as Partial<TConfig>);
     
     // Emit plugin updated event
     this.eventBus.emit('plugin.updated' as any, {
@@ -238,6 +238,16 @@ export class PluginManager {
    */
   getPluginContext(pluginId: string): PluginContext | undefined {
     return this.contexts.get(pluginId);
+  }
+
+  /**
+   * Get plugin by ID
+   * 
+   * @param pluginId - ID of plugin
+   * @returns Plugin or undefined if not registered
+   */
+  getPlugin(pluginId: string): Plugin<TConfig> | undefined {
+    return this.plugins.get(pluginId);
   }
 
   /**

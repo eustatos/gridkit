@@ -43,7 +43,7 @@
         "LICENSE"
     ],
     "scripts": {
-        "build": "tsup && tsc --project tsconfig.json --emitDeclarationOnly --outDir dist",
+        "build": "tsup && tsc --project tsconfig.dts.json",
         "dev": "tsup --watch",
         "test": "vitest run",
         "test:watch": "vitest",

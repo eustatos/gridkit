@@ -4,7 +4,7 @@ import { PluginContextFactory } from '../context/EnhancedPluginContext';
 import type { EnhancedPlugin, EnhancedPluginMetadata, PluginSearchQuery, PluginSearchResult, PluginUpdate, PluginHealth } from '../types/enhanced';
 import type { EventBus } from '../../events/core';
 
-export class EnhancedPluginManager extends PluginManager {
+export class EnhancedPluginManager extends PluginManager<Record<string, unknown>> {
   private contextFactory: PluginContextFactory;
   private pluginUpdates: Map<string, PluginUpdate> = new Map();
   
@@ -21,7 +21,8 @@ export class EnhancedPluginManager extends PluginManager {
     config?: Partial<T>
   ): Promise<void> {
     try {
-      this.register(plugin);
+      // Cast to Plugin<Record<string, unknown>> for compatibility with base class
+      this.register(plugin as any);
       
       const metadata = plugin.metadata as EnhancedPluginMetadata;
       const resolvedConfig = this.resolveConfig(plugin, config);
@@ -63,17 +64,18 @@ export class EnhancedPluginManager extends PluginManager {
    */
   async checkPluginHealth(pluginId: string): Promise<PluginHealth> {
     try {
-      const plugin = this.plugins.get(pluginId);
+      const plugin = this.getPlugin(pluginId);
       if (!plugin) {
         throw new PluginNotFoundError(pluginId);
       }
 
-      if (!plugin.healthCheck) {
+      const enhancedPlugin = plugin as EnhancedPlugin;
+      if (typeof enhancedPlugin.healthCheck !== 'function') {
         return { status: 'healthy', timestamp: Date.now() };
       }
 
       const startTime = performance.now();
-      const health = await plugin.healthCheck();
+      const health = await enhancedPlugin.healthCheck!();
       health.timestamp = Date.now();
       health.duration = performance.now() - startTime;
 
@@ -106,7 +108,7 @@ export class EnhancedPluginManager extends PluginManager {
    * Reload plugin (hot reload)
    */
   async reloadPlugin(pluginId: string): Promise<void> {
-    const plugin = this.plugins.get(pluginId);
+    const plugin = this.getPlugin(pluginId);
     if (!plugin) {
       throw new PluginNotFoundError(pluginId);
     }
@@ -150,14 +152,15 @@ export class EnhancedPluginManager extends PluginManager {
       total: 0,
       page: query.offset ? Math.floor(query.offset / (query.limit || 10)) : 0,
       pageSize: query.limit || 10,
-      filters: query
+      filters: query as Record<string, unknown>
     };
   }
 
   /**
    * Get plugin by ID (from marketplace)
+   * Note: This is a different method from PluginManager.getPlugin
    */
-  async getPlugin(pluginId: string): Promise<EnhancedPlugin | undefined> {
+  async getPluginFromMarketplace(pluginId: string): Promise<EnhancedPlugin | undefined> {
     // This would fetch plugin from marketplace
     return undefined;
   }
@@ -202,9 +205,10 @@ export class EnhancedPluginManager extends PluginManager {
   }
 
   /**
-   * Update plugin to newer version
+   * Update plugin version (marketplace)
+   * Note: Different from PluginManager.updatePlugin which updates config
    */
-  async updatePlugin(pluginId: string, version?: string): Promise<void> {
+  async updatePluginVersion(pluginId: string, version?: string): Promise<void> {
     // This would download and install updated version
     console.log(`Updating plugin ${pluginId} to version ${version || 'latest'}`);
   }

@@ -12,18 +12,22 @@ export type {
 
 // Row methods exports
 export type { BasicRowMethods } from './methods';
-export { 
-  buildSelectionMethods, 
-  createEmptySelectionMethods,
+export type { 
   SelectionMethods,
   BuildSelectionMethodsOptions
 } from './methods';
-
 export { 
-  buildExpansionMethods, 
-  createEmptyExpansionMethods,
+  buildSelectionMethods, 
+  createEmptySelectionMethods
+} from './methods';
+
+export type { 
   ExpansionMethods,
   BuildExpansionMethodsOptions
+} from './methods';
+export { 
+  buildExpansionMethods, 
+  createEmptyExpansionMethods
 } from './methods';
 
 // Cell exports - re-export from cell module

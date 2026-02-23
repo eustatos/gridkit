@@ -2,7 +2,7 @@
 // Uses GridKit core EventBus for full event system features
 
 import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
-import type { EnhancedTable, EventConfig } from '../types/enhanced'
+import type { EnhancedTable } from '../types/enhanced'
 import { EventBus, createEventBus } from '@gridkit/core/events'
 
 /**
@@ -10,20 +10,13 @@ import { EventBus, createEventBus } from '@gridkit/core/events'
  */
 export function withEvents<TData extends RowData>(
   table: TanStackTable<TData>,
-  config?: EventConfig | boolean
+  config?: { devMode?: boolean } | boolean
 ): EnhancedTable<TData> {
   // Create event bus from core
   const eventConfig = typeof config === 'boolean' ? {} : config ?? {}
   const eventBus = createEventBus({
     devMode: eventConfig.devMode ?? true,
   })
-
-  // Add middleware if provided
-  if (eventConfig.middleware) {
-    eventConfig.middleware.forEach(middleware => {
-      eventBus.use(middleware)
-    })
-  }
 
   // Wrap table with event methods from GridKit core
   const enhancedTable = {
@@ -51,7 +44,7 @@ export function withEvents<TData extends RowData>(
  */
 export function createEnhancedTableWithEvents<TData extends RowData>(
   options: any,
-  config?: EventConfig | boolean
+  config?: { devMode?: boolean } | boolean
 ): EnhancedTable<TData> {
   // First create TanStack table
   const { useReactTable } = require('@tanstack/react-table')
@@ -66,7 +59,7 @@ export function createEnhancedTableWithEvents<TData extends RowData>(
  */
 export function useTableWithEvents<TData extends RowData>(
   options: any,
-  config?: EventConfig | boolean
+  config?: { devMode?: boolean } | boolean
 ): EnhancedTable<TData> {
   const { useMemo } = require('react')
   const { useReactTable } = require('@tanstack/react-table')

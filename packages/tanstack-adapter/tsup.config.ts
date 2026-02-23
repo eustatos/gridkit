@@ -1,11 +1,13 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm', 'cjs'],
-  dts: {
-    tsconfig: 'tsconfig.dts.json',
+  entry: {
+    index: 'src/index.ts',
+    react: 'src/react/index.ts',
+    columns: 'src/columns/index.ts',
   },
+  format: ['esm', 'cjs'],
+  dts: false,
   sourcemap: true,
   clean: true,
   minify: true,
