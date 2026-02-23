@@ -38,19 +38,21 @@ export function deepClone<T>(obj: T): T {
   }
 
   // Handle regular objects
-  const cloned: any = {};
+  const cloned: Record<string | number | symbol, any> = {};
   const seen = new WeakMap<object, object>();
 
   // Stack entry type for circular reference tracking
   interface StackEntry {
-    original: object;
-    cloned: object;
+    original: Record<string | number | symbol, any>;
+    cloned: Record<string | number | symbol, any>;
   }
 
   const stack: StackEntry[] = [{ original: obj, cloned }];
 
   while (stack.length > 0) {
-    const { original, cloned } = stack.pop();
+    const { original, cloned } = stack.pop() as StackEntry | undefined;
+
+    if (!original || !cloned) continue;
 
     // Track visited objects for circular references
     seen.set(original, cloned);
@@ -62,7 +64,10 @@ export function deepClone<T>(obj: T): T {
         // Handle circular references
         if (value && typeof value === 'object') {
           if (seen.has(value)) {
-            cloned[key] = seen.get(value);
+            const cached = seen.get(value);
+            if (cached) {
+              cloned[key] = cached;
+            }
             continue;
           }
 
@@ -89,7 +94,7 @@ export function deepClone<T>(obj: T): T {
           }
 
           cloned[key] = newValue;
-          stack.push({ original: value, cloned: newValue });
+          stack.push({ original: value, cloned: newValue as object });
         } else {
           // Primitive value
           cloned[key] = value;

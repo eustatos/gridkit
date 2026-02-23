@@ -103,11 +103,11 @@ function buildRowModel<TData extends RowData>(params: {
     // Reactive count properties
     get selectedRowCount() {
       const state = table.getState();
-      return Object.keys(state.rowSelection || {}).filter(k => state.rowSelection?.[k]).length;
+      return Object.keys(state.rowSelection || {}).filter(k => state.rowSelection?.[k as RowId]).length;
     },
     get expandedRowCount() {
       const state = table.getState();
-      return Object.keys(state.expanded || {}).filter(k => state.expanded?.[k]).length;
+      return Object.keys(state.expanded || {}).filter(k => state.expanded?.[k as RowId]).length;
     },
   };
 

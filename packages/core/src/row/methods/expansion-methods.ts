@@ -67,7 +67,7 @@ export function buildExpansionMethods(
     getIsExpanded: () => {
       if (!hasChildren) return false;
       const state = table.getState();
-      return !!((state.expanded as any)[idStr]);
+      return !!(state.expanded[idStr as RowId]);
     },
 
     // Toggle expansion state
@@ -75,14 +75,14 @@ export function buildExpansionMethods(
       if (!hasChildren) return;
 
       const state = table.getState();
-      const current = !!((state.expanded as any)[idStr]);
+      const current = !!(state.expanded[idStr as RowId]);
       const next = expanded ?? !current;
 
       table.setState((prev) => ({
         ...prev,
         expanded: {
           ...prev.expanded,
-          [idStr]: next,
+          [idStr as RowId]: next,
         },
       }));
     },
@@ -95,7 +95,7 @@ export function buildExpansionMethods(
         ...prev,
         expanded: {
           ...prev.expanded,
-          [idStr]: true,
+          [idStr as RowId]: true,
         },
       }));
     },
@@ -105,8 +105,8 @@ export function buildExpansionMethods(
       if (!hasChildren) return;
       
       table.setState((prev) => {
-        const expanded = prev.expanded;
-        delete expanded[idStr];
+        const expanded = { ...prev.expanded };
+        delete expanded[idStr as RowId];
         return { ...prev, expanded };
       });
     },

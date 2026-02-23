@@ -3,6 +3,7 @@ import { createEventBus } from '../../events/core';
 import { createPerformanceMonitor, type PerformanceMetrics } from '../../performance';
 import { createRowFactory } from '../../row';
 import { createStore } from '../../state';
+import { DebugManager, type DebugConfig } from '@/debug';
 import type { Table, ValidatedTableOptions, TableState, RowData, Column, GridId, RowId, RowModel, ColumnId, Row } from '../../types';
 import { buildRowModel } from '../builders/model-builder';
 import { buildInitialState } from '../builders/state-builder';
@@ -38,8 +39,17 @@ function createTableInstance<TData extends RowData>(
   const performanceMonitor = options.debug.performance
     ? createPerformanceMonitor({
         enabled: true,
-        budgets: options.performanceBudgets,
+        budgets: (options as any).performanceBudgets,
       })
+    : undefined;
+
+  // === Debug Manager ===
+  const debugManager = options.debug
+    ? new DebugManager(
+        options.debug as DebugConfig,
+        eventBus,
+        stateStore
+      )
     : undefined;
 
   // Table ID (can be nullified on destroy for memory safety)
@@ -84,11 +94,15 @@ function createTableInstance<TData extends RowData>(
     get metrics(): PerformanceMetrics | undefined {
       return performanceMonitor?.getMetrics() as PerformanceMetrics | undefined;
     },
+    get debug(): DebugManager | undefined {
+      return debugManager;
+    },
 
     // Internal properties
     _internal: {
       eventBus,
       performanceMonitor,
+      debugManager,
     },
   };
 
@@ -262,6 +276,7 @@ function createTableInstance<TData extends RowData>(
       columnRegistry.destroy();
       eventBus.clear();
       performanceMonitor?.clear();
+      debugManager?.clear();
       // Nullify ID to prevent memory leaks from strong references
       tableId = null;
     },
@@ -273,11 +288,15 @@ function createTableInstance<TData extends RowData>(
     get metrics(): PerformanceMetrics | undefined {
       return performanceMonitor?.getMetrics() as PerformanceMetrics | undefined;
     },
+    get debug(): DebugManager | undefined {
+      return debugManager;
+    },
 
     // Internal properties (for plugin system and event bridge)
     _internal: {
       eventBus,
       performanceMonitor,
+      debugManager,
     },
   };
 

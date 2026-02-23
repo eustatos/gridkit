@@ -1,4 +1,5 @@
 import type { PerformanceBudgets } from '@/performance/types';
+import type { DebugConfig } from '@/debug/types';
 
 import { DeepPartial, RowData, RowId } from '../base';
 
@@ -8,58 +9,6 @@ import { TableMeta } from './support/Metadata';
 import { TableState } from './TableState';
 
 
-/**
- * Debug configuration options for debugging features.
- */
-export interface DebugOptions {
-  /** Log state changes to console */
-  readonly logStateChanges?: boolean;
-
-  /** Log performance metrics */
-  readonly logPerformance?: boolean;
-
-  /** Validate state on every change */
-  readonly validateState?: boolean;
-
-  /** Enable DevTools integration */
-  readonly devTools?: boolean;
-}
-
-/**
- * Internal debug configuration with normalized boolean flags.
- */
-export interface DebugConfig {
-  /** Log state changes to console */
-  readonly logStateChanges?: boolean;
-
-  /** Log performance metrics */
-  readonly logPerformance?: boolean;
-
-  /** Validate state on every change */
-  readonly validateState?: boolean;
-
-  /** Enable DevTools integration */
-  readonly devTools?: boolean;
-
-  /** Debug performance */
-  readonly performance?: boolean;
-
-  /** Debug events */
-  readonly events?: boolean;
-
-  /** Debug validation */
-  readonly validation?: boolean;
-
-  /** Debug memory */
-  readonly memory?: boolean;
-}
-
-/**
- * Complete table configuration.
- * All fields are optional except `columns`.
- *
- * @template TData - Row data type
- */
 export interface TableOptions<TData extends RowData> {
   // === Required Configuration ===
 
@@ -97,16 +46,10 @@ export interface TableOptions<TData extends RowData> {
 
   /**
    * Enable debug mode for development.
-   * Adds performance tracking and validation.
+   * Adds performance tracking and advanced debugging features.
    * @default false (disabled in production)
    */
-  debug?: boolean | DebugOptions;
-
-  /**
-   * Performance budgets for validation.
-   * Fails fast if budgets are exceeded.
-   */
-  performanceBudgets?: PerformanceBudgets;
+  debug?: boolean | DebugConfig;
 
   // === Event Handlers ===
 

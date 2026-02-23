@@ -70,7 +70,7 @@ export function buildSelectionMethods(
     getIsSelected: () => {
       const state = table.getState();
       const idStr = id.toString();
-      return !!((state.rowSelection as any)[idStr]);
+      return !!(state.rowSelection[idStr as RowId]);
     },
 
     // Toggle selection state
@@ -80,23 +80,23 @@ export function buildSelectionMethods(
     ) => {
       const state = table.getState();
       const idStr = id.toString();
-      const current = !!((state.rowSelection as any)[idStr]);
+      const current = !!(state.rowSelection[idStr as RowId]);
       const next = selected ?? !current;
 
       table.setState((prev) => {
-        const nextSelection = prev.rowSelection;
+        const nextSelection = { ...prev.rowSelection };
 
         if (next) {
-          nextSelection[idStr] = true;
+          nextSelection[idStr as RowId] = true;
         } else {
-          delete nextSelection[idStr];
+          delete nextSelection[idStr as RowId];
         }
 
         // Apply selection options
         if (selectionOptions?.clearOthers && next) {
           // Clear all other selections
           Object.keys(nextSelection).forEach((key) => {
-            if (key !== idStr) delete nextSelection[key];
+            if (key !== idStr) delete nextSelection[key as RowId];
           });
         }
 
@@ -125,8 +125,8 @@ export function buildSelectionMethods(
       const idStr = id.toString();
       
       table.setState((prev) => {
-        const nextSelection = prev.rowSelection;
-        delete nextSelection[idStr];
+        const nextSelection = { ...prev.rowSelection };
+        delete nextSelection[idStr as RowId];
         return { ...prev, rowSelection: nextSelection };
       });
     },

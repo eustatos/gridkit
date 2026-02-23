@@ -2,6 +2,14 @@
 export * from './types';
 export type { Unsubscribe, Updater } from './types';
 
+// Debug system exports
+export * from './debug/types';
+export { TimeTravelManager } from './debug/timetravel/TimeTravelManager';
+export { EventReplayer } from './debug/replay/EventReplayer';
+export { Profiler } from './debug/profiler/Profiler';
+export { MemoryDebugger } from './debug/memory/MemoryDebugger';
+export { DebugManager } from './debug/DebugManager';
+
 // State management exports
 export * from './state/create-store';
 export type { Store as GridKitStore, StateListener as StoreListener } from './state/types';

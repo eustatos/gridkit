@@ -1,47 +1,42 @@
-import type { DebugConfig, DebugOptions, TableState, ColumnDef, ValidatedColumnDef, RowId, RowData, DeepPartial } from '../../types';
+import type { DebugConfig } from '@/debug/types';
+import type { TableState, ColumnDef, ValidatedColumnDef, RowId, RowData, DeepPartial } from '@/types';
 
 /**
  * Normalizes debug options with sane defaults.
  */
-export function normalizeDebugOptions(debug: DebugConfig | DebugOptions | boolean | undefined): DebugConfig {
+export function normalizeDebugOptions(debug: DebugConfig | boolean | undefined): DebugConfig {
   if (debug === undefined) {
     return {
-      logStateChanges: false,
-      logPerformance: false,
-      validateState: false,
-      devTools: false,
-      performance: false,
       events: false,
+      performance: false,
       validation: false,
       memory: false,
+      plugins: false,
+      timeTravel: false,
     };
   }
 
   if (typeof debug === 'boolean') {
     // If debug is a boolean, enable all debug features if true
     return {
-      logStateChanges: debug,
-      logPerformance: debug,
-      validateState: debug,
-      devTools: debug,
-      performance: debug,
       events: debug,
+      performance: debug,
       validation: debug,
       memory: debug,
+      plugins: debug,
+      timeTravel: debug,
     };
   }
 
-  // Normalize DebugOptions to DebugConfig
-  const debugObj = debug as DebugOptions;
+  // Normalize DebugConfig
+  const debugConfig = debug as DebugConfig;
   return {
-    logStateChanges: Boolean(debugObj.logStateChanges),
-    logPerformance: Boolean(debugObj.logPerformance),
-    validateState: Boolean(debugObj.validateState),
-    devTools: Boolean(debugObj.devTools),
-    performance: Boolean((debug as DebugConfig).performance),
-    events: Boolean((debug as DebugConfig).events),
-    validation: Boolean((debug as DebugConfig).validation),
-    memory: Boolean((debug as DebugConfig).memory),
+    events: debugConfig.events === true || (debugConfig.events as any)?.enabled || false,
+    performance: debugConfig.performance === true || (debugConfig.performance as any)?.enabled || false,
+    validation: debugConfig.validation || false,
+    memory: debugConfig.memory === true || (debugConfig.memory as any)?.enabled || false,
+    plugins: debugConfig.plugins || false,
+    timeTravel: debugConfig.timeTravel === true || (debugConfig.timeTravel as any)?.enabled || false,
   };
 }
 

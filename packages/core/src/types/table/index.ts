@@ -20,7 +20,7 @@ export type {
 } from './TableState';
 
 // Table options types
-export type { TableOptions, ValidatedTableOptions, DebugOptions, DebugConfig } from './TableOptions';
+export type { TableOptions, ValidatedTableOptions } from './TableOptions';
 
 // Column types (re-export from main column module)
 export type {

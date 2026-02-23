@@ -13,6 +13,7 @@ export default defineConfig({
     'src/state/index.ts',
     'src/table/index.ts',
     'src/errors/index.ts',
+    'src/debug/index.ts',
   ],
   format: ['esm', 'cjs'],
   dts: {

@@ -8,7 +8,17 @@
       "@/*": ["*"]
     },
     "skipLibCheck": true,
-    "strict": false
+    "strict": false,
+    "incremental": false,
+    "composite": false,
+    // Gradually enable strict checks
+    "noImplicitAny": true,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": true,
+    "alwaysStrict": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/__tests__", "**/examples/**"]

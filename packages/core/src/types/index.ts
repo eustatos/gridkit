@@ -79,8 +79,6 @@ export type {
   ScrollPosition,
   CellCoordinate,
   ColumnValue,
-  DebugOptions,
-  DebugConfig,
 } from './table';
 
 // Re-export ValidatedColumnDef from column validation

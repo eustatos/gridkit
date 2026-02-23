@@ -8,6 +8,7 @@
  */
 
 import type { PerformanceMetrics } from '@/performance';
+import type { DebugManager } from '@/debug';
 import type {
   GridId,
   RowId,
@@ -140,6 +141,12 @@ export interface Table<TData extends RowData> {
    */
   readonly metrics?: PerformanceMetrics;
 
+  /**
+   * Debug manager for advanced debugging features.
+   * Includes time-travel, event replay, profiling, and memory analysis.
+   */
+  readonly debug?: DebugManager;
+
   // === Internal Properties (for internal use) ===
 
   /**
@@ -151,6 +158,8 @@ export interface Table<TData extends RowData> {
     eventBus: any;
     /** Performance monitor instance */
     performanceMonitor?: any;
+    /** Debug manager instance */
+    debugManager?: DebugManager;
   };
 }
 
