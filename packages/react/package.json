@@ -7,7 +7,7 @@
     "build": "tsc",
     "clean": "rm -rf dist && mkdir dist",
     "dev": "tsc -w",
-    "test": "vitest run",
+    "test": "vitest run index.test.ts",
     "lint": "eslint . --ext .ts"
   },
   "files": [

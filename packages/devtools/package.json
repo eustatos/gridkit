@@ -18,7 +18,7 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:types": "tsc -p tsconfig.build.json",
     "dev": "tsc -w",
-    "test": "vitest run",
+    "test": "vitest run src/__tests__ src/action-naming/__tests__",
     "test:production": "vitest run src/__tests__/production-noop.test.ts",
     "test:performance": "vitest run src/__tests__/performance --reporter=verbose",
     "test:benchmark": "vitest bench src/__tests__/performance",

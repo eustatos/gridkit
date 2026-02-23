@@ -57,7 +57,7 @@ export class AtomNameResolver {
       }
 
       // Get default name from registry
-      let defaultName = this.getDefaultName(atom);
+      const defaultName = this.getDefaultName(atom);
 
       // Apply custom formatter if provided
       const formattedName = this.options.formatter(atom, defaultName);

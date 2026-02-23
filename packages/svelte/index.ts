@@ -1,5 +1,5 @@
 // Svelte adapter for nexus-state
-import { Atom, Store, createStore } from '@nexus-state/core';
+import { Atom, createStore, Store } from '@nexus-state/core';
 import { readable, Readable } from 'svelte/store';
 
 /**

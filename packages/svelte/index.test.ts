@@ -1,49 +1,16 @@
-// Тесты для Svelte адаптера
+// Tests for Svelte adapter
 import { atom, createStore } from "@nexus-state/core";
 import { useAtom } from "./index";
-import type { Readable, StartStopNotifier } from "svelte/store";
-import * as svelteStore from "svelte/store";
-
-// Мокаем svelte/store для тестирования хука
-jest.mock("svelte/store", () => ({
-  ...jest.requireActual("svelte/store"),
-  readable: jest.fn(),
-}));
+import type { Readable } from "svelte/store";
 
 describe("useAtom", () => {
-  beforeEach(() => {
-    // Сброс моков перед каждым тестом
-    jest.clearAllMocks();
-  });
-
   it("should return a readable store with the initial value of the atom", () => {
     const store = createStore();
     const testAtom = atom(42);
 
-    // Мокаем readable для контроля возвращаемого значения
-    const readableMock = jest.spyOn(svelteStore, "readable");
-    readableMock.mockImplementation(<T>(
-      initial: T, 
-      start?: StartStopNotifier<T>
-    ) => {
-      let value = initial;
-      const set = (newValue: T) => {
-        value = newValue;
-      };
-      if (start) {
-        start(set);
-      }
-      return {
-        subscribe: (fn: (value: T) => void) => {
-          fn(value);
-          return () => {};
-        },
-      };
-    });
-
     const result = useAtom(testAtom, store);
 
-    // Вызываем subscribe для проверки значения
+    // Subscribe to get the initial value
     let receivedValue: number | undefined = undefined;
     (result as Readable<number>).subscribe((value: number) => {
       receivedValue = value;
@@ -56,44 +23,23 @@ describe("useAtom", () => {
     const store = createStore();
     const testAtom = atom(0);
 
-    // Мокаем readable для контроля возвращаемого значения
-    const readableMock = jest.spyOn(svelteStore, "readable");
-    readableMock.mockImplementation(<T>(
-      initial: T, 
-      start?: StartStopNotifier<T>
-    ) => {
-      let value = initial;
-      const set = (newValue: T) => {
-        value = newValue;
-      };
-      if (start) {
-        start(set);
-      }
-      return {
-        subscribe: (fn: (value: T) => void) => {
-          fn(value);
-          return () => {};
-        },
-      };
-    });
-
     const result = useAtom(testAtom, store);
 
-    // Проверяем начальное значение
-    let receivedValue: number | undefined = undefined;
+    // Subscribe to track updates
+    const values: number[] = [];
     const unsubscribe = (result as Readable<number>).subscribe((value: number) => {
-      receivedValue = value;
+      values.push(value);
     });
     
-    expect(receivedValue).toBe(0);
+    expect(values[0]).toBe(0);
 
-    // Изменяем значение атома
+    // Change atom value
     store.set(testAtom, 1);
 
-    // Проверяем, что значение обновилось
-    expect(receivedValue).toBe(1);
+    // The readable should have updated
+    expect(values[1]).toBe(1);
 
-    // Отписываемся
+    // Unsubscribe
     unsubscribe();
   });
 });

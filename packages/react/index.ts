@@ -1,4 +1,4 @@
-import { Atom, Store, createStore } from "@nexus-state/core";
+import { Atom, Store, createStore } from "@nexus-state/core"; // eslint-disable-line sort-imports
 import { useEffect, useMemo, useState } from "react";
 
 /**

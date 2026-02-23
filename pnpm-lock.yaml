@@ -173,6 +173,9 @@ importers:
       '@nexus-state/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@nexus-state/devtools':
+        specifier: workspace:*
+        version: link:../../packages/devtools
       '@nexus-state/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -198,6 +201,9 @@ importers:
 
   apps/demo-immer:
     dependencies:
+      '@nexus-state/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@nexus-state/immer':
         specifier: workspace:*
         version: link:../../packages/immer

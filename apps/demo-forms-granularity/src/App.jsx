@@ -1,9 +1,12 @@
 import React, { useMemo, useCallback } from "react";
 import { atom, createStore } from "@nexus-state/core";
 import { useAtom } from "@nexus-state/react";
+import { devTools } from "@nexus-state/devtools";
 
-// Создаем store для изоляции состояния формы - вне хука, так как это не React хук
+// Создаем store для изоляции состояния формы с DevTools
 const formStore = createStore();
+const devtoolsPlugin = devTools();
+devtoolsPlugin.apply(formStore);
 
 // Атомы для базовых значений полей - тоже вне хука
 const ageValueAtom = atom(0, "ageValue");
