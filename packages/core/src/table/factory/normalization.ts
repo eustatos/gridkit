@@ -13,6 +13,7 @@ export function normalizeDebugOptions(debug: DebugConfig | boolean | undefined):
       memory: false,
       plugins: false,
       timeTravel: false,
+      devtools: false,
     };
   }
 
@@ -25,6 +26,7 @@ export function normalizeDebugOptions(debug: DebugConfig | boolean | undefined):
       memory: debug,
       plugins: debug,
       timeTravel: debug,
+      devtools: debug,
     };
   }
 
@@ -37,6 +39,7 @@ export function normalizeDebugOptions(debug: DebugConfig | boolean | undefined):
     memory: debugConfig.memory === true || (debugConfig.memory as any)?.enabled || false,
     plugins: debugConfig.plugins || false,
     timeTravel: debugConfig.timeTravel === true || (debugConfig.timeTravel as any)?.enabled || false,
+    devtools: debugConfig.devtools === true || (debugConfig.devtools as any)?.enabled || false,
   };
 }
 

@@ -1,0 +1,53 @@
+{
+  "name": "@gridkit/devtools",
+  "version": "0.1.0",
+  "description": "Browser DevTools extension for debugging GridKit Enhanced tables",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "extension"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "build:extension": "webpack --config webpack.config.js",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.261",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "tsup": "^7.2.0",
+    "typescript": "^5.0.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "keywords": [
+    "gridkit",
+    "devtools",
+    "debugging",
+    "react",
+    "table"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gridkit/gridkit.git",
+    "directory": "packages/devtools"
+  },
+  "bugs": {
+    "url": "https://github.com/gridkit/gridkit/issues"
+  },
+  "homepage": "https://gridkit.dev"
+}

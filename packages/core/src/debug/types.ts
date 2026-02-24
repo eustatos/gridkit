@@ -27,6 +27,8 @@ export interface DebugConfig {
   timeTravel?: boolean | TimeTravelConfig;
   /** Debug output destination */
   output?: DebugOutput;
+  /** Enable/configure browser DevTools extension */
+  devtools?: boolean | DevToolsConfig;
 }
 
 /**
@@ -81,6 +83,20 @@ export interface TimeTravelConfig {
   maxSnapshots?: number;
   /** Interval between automatic snapshots (ms) */
   snapshotInterval?: number;
+}
+
+/**
+ * Browser DevTools extension configuration
+ */
+export interface DevToolsConfig {
+  /** Enable DevTools extension */
+  enabled: boolean;
+  /** Port for DevTools communication */
+  port?: number;
+  /** Maximum number of events to buffer */
+  maxEventBuffer?: number;
+  /** Buffer interval in ms */
+  bufferInterval?: number;
 }
 
 /**
