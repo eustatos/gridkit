@@ -1,15 +1,16 @@
 // Plugin Inspector Component
 
 import React, { useState, useEffect } from 'react'
-import { devToolsBridge } from '../bridge/DevToolsBridge'
+import { devToolsBridge } from '@gridkit/devtools-bridge/DevToolsBridge'
 
 export function PluginInspector({ tableId }: { tableId: string }) {
   const [plugins, setPlugins] = useState<any[]>([])
 
   useEffect(() => {
     // Fetch plugins
-    devToolsBridge.sendCommand({
+    {
       type: 'GET_PLUGINS',
+      timestamp: Date.now(,
       tableId
     }).then(setPlugins)
 

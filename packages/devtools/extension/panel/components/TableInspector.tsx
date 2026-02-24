@@ -1,7 +1,7 @@
 // Table Inspector Component
 
 import React, { useState, useEffect } from 'react'
-import { devToolsBridge } from '../bridge/DevToolsBridge'
+import { devToolsBridge } from '@gridkit/devtools-bridge/DevToolsBridge'
 
 export function TableInspector({ tableId, table }: { tableId: string, table: any }) {
   const [state, setState] = useState<any>(null)
@@ -10,9 +10,11 @@ export function TableInspector({ tableId, table }: { tableId: string, table: any
 
   useEffect(() => {
     // Fetch initial state
-    devToolsBridge.sendCommand({
+    {
       type: 'GET_STATE',
-      tableId
+      source: 'devtools',
+      tableId,
+      timestamp: Date.now(
     }).then(setState)
 
     // Subscribe to state updates

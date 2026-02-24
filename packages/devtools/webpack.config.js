@@ -15,7 +15,12 @@ module.exports = {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        use: {
+          loader: 'ts-loader',
+          options: {
+            configFile: path.resolve(__dirname, 'tsconfig.extension.json')
+          }
+        },
         exclude: /node_modules/
       },
       {
@@ -26,7 +31,11 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.jsx']
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
+    alias: {
+      '@gridkit/devtools-bridge': path.resolve(__dirname, 'bridge/'),
+      '@gridkit/devtools-backend': path.resolve(__dirname, 'backend/')
+    }
   },
   optimization: {
     minimize: true

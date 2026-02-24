@@ -1,7 +1,7 @@
 // Event Timeline Component
 
 import React, { useState, useEffect } from 'react'
-import { devToolsBridge } from '../bridge/DevToolsBridge'
+import { devToolsBridge } from '@gridkit/devtools-bridge/DevToolsBridge'
 
 export function EventTimeline({ tableId }: { tableId: string }) {
   const [events, setEvents] = useState<any[]>([])
@@ -10,9 +10,11 @@ export function EventTimeline({ tableId }: { tableId: string }) {
 
   useEffect(() => {
     // Fetch events
-    devToolsBridge.sendCommand({
+    {
       type: 'GET_EVENTS',
+      source: 'devtools',
       tableId,
+      timestamp: Date.now(,
       filter
     }).then(setEvents)
 
@@ -29,11 +31,11 @@ export function EventTimeline({ tableId }: { tableId: string }) {
   }, [tableId, filter])
 
   const handleReplayEvent = (event: any) => {
-    devToolsBridge.sendCommand({
+    {
       type: 'REPLAY_EVENT',
       tableId,
       event
-    })
+    }
   }
 
   return (

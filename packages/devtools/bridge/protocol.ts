@@ -1,15 +1,15 @@
 // DevTools Communication Protocol
 
 export interface DevToolsMessage {
-  source: 'devtools' | 'backend' | 'content'
+  source?: 'devtools' | 'backend' | 'content'
   type: string
   payload?: any
   tableId?: string
-  timestamp: number
+  timestamp?: number
 }
 
 export interface DevToolsCommand extends DevToolsMessage {
-  source: 'devtools'
+  source?: 'devtools'
   type:
     | 'GET_TABLES'
     | 'GET_STATE'
@@ -24,7 +24,7 @@ export interface DevToolsCommand extends DevToolsMessage {
 }
 
 export interface DevToolsResponse extends DevToolsMessage {
-  source: 'backend'
+  source?: 'backend'
   type:
     | 'TABLES_LIST'
     | 'STATE_UPDATE'
@@ -90,4 +90,9 @@ export interface TableSnapshot {
   timestamp: number
   state: any
   eventId: string
+}
+
+// Extension types - allow additional properties for commands
+export interface ExtensionCommand extends DevToolsCommand {
+  [key: string]: any
 }

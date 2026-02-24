@@ -2,13 +2,14 @@
 
 console.log('[GridKit DevTools] Content script loaded')
 
-// Check if DevTools is already connected
-if (window.__GRIDKIT_DEVTOOLS_CONTENT__) {
-  console.log('[GridKit DevTools] Content script already loaded')
-  return
-}
+;(() => {
+  // Check if DevTools is already connected
+  if (window.__GRIDKIT_DEVTOOLS_CONTENT__) {
+    console.log('[GridKit DevTools] Content script already loaded')
+    return
+  }
 
-window.__GRIDKIT_DEVTOOLS_CONTENT__ = true
+  window.__GRIDKIT_DEVTOOLS_CONTENT__ = true
 
 // Connection state
 let isConnected = false
@@ -269,19 +270,20 @@ connectToDevTools()
 setupAutoDetection()
 
 // Expose API for external use
-window.__GRIDKIT_DEVTOOLS_CONTENT__ = {
-  isConnected: () => isConnected,
-  detectTables: detectGridKitTables,
-  sendMessageToBackend: sendMessageToBackend,
-  addMessageHandler: (type, handler) => {
-    if (!messageHandlers.has(type)) {
-      messageHandlers.set(type, new Set())
-    }
-    messageHandlers.get(type).add(handler)
-  },
-  removeMessageHandler: (type, handler) => {
-    if (messageHandlers.has(type)) {
-      messageHandlers.get(type).delete(handler)
+  window.__GRIDKIT_DEVTOOLS_CONTENT__ = {
+    isConnected: () => isConnected,
+    detectTables: detectGridKitTables,
+    sendMessageToBackend: sendMessageToBackend,
+    addMessageHandler: (type, handler) => {
+      if (!messageHandlers.has(type)) {
+        messageHandlers.set(type, new Set())
+      }
+      messageHandlers.get(type).add(handler)
+    },
+    removeMessageHandler: (type, handler) => {
+      if (messageHandlers.has(type)) {
+        messageHandlers.get(type).delete(handler)
+      }
     }
   }
-}
+})()

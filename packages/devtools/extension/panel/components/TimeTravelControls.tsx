@@ -1,7 +1,7 @@
 // Time Travel Controls Component
 
 import React, { useState, useEffect } from 'react'
-import { devToolsBridge } from '../bridge/DevToolsBridge'
+import { devToolsBridge } from '@gridkit/devtools-bridge/DevToolsBridge'
 
 export function TimeTravelControls({ tableId }: { tableId: string }) {
   const [snapshots, setSnapshots] = useState<any[]>([])
@@ -12,13 +12,16 @@ export function TimeTravelControls({ tableId }: { tableId: string }) {
     // Fetch snapshots
     devToolsBridge.sendCommand({
       type: 'GET_SNAPSHOTS',
-      tableId
+      source: 'devtools',
+      tableId,
+      timestamp: Date.now()
     }).then(setSnapshots)
   }, [tableId])
 
   const handleTravelTo = (timestamp: number) => {
     devToolsBridge.sendCommand({
       type: 'TIME_TRAVEL',
+      source: 'devtools',
       tableId,
       timestamp
     })

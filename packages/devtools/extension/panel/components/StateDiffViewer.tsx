@@ -1,7 +1,7 @@
 // State Diff Viewer Component
 
 import React, { useState, useEffect } from 'react'
-import { devToolsBridge } from '../bridge/DevToolsBridge'
+import { devToolsBridge } from '@gridkit/devtools-bridge/DevToolsBridge'
 
 export function StateDiffViewer({ tableId }: { tableId: string }) {
   const [snapshots, setSnapshots] = useState<any[]>([])
@@ -10,8 +10,9 @@ export function StateDiffViewer({ tableId }: { tableId: string }) {
 
   useEffect(() => {
     // Fetch snapshots
-    devToolsBridge.sendCommand({
+    {
       type: 'GET_SNAPSHOTS',
+      timestamp: Date.now(,
       tableId
     }).then(setSnapshots)
   }, [tableId])

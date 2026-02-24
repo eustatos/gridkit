@@ -1,7 +1,7 @@
 // Performance Monitor Component
 
 import React, { useState, useEffect } from 'react'
-import { devToolsBridge } from '../bridge/DevToolsBridge'
+import { devToolsBridge } from '@gridkit/devtools-bridge/DevToolsBridge'
 
 export function PerformanceMonitor({ tableId }: { tableId: string }) {
   const [metrics, setMetrics] = useState<any[]>([])
@@ -9,8 +9,9 @@ export function PerformanceMonitor({ tableId }: { tableId: string }) {
 
   useEffect(() => {
     // Fetch performance data
-    devToolsBridge.sendCommand({
+    {
       type: 'GET_PERFORMANCE',
+      timestamp: Date.now(,
       tableId
     }).then(setMetrics)
 
