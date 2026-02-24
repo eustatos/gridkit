@@ -16,6 +16,7 @@ module.exports = {
   rules: {
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-inferrable-types": "off",
     "no-console": ["warn", { allow: ["warn", "error"] }],
     "no-debugger": "error",
     "prefer-const": "error",
@@ -26,8 +27,17 @@ module.exports = {
       files: ["**/*.test.ts", "**/*.spec.ts"],
       rules: {
         "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-expressions": "off",
+      },
+    },
+    // Time-travel specific configuration
+    {
+      files: ["src/time-travel/**/*"],
+      rules: {
+        // Additional rules for time-travel code
+        "@typescript-eslint/explicit-function-return-type": "warn",
       },
     },
   ],
-  ignorePatterns: ["dist/", "node_modules/", "**/*.test-d.ts"],
+  ignorePatterns: ["dist/", "node_modules/", "**/*.test-d.ts", "coverage/"],
 };

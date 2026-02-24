@@ -106,6 +106,21 @@ export class AtomRegistry {
   }
 
   /**
+   * Get atom by name
+   * @param name The atom name
+   * @returns The atom or undefined if not found
+   */
+  getByName(name: string): any | undefined {
+    for (const [id, atom] of this.registry) {
+      const metadata = this.metadata.get(id);
+      if (metadata && metadata.name === name) {
+        return atom;
+      }
+    }
+    return undefined;
+  }
+
+  /**
    * Get display name for atom
    * @param atom The atom
    * @returns Display name for the atom
