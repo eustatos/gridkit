@@ -36,6 +36,17 @@ export interface DevToolsResponse extends DevToolsMessage {
     | 'TABLE_UNREGISTERED'
     | 'COMMAND'
     | 'RESPONSE'
+    // Command types for responses
+    | 'GET_TABLES'
+    | 'GET_STATE'
+    | 'GET_EVENTS'
+    | 'GET_PERFORMANCE'
+    | 'TIME_TRAVEL'
+    | 'REPLAY_EVENT'
+    | 'GET_MEMORY'
+    | 'GET_PLUGINS'
+    | 'GET_SNAPSHOTS'
+    | 'SET_FILTER'
 }
 
 export interface DevToolsProtocol {

@@ -44,6 +44,7 @@ export function useAutoDetectDevTools(enabled: boolean = true): void {
   useEffect(() => {
     if (!enabled) return
 
+    const { setupAutoDetection } = require('./detector')
     const cleanupAutoDetection = setupAutoDetection()
 
     return () => {
@@ -59,12 +60,14 @@ export function getDevToolsBackend(): typeof devToolsBackend {
 
 // Helper to check if DevTools is connected
 export function isDevToolsConnected(): boolean {
-  return devToolsBackend.bridge.isConnected()
+  const backend = devToolsBackend as any
+  return backend.bridge.isConnected()
 }
 
 // Helper to send a command to DevTools
 export async function sendDevToolsCommand<T = any>(command: any): Promise<T> {
-  return devToolsBackend.bridge.sendCommand(command)
+  const backend = devToolsBackend as any
+  return backend.bridge.sendCommand(command)
 }
 
 // Setup function for non-React environments

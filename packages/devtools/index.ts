@@ -1,20 +1,20 @@
 // GridKit DevTools - Main Entry Point
 
 // Bridge
-export { devToolsBridge, DevToolsBridge } from '../bridge/DevToolsBridge'
+export { devToolsBridge, DevToolsBridge } from './bridge/DevToolsBridge'
 export type {
   DevToolsProtocol,
   DevToolsMessage,
   DevToolsCommand,
   DevToolsResponse
-} from '../bridge/protocol'
+} from './bridge/protocol'
 
 // Messages
-export * from '../bridge/messages'
+export * from './bridge/messages'
 
 // Backend
-export { devToolsBackend, DevToolsBackend } from '../backend/DevToolsBackend'
-export { isGridKitTable, detectGridKitTables, setupAutoDetection, listenForTableEvents } from '../backend/detector'
+export { devToolsBackend, DevToolsBackend } from './backend/DevToolsBackend'
+export { isGridKitTable, detectGridKitTables, setupAutoDetection, listenForTableEvents } from './backend/detector'
 export {
   useDevToolsTable,
   useAutoDetectDevTools,
@@ -23,7 +23,7 @@ export {
   sendDevToolsCommand,
   setupDevTools,
   DevToolsTableOptions
-} from '../backend/hooks'
+} from './backend/hooks'
 
 // Types
 export type {
@@ -32,4 +32,4 @@ export type {
   PerformanceMetrics,
   MemorySnapshot,
   TableSnapshot
-} from '../bridge/protocol'
+} from './bridge/protocol'

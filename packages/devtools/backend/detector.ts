@@ -23,10 +23,13 @@ export function detectGridKitTables(): any[] {
   const tables: any[] = []
 
   // Check window for __GRIDKIT_TABLES__ (if tables are registered globally)
-  if (typeof window !== 'undefined' && window.__GRIDKIT_TABLES__ instanceof Map) {
-    for (const table of window.__GRIDKIT_TABLES__.values()) {
-      if (isGridKitTable(table)) {
-        tables.push(table)
+  if (typeof window !== 'undefined') {
+    const gridKitTables = (window as any).__GRIDKIT_TABLES__
+    if (gridKitTables instanceof Map) {
+      for (const table of gridKitTables.values()) {
+        if (isGridKitTable(table)) {
+          tables.push(table)
+        }
       }
     }
   }
@@ -51,7 +54,8 @@ function findReactGridKitTables(root: Window): any[] {
     
     // Iterate through mounted roots
     if (hook.rendererIDToRenderer) {
-      for (const renderer of Object.values(hook.rendererIDToRenderer)) {
+      const renderers = Object.values(hook.rendererIDToRenderer) as any[]
+      for (const renderer of renderers) {
         if (renderer.findFiberByHostInstance) {
           // Traverse React component tree
           traverseReactRoots(renderer, tables)
@@ -81,12 +85,10 @@ export function autoRegisterTables(): void {
       devToolsBackend.registerTable(table)
     }
   })
-
-  return tables.length
 }
 
 // Setup auto-detection with polling
-export function setupAutoDetection(pollInterval: number = 1000): void {
+export function setupAutoDetection(pollInterval: number = 1000): () => void {
   // Register existing tables
   autoRegisterTables()
 
@@ -104,28 +106,30 @@ export function setupAutoDetection(pollInterval: number = 1000): void {
 // Listen for table creation events
 export function listenForTableEvents(callback: (table: any) => void): () => void {
   // Monitor window.__GRIDKIT_TABLES__ for changes
-  if (typeof window !== 'undefined' && window.__GRIDKIT_TABLES__ instanceof Map) {
-    const tables = window.__GRIDKIT_TABLES__
+  if (typeof window !== 'undefined') {
+    const tables = (window as any).__GRIDKIT_TABLES__
 
-    // Create a proxy to monitor changes
-    const proxy = new Proxy(tables, {
-      set(target: Map<any, any>, prop: string | symbol, value: any): boolean {
-        if (prop === 'size') return true
-        if (isGridKitTable(value)) {
-          callback(value)
+    if (tables instanceof Map) {
+      // Create a proxy to monitor changes
+      const proxy = new Proxy(tables, {
+        set(target: Map<any, any>, prop: string | symbol, value: any): boolean {
+          if (prop === 'size') return true
+          if (isGridKitTable(value)) {
+            callback(value)
+          }
+          return Reflect.set(target, prop, value)
+        },
+        deleteProperty(target: Map<any, any>, prop: string | symbol): boolean {
+          return Reflect.deleteProperty(target, prop)
         }
-        return Reflect.set(target, prop, value)
-      },
-      deleteProperty(target: Map<any, any>, prop: string | symbol): boolean {
-        return Reflect.deleteProperty(target, prop)
+      }) as Map<any, any>
+
+      // Replace the original with the proxy
+      (window as any).__GRIDKIT_TABLES__ = proxy
+
+      return () => {
+        (window as any).__GRIDKIT_TABLES__ = tables
       }
-    })
-
-    // Replace the original with the proxy
-    window.__GRIDKIT_TABLES__ = proxy
-
-    return () => {
-      window.__GRIDKIT_TABLES__ = tables
     }
   }
 

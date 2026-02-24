@@ -78,7 +78,6 @@ export class DevToolsBackend {
     // GET_TABLES
     this.bridge.onCommand('GET_TABLES', () => {
       return Array.from(this.tableMetadata.entries()).map(([id, metadata]) => ({
-        id,
         ...metadata
       }))
     })
@@ -232,5 +231,5 @@ export const devToolsBackend = new DevToolsBackend()
 
 // Auto-register tables if DevTools is enabled
 if (typeof window !== 'undefined') {
-  window.__GRIDKIT_DEVTOOLS__ = devToolsBackend
+  (window as any).__GRIDKIT_DEVTOOLS__ = devToolsBackend
 }

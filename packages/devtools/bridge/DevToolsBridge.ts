@@ -4,11 +4,9 @@ import {
   DevToolsMessage,
   DevToolsCommand,
   DevToolsResponse,
-  DevToolsProtocol,
-  COMMAND,
-  RESPONSE,
-  BACKEND_READY
+  DevToolsProtocol
 } from './protocol'
+import { COMMAND, RESPONSE, BACKEND_READY } from './messages'
 
 type CommandHandler<T = any> = (payload: any) => T | Promise<T>
 type ResponseHandler = (response: DevToolsResponse) => void
@@ -31,9 +29,11 @@ export class DevToolsBridge implements DevToolsProtocol {
   }
 
   private notifyContentScript(): void {
+    if (typeof window === 'undefined') return
+
     window.postMessage(
       {
-        source: 'gridkit-devtools-backend',
+        source: 'backend',
         type: BACKEND_READY,
         timestamp: Date.now()
       },
@@ -47,7 +47,7 @@ export class DevToolsBridge implements DevToolsProtocol {
 
     const message = event.data as DevToolsMessage
 
-    if (message.source !== 'gridkit-devtools-content') return
+    if (message.source !== 'content') return
 
     switch (message.type) {
       case COMMAND:
@@ -124,7 +124,7 @@ export class DevToolsBridge implements DevToolsProtocol {
     window.postMessage(
       {
         ...message,
-        source: 'gridkit-devtools-backend',
+        source: 'backend',
         timestamp: Date.now()
       },
       '*'

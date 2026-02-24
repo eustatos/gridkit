@@ -10,9 +10,12 @@
     "extension"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "build": "tsup index.ts --format esm,cjs --dts",
     "build:extension": "webpack --config webpack.config.js",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "dev": "tsup index.ts --format esm,cjs --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "clean": "rm -rf dist",
     "type-check": "tsc --noEmit"
   },
@@ -24,8 +27,11 @@
     "@types/chrome": "^0.0.261",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "babel-loader": "^10.0.0",
     "tsup": "^7.2.0",
     "typescript": "^5.0.0",
+    "vitest": "^1.2.1",
+    "@vitest/coverage-v8": "^1.2.1",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4"
   },
