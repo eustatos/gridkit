@@ -10,6 +10,7 @@ import { Store } from "../../types";
 import { SnapshotCreator } from "./SnapshotCreator";
 import { SnapshotRestorer } from "./SnapshotRestorer";
 import { SnapshotValidator } from "./SnapshotValidator";
+
 import type {
   SnapshotCreatorConfig,
   SnapshotRestorerConfig,
@@ -20,6 +21,7 @@ import type {
 export { SnapshotCreator } from "./SnapshotCreator";
 export { SnapshotRestorer } from "./SnapshotRestorer";
 export { SnapshotValidator } from "./SnapshotValidator";
+
 
 // Re-export types
 export type {
@@ -34,7 +36,6 @@ export type {
   SnapshotComparator,
   SnapshotDiff,
   SnapshotPatch,
-  SnapshotMetadata,
 } from "./types";
 
 // Re-export constants

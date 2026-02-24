@@ -198,7 +198,7 @@ export function createStore(plugins: Plugin[] = []): Store {
     const notified = new Set<Atom<any>>();
     
     while (toNotify.size > 0) {
-      const current = toNotify.values().next().value;
+      const current = toNotify.values().next().value as Atom<any>;
       toNotify.delete(current);
       
       if (notified.has(current)) continue;
@@ -207,7 +207,7 @@ export function createStore(plugins: Plugin[] = []): Store {
       console.log('[SET] Notifying dependent:', (current as any).name, 'dependents size:', (atomStates.get(current) as any)?.dependents?.size);
       
       // For computed atoms, we need to recompute their values
-      const currentState = atomStates.get(current) as AtomState<any> | undefined;
+      const currentState = atomStates.get(current);
       if (currentState && (isComputedAtom(current) || isWritableAtom(current))) {
         console.log('[SET] Dependent found, type:', current.type);
         // Track which atom is being evaluated

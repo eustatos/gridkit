@@ -37,21 +37,16 @@ describe("SimpleTimeTravel - History Management", () => {
       expect(timeTravel.canRedo()).toBe(false);
     });
 
-    it("should capture new initial state after clear when autoCapture is true", () => {
-      const store = createStore([]);
-      const counterAtom = atom(0, "counter");
-      store.get(counterAtom);
+    it("should not capture new initial state after clear by default", () => {
+      const { store, timeTravel } = createTimeTravelStore();
+      const { counterAtom } = (timeTravel as any).atoms;
 
-      const timeTravel = new SimpleTimeTravel(store, {
-        maxHistory: 10,
-        autoCapture: true,
-      });
+      store.set(counterAtom, 1);
+      timeTravel.capture("snap1");
 
       timeTravel.clearHistory();
 
-      const history = timeTravel.getHistory();
-      expect(history.length).toBe(1);
-      expect(history[0].metadata.action).toBe("initial state after clear");
+      expect(timeTravel.getHistory().length).toBe(0);
     });
   });
 

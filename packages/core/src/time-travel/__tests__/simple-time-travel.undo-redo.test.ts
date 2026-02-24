@@ -2,8 +2,37 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createStore } from "../../store";
 import { atom } from "../../atom";
 import { SimpleTimeTravel } from "../";
+import { atomRegistry } from "../../atom-registry";
+
+// Wait for auto-capture to happen (replaces setTimeout)
+function waitForAutoCapture(
+  timeTravel: SimpleTimeTravel,
+  expectedHistoryLength: number,
+  timeout = 500,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now();
+    const check = () => {
+      if (timeTravel.getHistory().length >= expectedHistoryLength) {
+        resolve();
+      } else if (Date.now() - startTime > timeout) {
+        reject(
+          new Error(
+            `Timeout waiting for history length ${expectedHistoryLength} after ${timeout}ms`,
+          ),
+        );
+      } else {
+        setTimeout(check, 10);
+      }
+    };
+    check();
+  });
+}
 
 describe("SimpleTimeTravel - Undo/Redo", () => {
+  beforeEach(() => {
+    atomRegistry.clear();
+  });
   const createTimeTravelStore = (maxHistory = 10, autoCapture = false) => {
     const store = createStore();
 
@@ -25,7 +54,7 @@ describe("SimpleTimeTravel - Undo/Redo", () => {
   };
 
   describe("undo", () => {
-    it("should undo to previous state", () => {
+    it("should undo to previous state", async () => {
       const { store, timeTravel, counterAtom } = createTimeTravelStore(
         10,
         true,
@@ -33,13 +62,13 @@ describe("SimpleTimeTravel - Undo/Redo", () => {
 
       store.set(counterAtom, 5);
 
-      // Wait for capture to happen
-      setTimeout(() => {
-        const result = timeTravel.undo();
+      // Wait for auto-capture to happen
+      await waitForAutoCapture(timeTravel, 2);
 
-        expect(result).toBe(true);
-        expect(store.get(counterAtom)).toBe(0);
-      }, 10);
+      const result = timeTravel.undo();
+
+      expect(result).toBe(true);
+      expect(store.get(counterAtom)).toBe(0);
     });
 
     it("should return false when no undo available", () => {
@@ -48,7 +77,7 @@ describe("SimpleTimeTravel - Undo/Redo", () => {
       expect(timeTravel.undo()).toBe(false);
     });
 
-    it("should move current snapshot to future after undo", () => {
+    it("should move current snapshot to future after undo", async () => {
       const { store, timeTravel, counterAtom } = createTimeTravelStore(
         10,
         true,
@@ -56,12 +85,11 @@ describe("SimpleTimeTravel - Undo/Redo", () => {
 
       store.set(counterAtom, 5);
 
-      setTimeout(() => {
-        timeTravel.undo();
+      await waitForAutoCapture(timeTravel, 2);
+      timeTravel.undo();
 
-        expect(timeTravel.canRedo()).toBe(true);
-        expect(timeTravel.getHistory().length).toBe(2); // initial + snapshot after set
-      }, 10);
+      expect(timeTravel.canRedo()).toBe(true);
+      expect(timeTravel.getHistory().length).toBe(2); // initial + snapshot after set
     });
 
     it("should handle multiple undos", async () => {
@@ -70,37 +98,29 @@ describe("SimpleTimeTravel - Undo/Redo", () => {
         true,
       );
 
-      return new Promise<void>((resolve) => {
-        const step = 0;
+      // Set values with waits for auto-capture
+      store.set(counterAtom, 1);
+      await waitForAutoCapture(timeTravel, 2);
 
-        store.set(counterAtom, 1);
+      store.set(counterAtom, 2);
+      await waitForAutoCapture(timeTravel, 3);
 
-        setTimeout(() => {
-          store.set(counterAtom, 2);
+      store.set(counterAtom, 3);
+      await waitForAutoCapture(timeTravel, 4);
 
-          setTimeout(() => {
-            store.set(counterAtom, 3);
+      timeTravel.undo();
+      expect(store.get(counterAtom)).toBe(2);
 
-            setTimeout(() => {
-              timeTravel.undo();
-              expect(store.get(counterAtom)).toBe(2);
+      timeTravel.undo();
+      expect(store.get(counterAtom)).toBe(1);
 
-              timeTravel.undo();
-              expect(store.get(counterAtom)).toBe(1);
-
-              timeTravel.undo();
-              expect(store.get(counterAtom)).toBe(0);
-
-              resolve();
-            }, 10);
-          }, 10);
-        }, 10);
-      });
+      timeTravel.undo();
+      expect(store.get(counterAtom)).toBe(0);
     });
   });
 
   describe("redo", () => {
-    it("should redo after undo", () => {
+    it("should redo after undo", async () => {
       const { store, timeTravel, counterAtom } = createTimeTravelStore(
         10,
         true,
@@ -108,15 +128,14 @@ describe("SimpleTimeTravel - Undo/Redo", () => {
 
       store.set(counterAtom, 5);
 
-      setTimeout(() => {
-        timeTravel.undo();
-        expect(store.get(counterAtom)).toBe(0);
+      await waitForAutoCapture(timeTravel, 2);
+      timeTravel.undo();
+      expect(store.get(counterAtom)).toBe(0);
 
-        const result = timeTravel.redo();
+      const result = timeTravel.redo();
 
-        expect(result).toBe(true);
-        expect(store.get(counterAtom)).toBe(5);
-      }, 10);
+      expect(result).toBe(true);
+      expect(store.get(counterAtom)).toBe(5);
     });
 
     it("should return false when no redo available", () => {
@@ -131,33 +150,25 @@ describe("SimpleTimeTravel - Undo/Redo", () => {
         true,
       );
 
-      return new Promise<void>((resolve) => {
-        store.set(counterAtom, 1);
+      // Set values with waits for auto-capture
+      store.set(counterAtom, 1);
+      await waitForAutoCapture(timeTravel, 2);
 
-        setTimeout(() => {
-          store.set(counterAtom, 2);
+      store.set(counterAtom, 2);
+      await waitForAutoCapture(timeTravel, 3);
 
-          setTimeout(() => {
-            store.set(counterAtom, 3);
+      store.set(counterAtom, 3);
+      await waitForAutoCapture(timeTravel, 4);
 
-            setTimeout(() => {
-              timeTravel.undo();
-              timeTravel.undo();
-              expect(store.get(counterAtom)).toBe(1);
+      timeTravel.undo();
+      timeTravel.undo();
+      expect(store.get(counterAtom)).toBe(1);
 
-              timeTravel.redo();
-              expect(store.get(counterAtom)).toBe(2);
+      timeTravel.redo();
+      expect(store.get(counterAtom)).toBe(2);
 
-              timeTravel.redo();
-              expect(store.get(counterAtom)).toBe(3);
-
-              resolve();
-            }, 10);
-          }, 10);
-        }, 10);
-      });
+      timeTravel.redo();
+      expect(store.get(counterAtom)).toBe(3);
     });
   });
-
-  // ... rest of the tests with similar async patterns
 });

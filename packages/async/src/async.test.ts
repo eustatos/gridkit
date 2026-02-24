@@ -46,7 +46,7 @@ describe('asyncAtom', () => {
     });
 
     const [asyncAtomInstance, fetchFn] = asyncAtom({
-      fetchFn: async (store) => {
+      fetchFn: async (store: any) => {
         const response = await fetch('/api/test');
         return response.json();
       },
@@ -150,7 +150,7 @@ describe('integration with core', () => {
       initialValue: 0,
     });
 
-    const doubleAtom = atom((get) => get(asyncAtomInstance).data * 2);
+    const doubleAtom = atom((get: any) => get(asyncAtomInstance).data * 2);
 
     await fetchFn(store);
 
@@ -204,8 +204,9 @@ describe('fetch function behavior', () => {
 
   it('should handle fetch called multiple times sequentially', async () => {
     const [asyncAtomInstance, fetchFn] = asyncAtom({
-      fetchFn: async (store) => {
-        const count = (store.get(asyncAtomInstance).data as number) || 0;
+      fetchFn: async (store: any) => {
+        const asyncValue = store.get(asyncAtomInstance) as AsyncAtomData<number>;
+        const count = (asyncValue.data || 0) as number;
         return count + 1;
       },
       initialValue: 0,
@@ -344,8 +345,8 @@ describe('complex async scenarios', () => {
       initialValue: 0,
     });
 
-    const doubledAtom = atom((get) => get(asyncAtomInstance).data * 2);
-    const stringAtom = atom((get) => String(get(doubledAtom)));
+    const doubledAtom = atom((get: any) => get(asyncAtomInstance).data * 2);
+    const stringAtom = atom((get: any) => String(get(doubledAtom)));
 
     await fetchFn(store);
 

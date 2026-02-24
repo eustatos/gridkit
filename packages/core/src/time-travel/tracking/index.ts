@@ -39,15 +39,15 @@ export type {
   TrackerRestorePoint,
 } from "./types";
 
-// Re-export constants
-export {
-  DEFAULT_TRACKER_CONFIG,
-  TRACKING_EVENTS,
-  CHANGE_TYPES,
-  COMPUTED_STRATEGIES,
-  INVALIDATION_STRATEGIES,
-  ATOM_TYPES,
-} from "./constants";
+// Re-export constants - TODO: create constants.ts
+// export {
+//   DEFAULT_TRACKER_CONFIG,
+//   TRACKING_EVENTS,
+//   CHANGE_TYPES,
+//   COMPUTED_STRATEGIES,
+//   INVALIDATION_STRATEGIES,
+//   ATOM_TYPES,
+// } from "./constants";
 
 /**
  * Create a new atom tracker

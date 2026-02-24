@@ -44,12 +44,15 @@ export class AtomTracker {
    * @returns True if tracking started
    */
   track<Value>(atom: Atom<Value>, name?: string): boolean {
+    console.log(`[TRACKER.track] Tracking atom: ${atom.name}, id: ${atom.id?.toString()}, atoms.size: ${this.atoms.size}`);
+    
     if (this.atoms.size >= this.config.maxAtoms) {
       this.emit("error", { message: "Max atoms limit reached" });
       return false;
     }
 
     if (this.atoms.has(atom.id)) {
+      console.log(`[TRACKER.track] Atom already tracked!`);
       return true; // Already tracked
     }
 

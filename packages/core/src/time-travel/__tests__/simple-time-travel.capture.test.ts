@@ -2,8 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { createStore } from "../../store";
 import { SimpleTimeTravel } from "../";
 import { atom } from "../../atom";
+import { atomRegistry } from "../../atom-registry";
 
 describe("SimpleTimeTravel - Capture", () => {
+  beforeEach(() => {
+    atomRegistry.clear();
+  });
+
   const createTimeTravelStore = (maxHistory = 10, autoCapture = true) => {
     const store = createStore([]);
 
@@ -13,26 +18,41 @@ describe("SimpleTimeTravel - Capture", () => {
     store.get(counterAtom);
     store.get(textAtom);
 
-    const timeTravel = new SimpleTimeTravel(store, { maxHistory, autoCapture });
+    const timeTravel = new SimpleTimeTravel(store, {
+      maxHistory,
+      autoCapture,
+      atoms: [counterAtom, textAtom],
+    });
 
-    (timeTravel as any).atoms = { counterAtom, textAtom };
-
-    return { store, timeTravel };
+    return { store, timeTravel, counterAtom, textAtom };
   };
 
   const toSnapshotEntry = (
     value: any,
     type: "primitive" | "computed" | "writable" = "primitive",
     name?: string,
-  ) => ({
-    value,
-    type,
-    name,
-  });
+  ) => {
+    // Get the atom to extract its ID for atomId field
+    const allAtoms = atomRegistry.getAll();
+    let atomId = "";
+    for (const [id, atom] of allAtoms) {
+      const atomName = atom.name || atom.id.description || String(atom.id);
+      if (atomName === name) {
+        atomId = id.toString();
+        break;
+      }
+    }
+    
+    return {
+      value,
+      type,
+      name,
+      atomId: atomId || undefined,
+    };
+  };
 
   it("should capture snapshot with action name", () => {
-    const { store, timeTravel } = createTimeTravelStore(10, false);
-    const { counterAtom } = (timeTravel as any).atoms;
+    const { store, timeTravel, counterAtom } = createTimeTravelStore(10, false);
 
     store.set(counterAtom, 5);
     const snapshot = timeTravel.capture("set to 5");
@@ -49,8 +69,7 @@ describe("SimpleTimeTravel - Capture", () => {
   });
 
   it("should capture snapshot without action name", () => {
-    const { store, timeTravel } = createTimeTravelStore(10, false);
-    const { counterAtom } = (timeTravel as any).atoms;
+    const { store, timeTravel, counterAtom } = createTimeTravelStore(10, false);
 
     store.set(counterAtom, 10);
     const snapshot = timeTravel.capture();
@@ -64,8 +83,7 @@ describe("SimpleTimeTravel - Capture", () => {
   });
 
   it("should not capture during time travel", () => {
-    const { store, timeTravel } = createTimeTravelStore(10, false);
-    const { counterAtom } = (timeTravel as any).atoms;
+    const { store, timeTravel, counterAtom } = createTimeTravelStore(10, false);
 
     store.set(counterAtom, 5);
     timeTravel.capture("snap1");
@@ -78,8 +96,7 @@ describe("SimpleTimeTravel - Capture", () => {
   });
 
   it("should not capture if state hasn't changed", () => {
-    const { store, timeTravel } = createTimeTravelStore(10, false);
-    const { counterAtom } = (timeTravel as any).atoms;
+    const { store, timeTravel, counterAtom } = createTimeTravelStore(10, false);
 
     store.set(counterAtom, 5);
     timeTravel.capture("snap1");
@@ -91,8 +108,7 @@ describe("SimpleTimeTravel - Capture", () => {
   });
 
   it("should enforce max history limit", () => {
-    const { store, timeTravel } = createTimeTravelStore(2, false);
-    const { counterAtom } = (timeTravel as any).atoms;
+    const { store, timeTravel, counterAtom } = createTimeTravelStore(2, false);
 
     store.set(counterAtom, 1);
     timeTravel.capture("snap1");

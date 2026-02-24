@@ -342,20 +342,17 @@ describe("DevToolsPlugin Action Naming Integration", () => {
 
   describe("Polling mode", () => {
     it("should generate action names for polling updates", () => {
-      const plugin = new DevToolsPlugin({
-        actionNamingStrategy: "pattern",
-        actionNamingPattern: "POLL:{timestamp}",
+      const mockConnectFn = vi.fn().mockReturnValue({
+        send: vi.fn(),
+        subscribe: vi.fn().mockReturnValue(() => {}),
+        init: vi.fn(),
+        unsubscribe: vi.fn(),
       });
 
       // Mock window
       (global as any).window = {
         __REDUX_DEVTOOLS_EXTENSION__: {
-          connect: vi.fn().mockReturnValue({
-            send: vi.fn(),
-            subscribe: vi.fn().mockReturnValue(() => {}),
-            init: vi.fn(),
-            unsubscribe: vi.fn(),
-          }),
+          connect: mockConnectFn,
         },
         addEventListener: vi.fn(),
       };
@@ -369,14 +366,19 @@ describe("DevToolsPlugin Action Naming Integration", () => {
       // Mock setTimeout for testing
       vi.useFakeTimers();
 
+      const plugin = new DevToolsPlugin({
+        actionNamingStrategy: "pattern",
+        actionNamingPattern: "POLL:{timestamp}",
+      });
+
+      // Apply plugin (this will replace connect with our wrapper, but mockConnectFn still tracks calls)
       plugin.apply(pollingStore);
 
       // Fast-forward time to trigger polling (должно сработать через 100ms)
       vi.advanceTimersByTime(150); // Больше чем latency (100ms)
 
       // Проверяем, что connect был вызван (это указывает на успешную инициализацию)
-      const mockExtension = (global as any).window.__REDUX_DEVTOOLS_EXTENSION__;
-      expect(mockExtension.connect).toHaveBeenCalledWith(
+      expect(mockConnectFn).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "nexus-state",
           latency: 100,

@@ -264,12 +264,17 @@ export interface StoreRegistry {
   /** The set of atom IDs owned by the store */
   atoms: Set<symbol>;
 }
+// packages/core/types.ts
+
+// ... existing types ...
 
 // === TIME TRAVEL TYPES ===
 
 export interface TimeTravelOptions {
   maxHistory?: number;
   autoCapture?: boolean;
+  registryMode?: "global" | "isolated";
+  atoms?: any[]; // Add atoms property to TimeTravelOptions
 }
 
 export interface SnapshotMetadata {
@@ -281,6 +286,8 @@ export interface SnapshotMetadata {
 export interface SnapshotStateEntry {
   value: any;
   type: "primitive" | "computed" | "writable";
+  name?: string; // Atom name for restoration lookup
+  atomId?: string;
 }
 
 export interface Snapshot {
@@ -290,7 +297,7 @@ export interface Snapshot {
 }
 
 export interface TimeTravelAPI {
-  capture(action?: string): void;
+  capture(action?: string): Snapshot | undefined;
   undo(): boolean;
   redo(): boolean;
   canUndo(): boolean;
@@ -320,4 +327,6 @@ export type StoreEnhancementOptions = {
   maxHistory?: number;
   /** Automatically capture snapshots on store changes */
   autoCapture?: boolean;
+  /** Atoms to track for time travel */
+  atoms?: any[]; // Add atoms to StoreEnhancementOptions as well
 };

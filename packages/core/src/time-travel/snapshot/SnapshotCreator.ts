@@ -11,6 +11,7 @@ export class SnapshotCreator {
   private store: Store;
   private config: SnapshotCreatorConfig;
   private listeners: Set<(snapshot: Snapshot) => void> = new Set();
+  private lastSnapshotState: Record<string, SnapshotStateEntry> | null = null;
 
   constructor(store: Store, config?: Partial<SnapshotCreatorConfig>) {
     this.store = store;
@@ -20,15 +21,20 @@ export class SnapshotCreator {
       transform: null,
       validate: true,
       generateId: () => Math.random().toString(36).substring(2, 9),
+      includeMetadata: true,
       ...config,
     };
+    // Ensure includeTypes is string array (for backward compatibility)
+    if (this.config.includeTypes) {
+      this.config.includeTypes = this.config.includeTypes.map((t) => String(t));
+    }
   }
 
   /**
    * Create a snapshot
    * @param action Optional action name
    * @param atomIds Set of atom IDs to include
-   * @returns Created snapshot or null if creation failed
+   * @returns Created snapshot or null if creation failed or state unchanged
    */
   create(action?: string, atomIds?: Set<symbol>): Snapshot | null {
     try {
@@ -36,6 +42,14 @@ export class SnapshotCreator {
 
       if (Object.keys(state).length === 0) {
         return null;
+      }
+
+      // Check if state has changed since last snapshot
+      // Only check for state changes when auto-capturing (action is not provided)
+      if (!this.config.skipStateCheck && this.config.autoCapture === false && !action && this.lastSnapshotState) {
+        if (this.statesEqual(state, this.lastSnapshotState)) {
+          return null; // State hasn't changed
+        }
       }
 
       const snapshot: Snapshot = {
@@ -57,6 +71,9 @@ export class SnapshotCreator {
       if (this.config.validate && !this.validateSnapshot(transformed)) {
         return null;
       }
+
+      // Store for next comparison
+      this.lastSnapshotState = { ...state };
 
       this.emit("create", transformed);
       return transformed;
@@ -104,6 +121,7 @@ export class SnapshotCreator {
         duration: Date.now() - startTime,
         timestamp: startTime,
         error: snapshot ? undefined : "Failed to create snapshot",
+        atomCount: snapshot ? Object.keys(snapshot.state).length : 0,
       };
     } catch (error) {
       return {
@@ -112,13 +130,14 @@ export class SnapshotCreator {
         duration: Date.now() - startTime,
         timestamp: startTime,
         error: error instanceof Error ? error.message : String(error),
+        atomCount: 0,
       };
     }
   }
 
   /**
    * Capture current state
-   * @param atomIds Set of atom IDs to include
+   * @param atomIds Set of atom IDs to include. If undefined, captures all atoms.
    * @returns Captured state
    */
   private captureState(
@@ -126,36 +145,60 @@ export class SnapshotCreator {
   ): Record<string, SnapshotStateEntry> {
     const state: Record<string, SnapshotStateEntry> = {};
 
-    if (!atomIds) return state;
-
-    atomIds.forEach((atomId) => {
-      try {
-        const atom = this.getAtomById(atomId);
-        if (!atom) return;
-
-        const atomType = this.getAtomType(atom);
-
-        // Filter by type
-        if (!this.config.includeTypes.includes(atomType)) return;
-
-        // Filter by exclude list
-        const atomName = atom.name || atomId.description || String(atomId);
-        if (this.config.excludeAtoms.includes(atomName)) return;
-
-        const value = this.store.get(atom);
-
-        state[atomName] = {
-          value: this.serializeValue(value),
-          type: atomType,
-          name: atomName,
-          atomId: atomId.toString(),
-        };
-      } catch (error) {
-        // Skip atoms that can't be accessed
-      }
-    });
+    if (!atomIds) {
+      // Capture all registered atoms
+      const allAtoms = atomRegistry.getAll();
+      allAtoms.forEach((atom) => {
+        this.addAtomToState(atom, state);
+      });
+    } else {
+      // Capture only specified atoms
+      atomIds.forEach((atomId) => {
+        try {
+          const atom = this.getAtomById(atomId);
+          if (atom) {
+            this.addAtomToState(atom, state);
+          }
+        } catch (error) {
+          // Skip atoms that can't be accessed
+        }
+      });
+    }
 
     return state;
+  }
+
+  /**
+   * Add atom to state object
+   */
+  private addAtomToState(atom: Atom<unknown>, state: Record<string, SnapshotStateEntry>): void {
+    try {
+      const atomType = this.getAtomType(atom);
+
+      // Filter by type
+      if (!this.config.includeTypes.includes(atomType)) return;
+
+      // Filter by exclude list
+      const atomName = atom.name || atom.id.description || String(atom.id);
+      if (this.config.excludeAtoms.includes(atomName)) return;
+
+      const value = this.store.get(atom);
+
+      // Cast atomType to the expected union type
+      const stateType: "primitive" | "computed" | "writable" =
+        atomType === "primitive" || atomType === "computed" || atomType === "writable"
+          ? atomType
+          : "primitive";
+
+      state[atomName] = {
+        value: this.serializeValue(value),
+        type: stateType,
+        name: atomName,
+        atomId: atom.id.toString(),
+      };
+    } catch (error) {
+      // Skip atoms that can't be accessed
+    }
   }
 
   /**
@@ -172,7 +215,7 @@ export class SnapshotCreator {
    * @param atom Atom
    * @returns Atom type
    */
-  private getAtomType(atom: Atom<unknown>): string {
+  private getAtomType(atom: Atom<unknown>): "primitive" | "computed" | "writable" | string {
     if (atom && typeof atom === "object" && "type" in atom) {
       return (atom as { type: string }).type;
     }
@@ -227,6 +270,24 @@ export class SnapshotCreator {
     if (event === "create" && snapshot) {
       this.listeners.forEach((listener) => listener(snapshot));
     }
+  }
+
+  /**
+   * Compare two states for equality
+   */
+  private statesEqual(a: Record<string, SnapshotStateEntry>, b: Record<string, SnapshotStateEntry>): boolean {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    
+    if (keysA.length !== keysB.length) return false;
+    
+    for (const key of keysA) {
+      if (!b.hasOwnProperty(key)) return false;
+      if (a[key].value !== b[key].value) return false;
+      if (a[key].type !== b[key].type) return false;
+    }
+    
+    return true;
   }
 
   /**

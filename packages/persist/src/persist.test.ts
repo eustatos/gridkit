@@ -235,7 +235,7 @@ describe('sessionStorageStorage', () => {
 describe('integration with core', () => {
   it('should work with computed atoms', () => {
     const baseAtom = atom(10, 'base');
-    const doubleAtom = atom((get) => get(baseAtom) * 2, 'double');
+    const doubleAtom = atom((get: any) => get(baseAtom) * 2, 'double');
 
     const cleanupBase = persist(baseAtom, {
       key: 'base',

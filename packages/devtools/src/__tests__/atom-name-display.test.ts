@@ -83,7 +83,7 @@ describe("DevToolsPlugin Atom Name Display", () => {
     const atomId = Symbol("test-atom");
     const atom: MockAtom = {
       id: atomId,
-      toString: () => `Atom(test-atom)`,
+      toString: () => `Symbol(test-atom)`,
     };
     // Do not register the atom to test fallback behavior
     const plugin = new DevToolsPlugin({ showAtomNames: true });
@@ -95,7 +95,8 @@ describe("DevToolsPlugin Atom Name Display", () => {
     const name = getAtomName(atom);
 
     // The name should contain the atom's symbol identifier
-    expect(name).toContain("atom-");
+    // Since the atom is not registered, it will use toString() result
+    expect(name).toBe("Symbol(test-atom)");
   });
 
   it("should handle error in atom name resolution", () => {

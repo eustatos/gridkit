@@ -175,11 +175,27 @@ export class MockDevToolsConnection implements DevToolsConnection {
       return;
     }
 
+    // Create properly formatted import state with checksum
+    const timestamp = Date.now();
+    const stateString = JSON.stringify(state);
+    // Compute simple checksum
+    let hash = 5381;
+    for (let i = 0; i < stateString.length; i++) {
+      hash = (hash * 33) ^ stateString.charCodeAt(i);
+    }
+    const checksum = Buffer.from(hash.toString(16).padStart(8, "0"), "hex")
+      .toString("base64")
+      .substring(0, 8);
+
     const message: DevToolsMessage = {
       type: "DISPATCH",
       payload: {
         type: "IMPORT_STATE",
-        state,
+        state: {
+          state,
+          timestamp,
+          checksum,
+        },
         timestamp: Date.now(),
       },
       // source: "@redux-devtools/extension",
@@ -268,6 +284,9 @@ export class MockDevToolsExtension implements MockDevToolsExtension {
   simulateExtensionLoad(): void {
     // Simulate extension being added to window
     (global as any).window.__REDUX_DEVTOOLS_EXTENSION__ = this;
+    
+    // Create a new connection (simulate user opening DevTools)
+    this.connect();
   }
 
   reset(): void {

@@ -21,6 +21,7 @@ export class SnapshotRestorer {
       onAtomNotFound: "skip",
       transform: null,
       batchRestore: true,
+      skipErrors: true,
       ...config,
     };
   }
@@ -83,6 +84,7 @@ export class SnapshotRestorer {
       return {
         success: false,
         restoredCount: 0,
+        totalAtoms: 0,
         errors: ["Restore already in progress"],
         warnings: [],
         duration: Date.now() - startTime,
@@ -102,6 +104,7 @@ export class SnapshotRestorer {
             return {
               success: false,
               restoredCount: 0,
+              totalAtoms: Object.keys(snapshot.state).length,
               errors,
               warnings: validation.warnings,
               duration: Date.now() - startTime,
@@ -131,6 +134,7 @@ export class SnapshotRestorer {
       return {
         success,
         restoredCount,
+        totalAtoms: Object.keys(snapshot.state).length,
         errors,
         warnings,
         duration: Date.now() - startTime,
@@ -140,6 +144,7 @@ export class SnapshotRestorer {
       return {
         success: false,
         restoredCount,
+        totalAtoms: Object.keys(snapshot.state).length,
         errors: [
           ...errors,
           error instanceof Error ? error.message : String(error),
@@ -169,12 +174,32 @@ export class SnapshotRestorer {
    * @returns True if restored successfully
    */
   private restoreAtom(key: string, entry: SnapshotStateEntry): boolean {
-    // Try to find atom by ID first
-    let atom = entry.atomId ? this.findAtomById(entry.atomId) : null;
+    console.log(`[RESTORE] Restoring atom: ${key}, entry.name=${entry.name}, value=${entry.value}`);
+    
+    // Try to find atom by name first
+    let atom = this.findAtomByName(entry.name || key);
+    console.log(`[RESTORE] Found by name? ${!!atom}, atom.id=${atom?.id?.toString()}, atom.name=${atom?.name}`);
 
-    // Then try by name
+    // If not found, try to find by ID string (though this is unreliable for symbols)
+    if (!atom && entry.atomId) {
+      console.log(`[RESTORE] Trying to find by atomId: ${entry.atomId}`);
+      atom = this.findAtomById(entry.atomId);
+      console.log(`[RESTORE] Found by ID? ${!!atom}`);
+    }
+
     if (!atom) {
-      atom = this.findAtomByName(entry.name || key);
+      // If still not found, try to find any atom with the same name (for unnamed atoms)
+      if (entry.name) {
+        const allAtoms = atomRegistry.getAll();
+        for (const [id, storedAtom] of allAtoms) {
+          const storedName = storedAtom.name || storedAtom.id?.description || "atom";
+          if (storedName === entry.name) {
+            atom = storedAtom as Atom<unknown>;
+            console.log(`[RESTORE] Found by name (fallback): ${entry.name}, id: ${atom.id?.toString()}`);
+            break;
+          }
+        }
+      }
     }
 
     if (!atom) {
@@ -184,14 +209,18 @@ export class SnapshotRestorer {
       if (this.config.onAtomNotFound === "warn") {
         console.warn(`Atom not found: ${key}`);
       }
+      console.log(`[RESTORE] Atom NOT FOUND: ${key}`);
       return false;
     }
 
     // Deserialize value if needed
     const value = this.deserializeValue(entry.value, entry.type);
+    console.log(`[RESTORE] Restoring ${entry.name}: ${value}, calling this.store.set(atom, ${value})`);
+    console.log(`[RESTORE] Current value in store before set: ${this.store.get(atom)}`);
 
     // Set the value
     this.store.set(atom, value);
+    console.log(`[RESTORE] Set complete for ${entry.name}, new value: ${this.store.get(atom)}`);
     return true;
   }
 
@@ -235,8 +264,10 @@ export class SnapshotRestorer {
    * @returns Atom or undefined
    */
   private findAtomById(atomId: string): Atom<unknown> | null {
-    const id = Symbol(atomId);
-    return atomRegistry.get(id) as Atom<unknown> | null;
+    // Atom IDs in snapshots are stored as strings from symbol.toString()
+    // But symbol.toString() creates a unique symbol, so we can't reconstruct it.
+    // Instead, use the name provided in the entry, which is more reliable.
+    return null;
   }
 
   /**

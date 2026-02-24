@@ -127,7 +127,14 @@ export class AtomRegistry {
    */
   getName(atom: any): string {
     const metadata = this.metadata.get(atom.id);
-    return metadata?.name || `atom-${atom.id.toString()}`;
+    if (metadata && metadata.name) {
+      // Remove 'atom-' prefix if present (from auto-generated names)
+      const name = metadata.name;
+      return name.startsWith('atom-') ? name.substring(5) : name;
+    }
+    // Return just the atom ID string without 'atom-' prefix
+    const idStr = atom.id.toString();
+    return idStr.startsWith('atom-') ? idStr.substring(5) : idStr;
   }
 
   /**

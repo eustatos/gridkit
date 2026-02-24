@@ -147,7 +147,10 @@ export class SnapshotValidator {
       isValid: errors.length === 0,
       errors,
       warnings,
+      info: [],
       timestamp: Date.now(),
+      duration: 0,
+      rulesChecked: this.rules.length,
     };
   }
 
@@ -208,7 +211,10 @@ export class SnapshotValidator {
       isValid: errors.length === 0,
       errors,
       warnings,
+      info: [],
       timestamp: Date.now(),
+      duration: 0,
+      rulesChecked: this.rules.length,
     };
   }
 

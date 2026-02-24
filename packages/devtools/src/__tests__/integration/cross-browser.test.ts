@@ -301,6 +301,9 @@ describe("Cross-Browser Compatibility Integration Tests", () => {
       const mockAtom = { id: { toString: () => "multiConnAtom" } };
       expect(() => store.set(mockAtom, 100)).not.toThrow();
 
+      // Flush batch to ensure messages are sent immediately (without waiting for rAF)
+      plugin.flushBatch();
+
       // At least one connection should receive messages
       const allMessages = mockExtension
         .getAllConnections()

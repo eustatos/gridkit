@@ -9,7 +9,6 @@ import type {
   TimeTravelOptions,
   Snapshot,
   TimeTravelAPI,
-  HistoryEvent,
 } from "../types";
 
 import { HistoryManager } from "./HistoryManager";
@@ -72,6 +71,8 @@ export class SimpleTimeTravel implements TimeTravelAPI {
       excludeAtoms: options.excludeAtoms || [],
       validate: true,
       generateId: () => Math.random().toString(36).substring(2, 9),
+      autoCapture: options.autoCapture ?? true,
+      skipStateCheck: true, // Skip state check for initial capture
       ...options.snapshotConfig,
     } as SnapshotCreatorConfig);
 
@@ -104,10 +105,9 @@ export class SimpleTimeTravel implements TimeTravelAPI {
     // Wrap store.set
     store.set = this.wrappedSet.bind(this);
 
-    // Capture initial state if autoCapture is enabled
-    if (this.autoCapture) {
-      this.capture("initial");
-    }
+    // Always capture initial state (to have something to undo to)
+    // The autoCapture setting will control subsequent auto-captures
+    this.capture("initial");
   }
 
   /**
@@ -120,12 +120,14 @@ export class SimpleTimeTravel implements TimeTravelAPI {
       return undefined;
     }
 
+    console.log(`[TIME_TRAVEL.capture] action: ${action}`);
     const snapshot = this.snapshotCreator.create(
       action,
       new Set(this.atomTracker.getTrackedAtoms().map((atom) => atom.id)),
     );
-
+    console.log(`[TIME_TRAVEL.capture] snapshot created: ${snapshot ? 'yes' : 'no'}`);
     if (snapshot) {
+      console.log(`[TIME_TRAVEL.capture] snapshot state:`, Object.entries(snapshot.state).map(([k, v]) => ({ [k]: v.value })));
       this.historyManager.add(snapshot);
     }
 
@@ -222,11 +224,27 @@ export class SimpleTimeTravel implements TimeTravelAPI {
    * Clear all history
    */
   clearHistory(): void {
-    // Clear history not implemented in HistoryManager
+    this.historyManager.clear();
 
-    if (this.autoCapture) {
-      this.capture("initial after clear");
+    // Note: clearHistory only clears history, it does not create a new initial snapshot
+    // If you need to create a new initial snapshot, call capture("initial") explicitly
+  }
+
+  /**
+   * Capture current state without checking tracked atoms (for initial/clear capture)
+   */
+  private captureAllState(action?: string): Snapshot | undefined {
+    if (this.isTimeTraveling) {
+      return undefined;
     }
+
+    const snapshot = this.snapshotCreator.create(action);
+    
+    if (snapshot) {
+      this.historyManager.add(snapshot);
+    }
+
+    return snapshot || undefined;
   }
 
   /**
@@ -240,12 +258,7 @@ export class SimpleTimeTravel implements TimeTravelAPI {
    * Get history statistics
    */
   getHistoryStats() {
-    // getStats not implemented in HistoryManager
-    return {
-      total: this.historyManager.getAll().length,
-      canUndo: this.historyManager.canUndo(),
-      canRedo: this.historyManager.canRedo(),
-    };
+    return this.historyManager.getStats();
   }
 
   /**
@@ -305,9 +318,8 @@ export class SimpleTimeTravel implements TimeTravelAPI {
    * @param listener - Event listener
    * @returns Unsubscribe function
    */
-  subscribe(listener: (event: HistoryEvent) => void): () => void {
-    // subscribe not implemented in HistoryManager
-    return () => {};
+  subscribe(listener: (event: any) => void): () => void {
+    return this.historyManager.subscribe(listener);
   }
 
   /**
@@ -363,26 +375,37 @@ export class SimpleTimeTravel implements TimeTravelAPI {
     atom: Atom<Value>,
     update: Value | ((prev: Value) => Value),
   ): void {
+    console.log(`[WRAPPED_SET] Called with atom: ${atom.name}, value: ${update}, isTimeTraveling: ${this.isTimeTraveling}`);
+    console.log(`[WRAPPED_SET] atom.id: ${atom.id?.toString()}, isTracked: ${this.atomTracker.isTracked(atom)}`);
+    
     // Track atom if not already tracked
     if (!this.atomTracker.isTracked(atom)) {
+      console.log(`[WRAPPED_SET] Tracking new atom: ${atom.name}`);
       this.atomTracker.track(atom);
+      atomRegistry.register(atom, atom.name);
+    } else {
+      console.log(`[WRAPPED_SET] Atom already tracked`);
     }
 
     // Get old value for change tracking
     let oldValue: Value | undefined;
     try {
       oldValue = this.store.get(atom);
+      console.log(`[WRAPPED_SET] Old value: ${oldValue}`);
     } catch {
       // Ignore if can't get old value
     }
 
     // Call original set
+    console.log(`[WRAPPED_SET] Calling originalSet`);
     this.originalSet(atom, update);
+    console.log(`[WRAPPED_SET] originalSet complete`);
 
     // Get new value
     let newValue: Value | undefined;
     try {
       newValue = this.store.get(atom);
+      console.log(`[WRAPPED_SET] New value: ${newValue}`);
     } catch {
       // Ignore if can't get new value
     }
@@ -394,6 +417,7 @@ export class SimpleTimeTravel implements TimeTravelAPI {
 
     // Auto-capture if enabled and not during time travel
     if (this.autoCapture && !this.isTimeTraveling) {
+      console.log(`[WRAPPED_SET] Auto-capturing`);
       this.capture(`set ${atom.name || atom.id?.description || "atom"}`);
     }
   }

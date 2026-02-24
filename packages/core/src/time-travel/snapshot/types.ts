@@ -31,6 +31,10 @@ export interface SnapshotCreatorConfig {
 
   /** Maximum number of atoms per snapshot */
   maxAtomsPerSnapshot?: number;
+  /** Whether auto-capture is enabled (for state change detection) */
+  autoCapture?: boolean;
+  /** Whether to skip state change check (useful for initial captures) */
+  skipStateCheck?: boolean;
 }
 
 /**

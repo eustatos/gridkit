@@ -166,6 +166,7 @@ declare global {
 export class DevToolsPlugin {
   private config: Required<DevToolsConfig>;
   private connection: DevToolsConnection | null = null;
+  private connections: DevToolsConnection[] = []; // All connections for broadcasting
   private mode: DevToolsMode = "disabled";
   private isTracking = true;
   private lastState: unknown = null;
@@ -316,6 +317,7 @@ export class DevToolsPlugin {
         );
       }
       this.connection = createFallbackConnection();
+      this.connections.push(this.connection);
       this.sendInitialState(store);
       return;
     }
@@ -328,19 +330,23 @@ export class DevToolsPlugin {
       return;
     }
 
-    // Create a connection to DevTools
-    this.connection = window.__REDUX_DEVTOOLS_EXTENSION__.connect({
+    // Create a connection to DevTools and track all connections
+    const extension = window.__REDUX_DEVTOOLS_EXTENSION__;
+    this.connection = extension.connect({
       name: this.config.name,
       trace: this.config.trace,
       latency: this.config.latency,
       maxAge: this.config.maxAge,
     });
+    
+    // Track this connection
+    this.connections.push(this.connection);
 
-    // Send initial state
+    // Send initial state to the main connection
     this.sendInitialState(store);
 
-    // Setup message listeners
-    this.setupMessageListeners(store);
+    // Setup message listeners for the main connection
+    this.setupMessageListeners(store, this.connection);
 
     // Enhance store methods if available
     if (store.setWithMetadata) {
@@ -349,6 +355,9 @@ export class DevToolsPlugin {
       // Fallback to polling for basic stores
       this.setupPolling(store);
     }
+    
+    // Listen for new connections from DevTools (e.g., multiple DevTools windows)
+    this.setupConnectionListener(extension, store);
   }
 
   /**
@@ -399,6 +408,7 @@ export class DevToolsPlugin {
 
   /**
    * Send initial state to DevTools (with optional lazy serialization).
+   * Sends to all connections for scenarios like multiple DevTools windows.
    * @param store The store to get initial state from
    */
   private sendInitialState(store: EnhancedStore): void {
@@ -420,7 +430,16 @@ export class DevToolsPlugin {
         this.lastLazyState = null;
       }
 
-      this.connection?.init(stateToSend);
+      // Send to all connections
+      for (const conn of this.connections) {
+        try {
+          conn.init(stateToSend);
+        } catch (error) {
+          if (process.env.NODE_ENV !== "production") {
+            console.warn("Failed to send initial state to connection:", error);
+          }
+        }
+      }
     } catch (error) {
       if (process.env.NODE_ENV !== "production") {
         console.warn("Failed to send initial state to DevTools:", error);
@@ -431,9 +450,14 @@ export class DevToolsPlugin {
   /**
    * Setup message listeners for DevTools commands.
    * @param store The store to handle commands for
+   * @param connection The connection to listen on (default: main connection)
    */
-  private setupMessageListeners(store: EnhancedStore): void {
-    const unsubscribe = this.connection?.subscribe(
+  private setupMessageListeners(
+    store: EnhancedStore,
+    connection?: DevToolsConnection,
+  ): void {
+    const conn = connection || this.connection;
+    const unsubscribe = conn?.subscribe(
       (message: DevToolsMessage) => {
         try {
           this.handleDevToolsMessage(message, store);
@@ -449,9 +473,45 @@ export class DevToolsPlugin {
     if (typeof window !== "undefined" && window.addEventListener) {
       window.addEventListener("beforeunload", () => {
         unsubscribe?.();
-        this.connection?.unsubscribe();
+        conn?.unsubscribe();
       });
     }
+  }
+
+  /**
+   * Setup listener for new connections (e.g., from multiple DevTools windows).
+   * Some DevTools extensions may create new connections dynamically.
+   * @param extension The DevTools extension instance
+   * @param store The store to apply to new connections
+   */
+  private setupConnectionListener(extension: any, store: EnhancedStore): void {
+    // Store reference for later use
+    const plugin = this;
+    
+    // Override connect method to track new connections
+    const originalConnect = extension.connect.bind(extension);
+    extension.connect = function (options?: any) {
+      const newConnection = originalConnect(options);
+      
+      // Track the new connection
+      plugin.connections.push(newConnection);
+      
+      // Send initial state to the new connection
+      try {
+        const state = store.serializeState?.() || store.getState();
+        const sanitized = plugin.config.stateSanitizer(state) as Record<
+          string,
+          unknown
+        >;
+        newConnection.init(sanitized);
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("Failed to send initial state to new connection:", error);
+        }
+      }
+      
+      return newConnection;
+    };
   }
 
   /**
@@ -659,6 +719,14 @@ export class DevToolsPlugin {
   }
 
   /**
+   * Flush any pending batch updates immediately.
+   * Useful for tests to ensure updates are sent without waiting for batch latency.
+   */
+  flushBatch(): void {
+    this.batchUpdater.flush();
+  }
+
+  /**
    * Get action name using naming system
    */
   private getActionName(
@@ -700,12 +768,13 @@ export class DevToolsPlugin {
 
   /**
    * Send state update to DevTools (called by BatchUpdater on flush).
+   * Broadcasts to all connections for scenarios like multiple DevTools windows.
    * Uses lazy serialization and incremental updates when config.serialization.lazy is set.
    * @param store The store to get state from
    * @param action The action name
    */
   private doSendStateUpdate(store: EnhancedStore, action: string): void {
-    if (!this.isTracking || !this.connection) return;
+    if (!this.isTracking) return;
     try {
       const currentState = store.serializeState?.() || store.getState();
       const sanitizedState = this.config.stateSanitizer(currentState) as Record<
@@ -749,7 +818,21 @@ export class DevToolsPlugin {
         console.log('[DevTools] State type:', typeof stateToSend);
         console.log('[DevTools] State keys:', Object.keys(stateToSend));
         console.log('[DevTools] State:', stateToSend);
-        this.connection.send({ type: action }, stateToSend);
+        
+        // Broadcast to all connections
+        const actionObj = { type: action };
+        for (const conn of this.connections) {
+          if (conn) {
+            try {
+              conn.send(actionObj, stateToSend);
+            } catch (error) {
+              if (process.env.NODE_ENV !== "production") {
+                console.warn("Failed to send to connection:", error);
+              }
+            }
+          }
+        }
+        
         this.snapshotMapper.mapSnapshotToAction(
           `snap-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
           action,

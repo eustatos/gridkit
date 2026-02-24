@@ -18,8 +18,7 @@ export type {
 // Re-export core components (for advanced use cases or testing)
 export { HistoryManager } from "./HistoryManager";
 export { HistoryNavigator } from "./HistoryNavigator";
-export type { HistoryManagerConfig } from "./HistoryManager";
-export type { NavigationResult } from "./HistoryNavigator";
+export type { HistoryManagerConfig, NavigationResult } from "./types";
 
 // Re-export internal types (useful for extensions)
 export type {
