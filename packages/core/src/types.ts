@@ -264,9 +264,52 @@ export interface StoreRegistry {
   /** The set of atom IDs owned by the store */
   atoms: Set<symbol>;
 }
-// packages/core/types.ts
 
-// ... existing types ...
+// === INCREMENTAL SNAPSHOT TYPES (basic types needed by TimeTravelOptions) ===
+
+/**
+ * Configuration for incremental snapshots
+ */
+export interface IncrementalSnapshotConfig {
+  /** Enable incremental snapshots */
+  enabled: boolean;
+  /** Create full snapshot every N changes */
+  fullSnapshotInterval: number;
+  /** Maximum deltas before forced full snapshot */
+  maxDeltaChainLength: number;
+  /** Maximum age of delta chain (ms) */
+  maxDeltaChainAge: number;
+  /** Maximum memory for delta chain (bytes) */
+  maxDeltaChainSize: number;
+  /** Change detection strategy */
+  changeDetection: "shallow" | "deep" | "reference";
+  /** Reconstruct on demand */
+  reconstructOnDemand: boolean;
+  /** Cache reconstructed snapshots */
+  cacheReconstructed: boolean;
+  /** Cache size limit */
+  maxCacheSize: number;
+  /** Compression level */
+  compressionLevel: "none" | "light" | "aggressive";
+}
+
+/**
+ * Default configuration for incremental snapshots
+ */
+export const DEFAULT_INCREMENTAL_SNAPSHOT_CONFIG: IncrementalSnapshotConfig = {
+  enabled: true,
+  fullSnapshotInterval: 10,
+  maxDeltaChainLength: 20,
+  maxDeltaChainAge: 5 * 60 * 1000, // 5 minutes
+  maxDeltaChainSize: 1024 * 1024, // 1MB
+  changeDetection: "deep",
+  reconstructOnDemand: true,
+  cacheReconstructed: true,
+  maxCacheSize: 100,
+  compressionLevel: "light",
+};
+
+// === TIME TRAVEL TYPES ===
 
 // === TIME TRAVEL TYPES ===
 
@@ -274,6 +317,10 @@ export interface TimeTravelOptions {
   maxHistory?: number;
   autoCapture?: boolean;
   registryMode?: "global" | "isolated";
+  /** Enable incremental snapshots (delta-based history) */
+  enableIncrementalSnapshots?: boolean;
+  /** Configuration for incremental snapshots */
+  incrementalSnapshotConfig?: Partial<IncrementalSnapshotConfig>;
   atoms?: any[]; // Add atoms property to TimeTravelOptions
 }
 
