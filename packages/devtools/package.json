@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "build": "tsup index.ts --format esm,cjs --dts",
-    "build:extension": "webpack --config webpack.config.js",
+    "build:extension": "webpack --config webpack.config.js && node scripts/copy-extension.js",
     "dev": "tsup index.ts --format esm,cjs --dts --watch",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -41,6 +41,7 @@
     "@types/react-dom": "^18.2.0",
     "@vitest/coverage-v8": "^1.2.1",
     "babel-loader": "^10.0.0",
+    "copy-webpack-plugin": "^13.0.1",
     "css-loader": "^7.1.4",
     "jsdom": "^28.1.0",
     "react": "^18.2.0",
