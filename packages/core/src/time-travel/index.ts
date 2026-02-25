@@ -223,6 +223,35 @@ export type {
 };
 
 // ============================================================================
+
+// ============================================================================
+// Compression module
+// ============================================================================
+
+import * as Compression from "./compression";
+
+export { Compression };
+export type {
+  CompressionStrategy,
+  CompressionStrategyConfig,
+  CompressionMetadata,
+  TimeBasedCompressionConfig,
+  SizeBasedCompressionConfig,
+  SignificanceBasedCompressionConfig,
+  CompressionFactoryConfig,
+  CompressionStrategyType,
+} from "./compression";
+
+export {
+  BaseCompressionStrategy,
+  NoCompressionStrategy,
+  TimeBasedCompression,
+  SizeBasedCompression,
+  SignificanceBasedCompression,
+  CompressionFactory,
+  compareSnapshots,
+} from "./compression";
+
 // History utilities and types
 // ============================================================================
 

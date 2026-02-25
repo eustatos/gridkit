@@ -87,6 +87,29 @@ export { createStore } from "./store";
  */
 export { createEnhancedStore } from "./enhanced-store";
 
+
+// Time travel compression strategies
+export { Compression } from "./time-travel";
+export type {
+  CompressionStrategy,
+  CompressionStrategyConfig,
+  CompressionMetadata,
+  TimeBasedCompressionConfig,
+  SizeBasedCompressionConfig,
+  SignificanceBasedCompressionConfig,
+  CompressionFactoryConfig,
+  CompressionStrategyType,
+} from "./time-travel";
+export {
+  BaseCompressionStrategy,
+  NoCompressionStrategy,
+  TimeBasedCompression,
+  SizeBasedCompression,
+  SignificanceBasedCompression,
+  CompressionFactory,
+  compareSnapshots,
+} from "./time-travel";
+
 // Time travel functionality
 export { SimpleTimeTravel } from "./time-travel";
 

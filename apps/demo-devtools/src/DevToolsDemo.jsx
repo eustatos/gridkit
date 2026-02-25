@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAtom } from '@nexus-state/react'
-import { atom, createStore } from '@nexus-state/core'
+import { atom, createStore, SimpleTimeTravel } from '@nexus-state/core'
 import { devTools } from '@nexus-state/devtools'
 
 // Простой пример счетчика
@@ -8,15 +8,30 @@ const countAtom = atom(0, 'counter')
 const doubleCountAtom = atom((get) => get(countAtom) * 2, 'doubleCount')
 const isEvenAtom = atom((get) => get(countAtom) % 2 === 0, 'isEven')
 
-// Создаем store с devtools
+// Создаем store
 const store = createStore()
+
+// Создаем экземпляр SimpleTimeTravel
+const timeTravel = new SimpleTimeTravel(store, {
+  maxHistory: 50,
+  autoCapture: true,
+})
+
+// Создаем и настраиваем DevTools plugin
 const devtoolsPlugin = devTools()
+
+// Применяем DevTools plugin - timeTravel будет автоматически обнаружен
 devtoolsPlugin.apply(store)
 
 const CounterDemo = () => {
   const [count, setCount] = useAtom(countAtom, store)
   const [doubleCount] = useAtom(doubleCountAtom, store)
   const [isEven] = useAtom(isEvenAtom, store)
+  
+  // Get time travel info
+  const historyLength = timeTravel.getHistory().length
+  const canUndo = timeTravel.canUndo()
+  const canRedo = timeTravel.canRedo()
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
@@ -70,7 +85,13 @@ const CounterDemo = () => {
       </div>
 
       <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#E8F5E9', borderRadius: '5px', border: '1px solid #C8E6C9', fontSize: '14px', color: '#2E7D32' }}>
-        <strong>ℹ️ Information:</strong> This is a demonstration of DevTools integration. Use Nexus State DevTools to inspect atoms and their states.
+        <strong>ℹ️ Time Travel Info:</strong>
+        <ul style={{ margin: '10px 0', paddingLeft: '20px' }}>
+          <li>History entries: {historyLength}</li>
+          <li>Can Undo: {canUndo ? '✅ Yes' : '❌ No'}</li>
+          <li>Can Redo: {canRedo ? '✅ Yes' : '❌ No'}</li>
+        </ul>
+        <p><strong>💡 Instructions:</strong> Use Redux DevTools extension to navigate through history. Click on any state in the DevTools timeline to jump to it.</p>
       </div>
     </div>
   )

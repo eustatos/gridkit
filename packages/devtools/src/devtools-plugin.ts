@@ -16,6 +16,7 @@ import type {
   ActionMetadata,
 } from "./types";
 import type { SnapshotMapper } from "./snapshot-mapper";
+import type { SimpleTimeTravel } from "@nexus-state/core";
 import {
   captureStackTrace,
   formatStackTraceForDevTools,
@@ -179,6 +180,7 @@ export class DevToolsPlugin {
   private currentStore: EnhancedStore | null = null;
   /** Last lazy-serialized state (when serialization.lazy is enabled) for incremental updates */
   private lastLazyState: Record<string, unknown> | null = null;
+  private timeTravel: SimpleTimeTravel | null = null;
 
   constructor(config: DevToolsConfig = {}) {
     // Extract action naming config with defaults
@@ -228,6 +230,13 @@ export class DevToolsPlugin {
         }
       },
     });
+  }
+
+  /**
+   * Set up time travel integration
+   */
+  setTimeTravel(timeTravel: SimpleTimeTravel): void {
+    this.timeTravel = timeTravel;
   }
 
   /**
@@ -355,6 +364,9 @@ export class DevToolsPlugin {
       // Fallback to polling for basic stores
       this.setupPolling(store);
     }
+    
+    // Setup time travel if available
+    this.setupTimeTravel(store);
     
     // Listen for new connections from DevTools (e.g., multiple DevTools windows)
     this.setupConnectionListener(extension, store);
@@ -531,12 +543,7 @@ export class DevToolsPlugin {
       switch (payload?.type) {
         case "JUMP_TO_ACTION":
         case "JUMP_TO_STATE":
-          // Time travel is not fully supported without core modifications
-          if (process.env.NODE_ENV !== "production") {
-            console.warn(
-              "Time travel is not fully supported without core modifications",
-            );
-          }
+          this.handleTimeTravelCommand(payload, store);
           break;
 
         case "START":
@@ -568,6 +575,104 @@ export class DevToolsPlugin {
           if (process.env.NODE_ENV !== "production") {
             console.warn("Unknown DevTools dispatch type:", payload?.type);
           }
+      }
+    }
+  }
+
+  /**
+   * Handle time travel commands from DevTools
+   * @param payload The time travel command payload
+   * @param store The store to apply commands to
+   */
+  private handleTimeTravelCommand(
+    payload: { type: string; [key: string]: unknown },
+    store: EnhancedStore,
+  ): void {
+    if (!this.timeTravel) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          "[DevToolsPlugin] Time travel not available. Ensure store has SimpleTimeTravel instance.",
+        );
+      }
+      return;
+    }
+
+    try {
+      switch (payload.type) {
+        case "JUMP_TO_STATE":
+          const index = (payload as any).index;
+          if (typeof index === 'number' && index >= 0) {
+            console.log(`[DevToolsPlugin] JUMP_TO_STATE: ${index}`);
+            const success = this.timeTravel.jumpTo(index);
+            if (success) {
+              if (process.env.NODE_ENV !== "production") {
+                console.log(`[DevToolsPlugin] Successfully jumped to state ${index}`);
+              }
+              // Send updated state to DevTools
+              this.sendInitialState(store);
+            } else {
+              if (process.env.NODE_ENV !== "production") {
+                console.warn(`[DevToolsPlugin] Failed to jump to state ${index}`);
+              }
+            }
+          } else {
+            if (process.env.NODE_ENV !== "production") {
+              console.warn(`[DevToolsPlugin] Invalid index: ${index}`);
+            }
+          }
+          break;
+
+        case "JUMP_TO_ACTION":
+          const actionName = (payload as any).action;
+          if (typeof actionName === 'string') {
+            console.log(`[DevToolsPlugin] JUMP_TO_ACTION: ${actionName}`);
+            
+            // Find the index of the action in history
+            const history = this.timeTravel.getHistory();
+            let foundIndex = -1;
+            
+            // Search backwards from the end
+            for (let i = history.length - 1; i >= 0; i--) {
+              const snapshot = history[i];
+              if (snapshot.metadata.action === actionName) {
+                foundIndex = i;
+                break;
+              }
+            }
+            
+            if (foundIndex >= 0) {
+              const success = this.timeTravel.jumpTo(foundIndex);
+              if (success) {
+                if (process.env.NODE_ENV !== "production") {
+                  console.log(`[DevToolsPlugin] Successfully jumped to action ${actionName} at index ${foundIndex}`);
+                }
+                // Send updated state to DevTools
+                this.sendInitialState(store);
+              } else {
+                if (process.env.NODE_ENV !== "production") {
+                  console.warn(`[DevToolsPlugin] Failed to jump to action ${actionName}`);
+                }
+              }
+            } else {
+              if (process.env.NODE_ENV !== "production") {
+                console.warn(`[DevToolsPlugin] Action not found: ${actionName}`);
+              }
+            }
+          } else {
+            if (process.env.NODE_ENV !== "production") {
+              console.warn(`[DevToolsPlugin] Invalid action name: ${actionName}`);
+            }
+          }
+          break;
+
+        default:
+          if (process.env.NODE_ENV !== "production") {
+            console.warn(`[DevToolsPlugin] Unknown time travel command: ${payload.type}`);
+          }
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[DevToolsPlugin] Error handling time travel command:", error);
       }
     }
   }
@@ -909,5 +1014,28 @@ export class DevToolsPlugin {
    */
   getSnapshotMapper(): SnapshotMapper {
     return this.snapshotMapper;
+  }
+
+  /**
+   * Set up time travel integration
+   * @param store The store to integrate with
+   */
+  private setupTimeTravel(store: EnhancedStore): void {
+    // Check if store has timeTravel property (SimpleTimeTravel instance)
+    const storeWithTimeTravel = store as any;
+    
+    if (storeWithTimeTravel.timeTravel && typeof storeWithTimeTravel.timeTravel === 'object') {
+      console.log('[DevToolsPlugin] Found timeTravel instance:', {
+        hasJumpTo: typeof storeWithTimeTravel.timeTravel.jumpTo === 'function',
+        hasGetHistory: typeof storeWithTimeTravel.timeTravel.getHistory === 'function',
+        hasUndo: typeof storeWithTimeTravel.timeTravel.undo === 'function',
+        hasRedo: typeof storeWithTimeTravel.timeTravel.redo === 'function',
+      });
+      
+      this.timeTravel = storeWithTimeTravel.timeTravel;
+    } else if (storeWithTimeTravel.jumpTo && storeWithTimeTravel.getHistory) {
+      // Fallback: create SimpleTimeTravel wrapper for enhanced store
+      console.log('[DevToolsPlugin] Store has time travel methods directly');
+    }
   }
 }

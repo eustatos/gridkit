@@ -1,5 +1,5 @@
 import type { DevToolsConfig } from './types';
-import { DevToolsPlugin } from './devtools-plugin';
+import { DevToolsPluginRefactored, createDevToolsPluginRefactored } from './devtools-plugin-refactored';
 
 /**
  * Factory function to create a DevToolsPlugin instance.
@@ -21,11 +21,11 @@ import { DevToolsPlugin } from './devtools-plugin';
  *   showAtomNames: true,
  * });
  */
-export function devTools(config: DevToolsConfig = {}): DevToolsPlugin {
-  return new DevToolsPlugin(config);
+export function devTools(config: DevToolsConfig = {}): DevToolsPluginRefactored {
+  return createDevToolsPluginRefactored(config);
 }
 
-export { DevToolsPlugin };
+export { DevToolsPluginRefactored as DevToolsPlugin };
 export { SnapshotMapper, createSnapshotMapper } from './snapshot-mapper';
 export type {
   DevToolsConfig,

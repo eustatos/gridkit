@@ -27,6 +27,8 @@ export interface MessageHandlerOptions {
   debug?: boolean;
   /** Custom handlers for specific message types */
   customHandlers?: Record<string, (message: DevToolsMessage, store: EnhancedStore) => void>;
+  /** Callback when state is updated after time-travel command */
+  onStateUpdate?: (state: Record<string, unknown>) => void;
 }
 
 /**
@@ -60,12 +62,15 @@ export class MessageHandler {
       enableImportExport: options.enableImportExport ?? true,
       debug: options.debug ?? false,
       customHandlers: options.customHandlers ?? {},
+      onStateUpdate: options.onStateUpdate ?? (() => {}),
     };
 
     this.stateSerializer = createStateSerializer();
 
     if (this.options.enableTimeTravel) {
-      this.commandHandler = new CommandHandler();
+      this.commandHandler = new CommandHandler({
+        onStateUpdate: (state) => this.onStateUpdate(state),
+      });
     }
   }
 
@@ -116,6 +121,34 @@ export class MessageHandler {
     if (this.commandHandler) {
       this.commandHandler.setSnapshotMapper(mapper);
     }
+  }
+
+  /**
+   * Set the SimpleTimeTravel instance for time travel debugging
+   * @param timeTravel The SimpleTimeTravel instance
+   */
+  setTimeTravel(timeTravel: any): void {
+    console.log('[MessageHandler] setTimeTravel called:', {
+      hasJumpTo: typeof timeTravel.jumpTo === 'function',
+      hasGetHistory: typeof timeTravel.getHistory === 'function',
+    });
+    
+    if (this.commandHandler) {
+      this.commandHandler.setTimeTravel(timeTravel);
+    }
+  }
+
+  /**
+   * Handle state updates after time-travel commands
+   */
+  private onStateUpdate(state: Record<string, unknown>): void {
+    console.log('[MessageHandler.onStateUpdate] State updated after time-travel:', {
+      hasState: !!state,
+      stateKeys: Object.keys(state),
+    });
+    
+    // Call the configured callback if available
+    this.options.onStateUpdate(state);
   }
 
   /**
@@ -507,7 +540,9 @@ export class MessageHandler {
     if (newOptions.enableTimeTravel === false && this.commandHandler) {
       this.commandHandler = null;
     } else if (newOptions.enableTimeTravel === true && !this.commandHandler) {
-      this.commandHandler = new CommandHandler();
+      this.commandHandler = new CommandHandler({
+        onStateUpdate: (state) => this.onStateUpdate(state),
+      });
       
       // Re-set time travel if store has it
       if (this.store && (this.store as any).timeTravel) {

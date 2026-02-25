@@ -20,6 +20,7 @@ import type {
   DevToolsMode,
   ActionMetadata,
 } from "./types";
+import type { SimpleTimeTravel } from "@nexus-state/core";
 import { atomRegistry } from "@nexus-state/core";
 
 // Import decomposed services
@@ -63,6 +64,7 @@ export class DevToolsPluginRefactored {
   private lastState: unknown = null;
   private lastLazyState: Record<string, unknown> | null = null;
   private isTracking = true;
+  private timeTravel: SimpleTimeTravel | null = null;
 
   constructor(config: DevToolsConfig = {}) {
     // Store configuration
@@ -76,6 +78,7 @@ export class DevToolsPluginRefactored {
       enableTimeTravel: true,
       enableImportExport: true,
       debug: process.env.NODE_ENV !== "production",
+      onStateUpdate: (state) => this.onStateUpdateFromTimeTravel(state),
     });
     this.stackTraceService = createStackTraceService();
     this.atomNameResolver = createAtomNameResolver({
@@ -196,15 +199,42 @@ export class DevToolsPluginRefactored {
   }
 
   /**
+   * Set the SimpleTimeTravel instance for time travel debugging
+   * @param timeTravel The SimpleTimeTravel instance
+   */
+  setTimeTravel(timeTravel: SimpleTimeTravel): void {
+    this.timeTravel = timeTravel;
+    console.log('[DevToolsPlugin] TimeTravel set:', {
+      hasJumpTo: typeof timeTravel.jumpTo === 'function',
+      hasGetHistory: typeof timeTravel.getHistory === 'function',
+    });
+  }
+
+  /**
+   * Handle state update from time-travel command
+   */
+  private onStateUpdateFromTimeTravel(state: Record<string, unknown>): void {
+    console.log('[DevToolsPlugin] State updated from time-travel:', {
+      hasState: !!state,
+      stateKeys: Object.keys(state),
+    });
+    
+    // Send updated state to DevTools
+    if (this.currentStore && this.connector.isConnectedToDevTools()) {
+      const actionName = this.actionNamingSystem.getName({
+        atom: { id: { toString: (): string => "time-travel" } } as BasicAtom,
+        atomName: "time-travel",
+        operation: "JUMP",
+      });
+      
+      this.doSendStateUpdate(this.currentStore, actionName);
+    }
+  }
+
+  /**
    * Apply the plugin to a store
    */
   apply(store: EnhancedStore): void {
-    console.log('[DevToolsPlugin.apply] Store received:', {
-      hasTimeTravel: 'timeTravel' in store,
-      timeTravelType: typeof (store as any).timeTravel,
-      storeKeys: Object.keys(store).filter(k => !k.startsWith('get') && k !== 'set' && k !== 'subscribe'),
-    });
-    
     this.currentStore = store;
 
     // Runtime production guard
@@ -230,6 +260,9 @@ export class DevToolsPluginRefactored {
     // Setup message handler
     this.messageHandler.setStore(store);
     this.messageHandler.setSnapshotMapper(this.snapshotMapper);
+
+    // Setup time travel if available
+    this.setupTimeTravel(store);
 
     // Subscribe to DevTools messages
     this.connector.subscribe((message) => {
@@ -538,7 +571,46 @@ export class DevToolsPluginRefactored {
     this.currentBatchId = null;
     this.lastState = null;
     this.lastLazyState = null;
+    this.timeTravel = null;
     this.isTracking = false;
+  }
+
+  /**
+   * Set up time travel integration
+   * @param store The store to integrate with
+   */
+  private setupTimeTravel(store: EnhancedStore): void {
+    const storeWithTimeTravel = store as any;
+    
+    // First check if setTimeTravel was called explicitly
+    if (this.timeTravel) {
+      console.log('[DevToolsPlugin] Using explicitly set timeTravel');
+      this.messageHandler.setTimeTravel(this.timeTravel);
+      return;
+    }
+    
+    // Then check if store has timeTravel property
+    if (storeWithTimeTravel.timeTravel && typeof storeWithTimeTravel.timeTravel === 'object') {
+      console.log('[DevToolsPlugin] Found timeTravel on store:', {
+        hasJumpTo: typeof storeWithTimeTravel.timeTravel.jumpTo === 'function',
+        hasGetHistory: typeof storeWithTimeTravel.timeTravel.getHistory === 'function',
+        hasUndo: typeof storeWithTimeTravel.timeTravel.undo === 'function',
+        hasRedo: typeof storeWithTimeTravel.timeTravel.redo === 'function',
+      });
+      
+      this.messageHandler.setTimeTravel(storeWithTimeTravel.timeTravel);
+      return;
+    }
+    
+    // Check if store has time travel methods directly
+    if (storeWithTimeTravel.jumpTo && storeWithTimeTravel.getHistory) {
+      console.log('[DevToolsPlugin] Store has time travel methods directly');
+      // Create a wrapper
+      this.messageHandler.setTimeTravel(storeWithTimeTravel);
+      return;
+    }
+    
+    console.log('[DevToolsPlugin] No timeTravel found on store');
   }
 }
 

@@ -44,6 +44,7 @@ export class CommandHandler {
       maxHistory: config.maxHistory ?? 50,
       onCommandExecuted: config.onCommandExecuted ?? (() => {}),
       onCommandError: config.onCommandError ?? (() => {}),
+      onStateUpdate: config.onStateUpdate ?? (() => {}),
     };
     this.stateSerializer = createStateSerializer();
   }
@@ -136,6 +137,10 @@ export class CommandHandler {
     if (success) {
       this.history.push(command);
       this.config.onCommandExecuted(command, true);
+      
+      // Send updated state to DevTools
+      this.sendUpdatedState();
+      
       return true;
     } else {
       throw new Error(`Failed to jump to index ${index}`);
@@ -203,6 +208,10 @@ export class CommandHandler {
     if (success) {
       this.history.push(command);
       this.config.onCommandExecuted(command, true);
+      
+      // Send updated state to DevTools
+      this.sendUpdatedState();
+      
       return true;
     } else {
       throw new Error(`Failed to jump to action "${actionName}"`);
@@ -287,6 +296,10 @@ export class CommandHandler {
     if (success) {
       this.history.push(command);
       this.config.onCommandExecuted(command, true);
+      
+      // Send updated state to DevTools
+      this.sendUpdatedState();
+      
       return true;
     } else {
       throw new Error("Failed to import state into SimpleTimeTravel");
@@ -345,6 +358,38 @@ export class CommandHandler {
         console.warn("Failed to export state:", error);
       }
       return null;
+    }
+  }
+
+  /**
+   * Send updated state to DevTools
+   */
+  private sendUpdatedState(): void {
+    try {
+      if (!this.timeTravel) {
+        return;
+      }
+
+      // Get current state from SimpleTimeTravel
+      const history = this.timeTravel.getHistory();
+      if (history.length === 0) {
+        return;
+      }
+
+      const currentSnapshot = history[history.length - 1];
+      const state: Record<string, unknown> = {};
+
+      // Convert snapshot state to plain object
+      for (const [atomIdStr, atomData] of Object.entries(currentSnapshot.state)) {
+        state[atomIdStr] = atomData.value;
+      }
+
+      // Call the callback to send state to DevTools
+      this.config.onStateUpdate(state);
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("Failed to send updated state to DevTools:", error);
+      }
     }
   }
 }

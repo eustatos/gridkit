@@ -136,6 +136,12 @@ export interface HistoryStats {
   oldestTimestamp?: number;
   /** Newest snapshot timestamp */
   newestTimestamp?: number;
+  /** Compression metadata if compression was applied */
+  compressionMetadata?: import("../types").CompressionMetadata;
+  /** Original history size before compression */
+  originalHistorySize?: number;
+  /** Compressed history size after compression */
+  compressedHistorySize?: number;
 }
 
 /**

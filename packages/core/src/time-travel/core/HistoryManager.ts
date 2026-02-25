@@ -1,32 +1,93 @@
 import { Snapshot } from "../types";
 import type { HistoryEvent, HistoryStats } from "./types";
 
+// Import compression types
+import type { CompressionStrategy, CompressionStrategyConfig } from "../compression";
+
 export class HistoryManager {
   private past: Snapshot[] = [];
   private future: Snapshot[] = [];
   private current: Snapshot | null = null;
   private maxHistory: number;
   private listeners: Set<(event: HistoryEvent) => void> = new Set();
+  
+  // Compression support
+  private compressionStrategy: CompressionStrategy | null = null;
+  private compressionConfig: CompressionStrategyConfig | null = null;
+  
+  // Memory tracking before/after compression
+  private originalHistorySize: number = 0;
+  private compressedHistorySize: number = 0;
 
-  constructor(maxHistory: number = 50) {
+  constructor(maxHistory: number = 50, compressionConfig?: CompressionStrategyConfig) {
     this.maxHistory = maxHistory;
+    
+    if (compressionConfig) {
+      this.compressionConfig = compressionConfig;
+      // Import compression factory dynamically to avoid circular dependencies
+      // This will be replaced with actual implementation
+    }
+  }
+  
+  /**
+   * Set compression strategy
+   */
+  setCompressionStrategy(strategy: CompressionStrategy | null): void {
+    this.compressionStrategy = strategy;
+    
+    // Reset compression tracking
+    this.originalHistorySize = 0;
+    this.compressedHistorySize = 0;
+    
+    // Apply compression to existing history if strategy is enabled
+    if (strategy && strategy.name !== "none" && strategy.shouldCompress(this.getAll(), this.past.length)) {
+      this.applyCompression();
+    }
   }
 
   add(snapshot: Snapshot): void {
     console.log(`[HISTORY.add] Adding snapshot: ${snapshot.metadata.action || 'unknown'}, past.length: ${this.past.length}, current: ${this.current?.metadata.action || 'none'}`);
+    
+    // If maxHistory is 0, don't save any history
+    if (this.maxHistory <= 0) {
+      console.log(`[HISTORY.add] maxHistory is ${this.maxHistory}, skipping history save`);
+      this.current = snapshot;
+      this.past = [];
+      this.future = [];
+      console.log(`[HISTORY.add] Added. Total: ${this.getAll().length} (past: ${this.past.length}, current: ${this.current ? 1 : 0}, future: ${this.future.length})`);
+      return;
+    }
+    
+    // First, push current to past if it exists
     if (this.current) {
       this.past.push(this.current);
-      console.log(`[HISTORY.add] Pushed to past, past.length now: ${this.past.length}`);
+      console.log(`[HISTORY.add] Pushed current to past, past.length now: ${this.past.length}`);
     }
+    
+    // Update current and clear future
     this.current = snapshot;
     this.future = [];
     
-    // Enforce maxHistory: past + current <= maxHistory
-    // Keep only the last (maxHistory - 1) snapshots in past
-    if (this.past.length >= this.maxHistory) {
-      this.past = this.past.slice(1);
-      console.log(`[HISTORY.add] Trimmed past to ${this.past.length} items`);
+    // Enforce maxHistory limit: past + current <= maxHistory
+    // We need to keep at most (maxHistory - 1) items in past
+    // because current counts as one slot
+    const maxPastSize = this.maxHistory - 1;
+    
+    if (this.past.length > maxPastSize) {
+      // Calculate how many items to remove from the beginning
+      const itemsToRemove = this.past.length - maxPastSize;
+      
+      // Keep only the most recent (maxPastSize) items
+      this.past = this.past.slice(itemsToRemove);
+      console.log(`[HISTORY.add] Trimmed past from ${this.past.length + itemsToRemove} to ${this.past.length} items (maxPastSize: ${maxPastSize})`);
     }
+    
+    // Apply compression if strategy is configured and should compress
+    if (this.compressionStrategy && this.compressionStrategy.shouldCompress(this.getAll(), this.past.length)) {
+      console.log(`[HISTORY.add] Applying compression`);
+      this.applyCompression();
+    }
+    
     console.log(`[HISTORY.add] Added. Total: ${this.getAll().length} (past: ${this.past.length}, current: ${this.current ? 1 : 0}, future: ${this.future.length})`);
   }
 
@@ -105,6 +166,66 @@ export class HistoryManager {
     return targetSnapshot;
   }
 
+  /**
+   * Apply compression to the current history
+   */
+  private applyCompression(): void {
+    if (!this.compressionStrategy) {
+      return;
+    }
+    
+    // Record original size
+    const allSnapshots = this.getAll();
+    this.originalHistorySize = allSnapshots.length;
+    
+    console.log(`[HISTORY.compression] Original history size: ${this.originalHistorySize}`);
+    
+    // Apply compression
+    const compressedHistory = this.compressionStrategy.compress(allSnapshots);
+    this.compressedHistorySize = compressedHistory.length;
+    
+    console.log(`[HISTORY.compression] Compressed history size: ${this.compressedHistorySize}`);
+    
+    // To preserve navigation capabilities, we need to rebuild past/future
+    // from the compressed history while keeping the same current snapshot
+    const currentIndex = this.past.length;  // This was the current position BEFORE add
+    
+    // Find the current snapshot in the compressed history
+    // We use the snapshot ID to find it
+    const currentSnapshotIndex = compressedHistory.findIndex(
+      (s) => s.id === this.current?.id,
+    );
+    
+    if (currentSnapshotIndex !== -1) {
+      // Found current in compressed history
+      // The past should be all snapshots before current in compressed history
+      this.past = compressedHistory.slice(0, currentSnapshotIndex);
+      // The future should be all snapshots after current in compressed history
+      this.future = compressedHistory.slice(currentSnapshotIndex + 1);
+      
+      // The current is the snapshot at currentSnapshotIndex
+      this.current = compressedHistory[currentSnapshotIndex];
+      
+      console.log(`[HISTORY.compression] Rebuilt history: past=${this.past.length}, current=${this.current?.metadata.action}, future=${this.future.length}`);
+    } else {
+      // Current snapshot not found in compressed history
+      // This should not happen in normal operation, but we have a fallback
+      console.warn(`[HISTORY.compression] Current snapshot not found in compressed history`);
+      
+      // Use the index from before compression
+      if (currentIndex < compressedHistory.length) {
+        this.past = compressedHistory.slice(0, currentIndex);
+        this.future = compressedHistory.slice(currentIndex + 1);
+        this.current = compressedHistory[currentIndex];
+        
+        console.log(`[HISTORY.compression] Fallback: using index ${currentIndex}`);
+      }
+    }
+    
+    // Reset compression strategy
+    this.compressionStrategy.reset?.();
+  }
+
   // Остальные методы...
 
   /**
@@ -114,6 +235,10 @@ export class HistoryManager {
     this.past = [];
     this.future = [];
     this.current = null;
+    
+    // Reset compression tracking
+    this.originalHistorySize = 0;
+    this.compressedHistorySize = 0;
     
     this.emit({
       type: "change",
@@ -135,6 +260,10 @@ export class HistoryManager {
       estimatedMemoryUsage: this.estimateMemoryUsage(),
       oldestTimestamp: this.past.length > 0 ? this.past[0].metadata.timestamp : undefined,
       newestTimestamp: this.current ? this.current.metadata.timestamp : undefined,
+      // Add compression stats if available
+      compressionMetadata: this.compressionStrategy?.getMetadata() || undefined,
+      originalHistorySize: this.originalHistorySize,
+      compressedHistorySize: this.compressedHistorySize,
     };
   }
 
@@ -178,5 +307,14 @@ export class HistoryManager {
    */
   private emit(event: HistoryEvent): void {
     this.listeners.forEach((listener) => listener(event));
+  }
+}
+
+// Extend HistoryStats to include compression metadata
+declare module "./types" {
+  interface HistoryStats {
+    compressionMetadata?: import("../types").CompressionMetadata;
+    originalHistorySize?: number;
+    compressedHistorySize?: number;
   }
 }

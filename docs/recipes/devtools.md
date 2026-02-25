@@ -20,10 +20,10 @@ npm install @nexus-state/devtools
 
 ## Basic Setup
 
-### React with DevTools
+### React with DevTools and Time-Travel
 
 ```javascript
-import { atom, createStore } from '@nexus-state/core';
+import { atom, createStore, SimpleTimeTravel } from '@nexus-state/core';
 import { useAtom } from '@nexus-state/react';
 import { devTools } from '@nexus-state/devtools';
 
@@ -35,9 +35,18 @@ const lastNameAtom = atom('Doe', 'lastName');
 // Create store
 const store = createStore();
 
-// Apply devtools plugin
+// Create and configure DevTools plugin
 const devtoolsPlugin = devTools();
+
+// Create SimpleTimeTravel instance for time travel debugging
+const timeTravel = new SimpleTimeTravel(store, {
+  maxHistory: 50,
+  autoCapture: true,
+});
+
+// Apply devtools plugin and set up time travel
 devtoolsPlugin.apply(store);
+devtoolsPlugin.setTimeTravel(timeTravel);
 
 // In your React component
 function App() {
@@ -97,12 +106,58 @@ devtoolsPlugin.apply(store);
 
 ### Time-Travel Debugging
 
-In the DevTools interface:
+Time-travel debugging allows you to navigate through your application's state history.
 
-1. **Jump to State**: Click on any state in the history to revert to it
+#### Setup
+
+To enable time-travel, create a `SimpleTimeTravel` instance and connect it to DevTools:
+
+```javascript
+import { atom, createStore, SimpleTimeTravel } from '@nexus-state/core';
+import { devTools } from '@nexus-state/devtools';
+
+const store = createStore();
+const timeTravel = new SimpleTimeTravel(store, {
+  maxHistory: 50,
+  autoCapture: true,
+});
+
+const devtoolsPlugin = devTools();
+devtoolsPlugin.apply(store);
+devtoolsPlugin.setTimeTravel(timeTravel);
+```
+
+#### Using Time-Travel in DevTools
+
+In the Redux DevTools interface:
+
+1. **Jump to State**: Click on any state in the timeline to revert to it
 2. **Undo/Redo**: Use the buttons to navigate through states
 3. **State Inspector**: View the complete state tree at any point
 4. **Action List**: See all actions with timestamps and payloads
+
+#### API Methods
+
+```javascript
+// Get current history
+const history = timeTravel.getHistory();
+
+// Jump to specific state by index
+timeTravel.jumpTo(5);
+
+// Check if undo is available
+if (timeTravel.canUndo()) {
+  timeTravel.undo();
+}
+
+// Check if redo is available
+if (timeTravel.canRedo()) {
+  timeTravel.redo();
+}
+
+// Clear history
+timeTravel.clearHistory();
+```
 
 ### Action Naming Strategies
 
@@ -289,13 +344,17 @@ function Form() {
 
 ### Time Travel in Development
 
-Enable time travel only in development:
+Enable time travel in development:
 
 ```javascript
-import { atom, createStore } from '@nexus-state/core';
+import { atom, createStore, SimpleTimeTravel } from '@nexus-state/core';
 import { devTools } from '@nexus-state/devtools';
 
 const store = createStore();
+const timeTravel = new SimpleTimeTravel(store, {
+  maxHistory: 50,
+  autoCapture: true,
+});
 
 if (process.env.NODE_ENV === 'development') {
   const devtoolsPlugin = devTools({
@@ -305,6 +364,7 @@ if (process.env.NODE_ENV === 'development') {
   });
   
   devtoolsPlugin.apply(store);
+  devtoolsPlugin.setTimeTravel(timeTravel);
 }
 ```
 

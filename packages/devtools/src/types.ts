@@ -172,6 +172,8 @@ export interface CommandHandlerConfig {
   onCommandExecuted?: (command: Command, success: boolean) => void;
   /** Callback when command execution fails */
   onCommandError?: (command: Command, error: Error) => void;
+  /** Callback when state is updated after time-travel command */
+  onStateUpdate?: (state: Record<string, unknown>) => void;
 }
 
 /**

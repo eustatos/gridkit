@@ -30,6 +30,24 @@ export interface HistoryEvent {
   data?: Record<string, unknown>;
 }
 
+/**
+ * Compression metadata for tracking compression statistics
+ */
+export interface CompressionMetadata {
+  /** Strategy name used for compression */
+  strategy: string;
+  /** Timestamp when compression was applied */
+  timestamp: number;
+  /** Number of snapshots before compression */
+  originalCount: number;
+  /** Number of snapshots after compression */
+  compressedCount: number;
+  /** Compression ratio (compressed / original) */
+  compressionRatio: number;
+  /** Whether snapshots were removed or just modified */
+  removedCount: number;
+}
+
 export type HistoryEventListener = (event: HistoryEvent) => void;
 
 export interface TimeTravelStats {
