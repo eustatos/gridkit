@@ -12,7 +12,7 @@ import type { BudgetViolation, AlertDestinationType } from '../types/metrics';
 /**
  * New Relic alert destination configuration.
  */
-export interface NewRelicOptions {
+export interface NewRelicOptions extends Record<string, unknown> {
   /** New Relic API key */
   apiKey?: string;
   /** New Relic license key */

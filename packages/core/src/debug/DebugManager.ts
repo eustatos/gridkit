@@ -7,7 +7,7 @@
 
 import type { GridEvent } from '@/events/types/base';
 import type { TableState } from '@/types/table/TableState';
-import type { DebugConfig, DebugInfo, ProfilingResult, MemorySnapshot, MemoryLeak, TableSnapshot, ProfilingAnalysis, ProfilerBottleneck } from './types';
+import type { DebugConfig, DebugInfo, ProfilingResult, MemorySnapshot, DebugMemoryLeak, TableSnapshot, ProfilingAnalysis, ProfilerBottleneck } from './types';
 import { TimeTravelManager } from './timetravel/TimeTravelManager';
 import { EventReplayer } from './replay/EventReplayer';
 import { Profiler } from './profiler/Profiler';
@@ -250,7 +250,7 @@ export class DebugManager {
   /**
    * Detect memory leaks
    */
-  detectLeaks(): MemoryLeak[] {
+  detectLeaks(): DebugMemoryLeak[] {
     return this.memoryDebugger.detectLeaks();
   }
 

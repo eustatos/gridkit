@@ -2,8 +2,10 @@
 // Uses GridKit core ValidationManager for schema-based validation
 
 import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
-import type { EnhancedTable, ValidationConfig } from '../types/enhanced'
-import { ValidationManager } from '@gridkit/core/validation'
+import type { EnhancedTable, ValidationConfig, ValidationManager } from '../types/enhanced'
+import { createValidationManager } from '@gridkit/core/validation'
+import { useMemo } from 'react'
+import { useReactTable } from '@tanstack/react-table'
 
 /**
  * High-order function to add validation to TanStack Table
@@ -13,7 +15,7 @@ export function withValidation<TData extends RowData>(
   config?: ValidationConfig
 ): EnhancedTable<TData> {
   // Create validation manager from core
-  const validationManager = new ValidationManager({
+  const validationManager = createValidationManager({
     defaultMode: config?.mode || 'normal',
     cacheEnabled: config?.cache ?? true,
     throwOnError: config?.throwOnError ?? false,
@@ -43,7 +45,6 @@ export function createEnhancedTableWithValidation<TData extends RowData>(
   config?: ValidationConfig
 ): EnhancedTable<TData> {
   // First create TanStack table
-  const { useReactTable } = require('@tanstack/react-table')
   const tanstackTable = useReactTable(options)
 
   // Add validation
@@ -57,9 +58,6 @@ export function useTableWithValidation<TData extends RowData>(
   options: any,
   config?: ValidationConfig
 ): EnhancedTable<TData> {
-  const { useMemo } = require('react')
-  const { useReactTable } = require('@tanstack/react-table')
-  
   // First create TanStack table
   const tanstackTable = useReactTable(options)
 

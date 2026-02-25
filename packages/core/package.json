@@ -35,6 +35,76 @@
             "types": "./dist/events/*/index.d.ts",
             "import": "./dist/events/*/index.js",
             "require": "./dist/events/*/index.cjs"
+        },
+        "./performance": {
+            "types": "./dist/performance/index.d.ts",
+            "import": "./dist/performance/index.js",
+            "require": "./dist/performance/index.cjs"
+        },
+        "./performance/*": {
+            "types": "./dist/performance/*/index.d.ts",
+            "import": "./dist/performance/*/index.js",
+            "require": "./dist/performance/*/index.cjs"
+        },
+        "./performance/alerts": {
+            "types": "./dist/performance/alerts/index.d.ts",
+            "import": "./dist/performance/alerts/index.js",
+            "require": "./dist/performance/alerts/index.cjs"
+        },
+        "./performance/alerts/*": {
+            "types": "./dist/performance/alerts/*/index.d.ts",
+            "import": "./dist/performance/alerts/*/index.js",
+            "require": "./dist/performance/alerts/*/index.cjs"
+        },
+        "./validation": {
+            "types": "./dist/validation/index.d.ts",
+            "import": "./dist/validation/index.js",
+            "require": "./dist/validation/index.cjs"
+        },
+        "./validation/*": {
+            "types": "./dist/validation/*/index.d.ts",
+            "import": "./dist/validation/*/index.js",
+            "require": "./dist/validation/*/index.cjs"
+        },
+        "./column": {
+            "types": "./dist/column/index.d.ts",
+            "import": "./dist/column/index.js",
+            "require": "./dist/column/index.cjs"
+        },
+        "./column/*": {
+            "types": "./dist/column/*/index.d.ts",
+            "import": "./dist/column/*/index.js",
+            "require": "./dist/column/*/index.cjs"
+        },
+        "./row": {
+            "types": "./dist/row/index.d.ts",
+            "import": "./dist/row/index.js",
+            "require": "./dist/row/index.cjs"
+        },
+        "./row/*": {
+            "types": "./dist/row/*/index.d.ts",
+            "import": "./dist/row/*/index.js",
+            "require": "./dist/row/*/index.cjs"
+        },
+        "./table": {
+            "types": "./dist/table/index.d.ts",
+            "import": "./dist/table/index.js",
+            "require": "./dist/table/index.cjs"
+        },
+        "./table/*": {
+            "types": "./dist/table/*/index.d.ts",
+            "import": "./dist/table/*/index.js",
+            "require": "./dist/table/*/index.cjs"
+        },
+        "./debug": {
+            "types": "./dist/debug/index.d.ts",
+            "import": "./dist/debug/index.js",
+            "require": "./dist/debug/index.cjs"
+        },
+        "./debug/*": {
+            "types": "./dist/debug/*/index.d.ts",
+            "import": "./dist/debug/*/index.js",
+            "require": "./dist/debug/*/index.cjs"
         }
     },
     "files": [

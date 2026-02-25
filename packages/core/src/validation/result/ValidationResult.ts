@@ -415,7 +415,7 @@ export interface ValidationReport {
   /**
    * Summary of validation results.
    */
-  readonly summary: ReportSummary;
+  readonly summary: ValidationReportSummary;
 
   /**
    * All validation errors.
@@ -446,7 +446,7 @@ export interface ValidationReport {
 /**
  * Report summary.
  */
-export interface ReportSummary {
+export interface ValidationReportSummary {
   /**
    * Total records validated.
    */

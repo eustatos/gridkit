@@ -153,7 +153,7 @@ describe('EnhancedPerformanceMonitor', () => {
       const destination = createConsoleAlertDestination()
 
       // Mock console.error
-      const consoleError = jest.spyOn(console, 'error').mockImplementation()
+      const consoleError = vi.spyOn(console, 'error').mockImplementation()
 
       monitor.addAlertDestination(destination)
 

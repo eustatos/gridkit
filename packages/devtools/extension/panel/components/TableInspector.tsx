@@ -10,11 +10,11 @@ export function TableInspector({ tableId, table }: { tableId: string, table: any
 
   useEffect(() => {
     // Fetch initial state
-    {
+    devToolsBridge.sendCommand({
       type: 'GET_STATE',
       source: 'devtools',
       tableId,
-      timestamp: Date.now(
+      timestamp: Date.now()
     }).then(setState)
 
     // Subscribe to state updates

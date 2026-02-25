@@ -57,86 +57,21 @@ export interface AuditEvent {
 /**
  * Create audit log plugin
  */
-export const auditLogPlugin = (config: AuditLogConfig): EnhancedPlugin<AuditLogConfig> => ({
-  metadata: {
-    id: '@gridkit/plugin-audit-log',
-    name: 'Audit Log Plugin',
-    version: '1.0.0',
-    author: 'GridKit Team',
-    description: 'GDPR/HIPAA/SOX compliant audit logging',
-    category: 'security',
-    tags: ['audit', 'compliance', 'security', 'logging'],
-    coreVersion: '^1.0.0',
-    license: 'MIT',
-    pricing: 'free',
-    verified: true,
-    featured: true,
-  },
-
-  async initialize(context) {
-    const logs: AuditEvent[] = [];
-    
-    // Set up event listeners
-    const eventSubscriptions = config.events.map(eventType => {
-      return context.on(eventType, (event: any) => {
-        const auditEvent: AuditEvent = {
-          type: this.determineEventType(eventType),
-          timestamp: Date.now(),
-          userId: event.metadata?.userId,
-          resourceType: event.metadata?.resourceType,
-          resourceId: event.metadata?.resourceId,
-          oldValue: event.metadata?.oldValue,
-          newValue: event.metadata?.newValue,
-          metadata: config.includeMetadata ? event.metadata : undefined,
-        };
-
-        // Handle PII
-        if (config.pii) {
-          this.maskPII(auditEvent, config.pii);
-        }
-
-        logs.push(auditEvent);
-
-        // Send to destination
-        this.sendToDestination(auditEvent, config.destination);
-      });
-    });
-
-    // Store subscriptions for cleanup
-    (context as any).subscriptions = eventSubscriptions;
-  },
-
-  destroy(context) {
-    // Cleanup event subscriptions
-    const subscriptions = (context as any).subscriptions;
-    if (subscriptions) {
-      subscriptions.forEach((unsub: () => void) => unsub());
-    }
-
-    // Flush pending logs
-    if (typeof config.destination === 'string') {
-      this.sendToDestination([], config.destination);
-    }
-  },
-
-  requiredPermissions: ['events:subscribe', 'state:read'],
-
-  resourceLimits: {
-    maxMemoryMB: 50,
-    maxEventHandlers: 10,
-  },
-
+export const auditLogPlugin = (config: AuditLogConfig) => {
+  // Store subscriptions
+  let subscriptions: (() => void)[] = [];
+  
   // Private methods
-  determineEventType: (eventType: string): AuditEvent['type'] => {
+  const determineEventType = (eventType: string): AuditEvent['type'] => {
     if (eventType.includes('create') || eventType.includes('add')) return 'CREATE';
     if (eventType.includes('read') || eventType.includes('get')) return 'READ';
     if (eventType.includes('update') || eventType.includes('edit')) return 'UPDATE';
     if (eventType.includes('delete') || eventType.includes('remove')) return 'DELETE';
     return 'ACTION';
-  },
+  };
 
-  maskPII: (event: AuditEvent, piiConfig: AuditLogConfig['pii']): void => {
-    if (piiConfig.mask) {
+  const maskPII = (event: AuditEvent, piiConfig: AuditLogConfig['pii']): void => {
+    if (piiConfig?.mask) {
       piiConfig.mask.forEach(field => {
         if (event.newValue && typeof event.newValue === 'object') {
           delete (event.newValue as any)[field];
@@ -146,9 +81,9 @@ export const auditLogPlugin = (config: AuditLogConfig): EnhancedPlugin<AuditLogC
         }
       });
     }
-  },
+  };
 
-  sendToDestination: (event: AuditEvent | AuditEvent[], destination: string | ((events: AuditEvent[]) => void)): void => {
+  const sendToDestination = (event: AuditEvent | AuditEvent[], destination: string | ((events: AuditEvent[]) => void)): void => {
     if (typeof destination === 'function') {
       destination(Array.isArray(event) ? event : [event]);
     } else {
@@ -159,5 +94,76 @@ export const auditLogPlugin = (config: AuditLogConfig): EnhancedPlugin<AuditLogC
         body: JSON.stringify(event),
       }).catch(error => console.error('Failed to send audit log:', error));
     }
-  },
-});
+  };
+
+  // Main plugin object
+  return {
+    metadata: {
+      id: '@gridkit/plugin-audit-log',
+      name: 'Audit Log Plugin',
+      version: '1.0.0',
+      author: 'GridKit Team',
+      description: 'GDPR/HIPAA/SOX compliant audit logging',
+      category: 'security',
+      tags: ['audit', 'compliance', 'security', 'logging'],
+      coreVersion: '^1.0.0',
+      license: 'MIT',
+      pricing: 'free',
+      verified: true,
+      featured: true,
+    },
+
+    async initialize(_config: AuditLogConfig, context: any) {
+      const logs: AuditEvent[] = [];
+      
+      // Set up event listeners
+      subscriptions = config.events.map(eventType => {
+        return (context as any).eventBus.on(eventType, (event: any) => {
+          const auditEvent: AuditEvent = {
+            type: determineEventType(eventType),
+            timestamp: Date.now(),
+            userId: event.metadata?.userId,
+            resourceType: event.metadata?.resourceType,
+            resourceId: event.metadata?.resourceId,
+            oldValue: event.metadata?.oldValue,
+            newValue: event.metadata?.newValue,
+            metadata: config.includeMetadata ? event.metadata : undefined,
+          };
+
+          // Handle PII
+          if (config.pii) {
+            maskPII(auditEvent, config.pii);
+          }
+
+          logs.push(auditEvent);
+
+          // Send to destination
+          sendToDestination(auditEvent, config.destination);
+        });
+      });
+    },
+
+    destroy() {
+      // Cleanup event subscriptions
+      subscriptions.forEach((unsub: () => void) => unsub());
+      subscriptions = [];
+
+      // Flush pending logs
+      if (typeof config.destination === 'string') {
+        sendToDestination([], config.destination);
+      }
+    },
+
+    requiredPermissions: ['events:subscribe', 'state:read'],
+
+    resourceLimits: {
+      maxMemoryMB: 50,
+      maxEventHandlers: 10,
+    },
+
+    // Private methods
+    determineEventType,
+    maskPII,
+    sendToDestination,
+  };
+};

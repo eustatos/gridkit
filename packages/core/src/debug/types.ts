@@ -289,7 +289,7 @@ export interface MemoryDiff {
 /**
  * Memory leak detection result
  */
-export interface MemoryLeak {
+export interface DebugMemoryLeak {
   /** Leak type */
   type: 'row' | 'column' | 'subscription' | 'listener';
   /** Number of leaked objects */
@@ -391,7 +391,7 @@ export interface DebugInfo {
   /** Memory statistics */
   memory: {
     current: MemorySnapshot;
-    leaks: MemoryLeak[];
+    leaks: DebugMemoryLeak[];
   };
   /** Time travel state */
   timeTravel: {

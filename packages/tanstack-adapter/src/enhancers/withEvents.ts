@@ -4,6 +4,8 @@
 import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
 import type { EnhancedTable } from '../types/enhanced'
 import { EventBus, createEventBus } from '@gridkit/core/events'
+import { useMemo } from 'react'
+import { useReactTable } from '@tanstack/react-table'
 
 /**
  * High-order function to add event features to TanStack Table
@@ -47,7 +49,6 @@ export function createEnhancedTableWithEvents<TData extends RowData>(
   config?: { devMode?: boolean } | boolean
 ): EnhancedTable<TData> {
   // First create TanStack table
-  const { useReactTable } = require('@tanstack/react-table')
   const tanstackTable = useReactTable(options)
 
   // Add events
@@ -61,9 +62,6 @@ export function useTableWithEvents<TData extends RowData>(
   options: any,
   config?: { devMode?: boolean } | boolean
 ): EnhancedTable<TData> {
-  const { useMemo } = require('react')
-  const { useReactTable } = require('@tanstack/react-table')
-  
   // First create TanStack table
   const tanstackTable = useReactTable(options)
 

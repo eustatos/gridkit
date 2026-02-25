@@ -9,9 +9,9 @@ export function MemoryProfiler({ tableId }: { tableId: string }) {
 
   useEffect(() => {
     // Fetch memory data
-    {
+    devToolsBridge.sendCommand({
       type: 'GET_MEMORY',
-      timestamp: Date.now(,
+      timestamp: Date.now(),
       tableId
     }).then((data: any) => {
       setSnapshots(data.snapshots || [])
@@ -32,9 +32,9 @@ export function MemoryProfiler({ tableId }: { tableId: string }) {
   }, [tableId])
 
   const takeSnapshot = () => {
-    {
+    devToolsBridge.sendCommand({
       type: 'GET_MEMORY',
-      timestamp: Date.now(,
+      timestamp: Date.now(),
       tableId
     }).then((data: any) => {
       setSnapshots(prev => [...prev, ...(data.snapshots || [])])

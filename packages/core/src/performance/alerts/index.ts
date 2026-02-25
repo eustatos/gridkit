@@ -6,18 +6,11 @@
  * @module @gridkit/core/performance/alerts
  */
 
-import type { BudgetViolation, AlertDestination, AlertDestinationType } from '../types/metrics';
+// Export base classes first to avoid circular dependencies
+export { BaseAlertDestination } from './base';
 
-/**
- * Base class for alert destinations.
- */
-export abstract class BaseAlertDestination implements AlertDestination {
-  abstract id: string;
-  abstract type: AlertDestinationType;
-
-  abstract send(violation: BudgetViolation): Promise<void>;
-
-  getConfig?(): Record<string, unknown> {
-    return {};
-  }
-}
+// Export alert destinations
+export { ConsoleAlertDestination, createConsoleAlertDestination } from './console';
+export { SentryAlertDestination, createSentryAlertDestination } from './sentry';
+export { DataDogAlertDestination, createDataDogAlertDestination } from './datadog';
+export { NewRelicAlertDestination, createNewRelicAlertDestination } from './newrelic';

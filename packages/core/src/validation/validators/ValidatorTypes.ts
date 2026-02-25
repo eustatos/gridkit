@@ -187,7 +187,7 @@ export interface ValidatorFactory {
   uniqueAcrossAll(fields: string[]): Validator;
 
   // === Performance Validators ===
-  withinBudget(budget: PerformanceBudget): Validator;
+  withinBudget(budget: ValidationPerformanceBudget): Validator;
 
   // === Custom Validators ===
   custom(
@@ -206,7 +206,7 @@ export interface ValidatorFactory {
 /**
  * Performance budget for validation.
  */
-export interface PerformanceBudget {
+export interface ValidationPerformanceBudget {
   /**
    * Maximum duration in milliseconds.
    */

@@ -12,7 +12,7 @@ import type { BudgetViolation, AlertDestinationType } from '../types/metrics';
 /**
  * DataDog alert destination configuration.
  */
-export interface DataDogOptions {
+export interface DataDogOptions extends Record<string, unknown> {
   /** DataDog API key */
   apiKey?: string;
   /** DataDog site */

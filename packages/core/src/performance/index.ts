@@ -33,10 +33,10 @@ export type {
   MemoryMetrics as EnhancedMemoryMetrics,
   PerformanceBudget,
   BudgetViolation as EnhancedBudgetViolation,
-  MemoryLeak,
-  ReportOptions,
+  PerformanceMemoryLeak,
+  PerformanceReportOptions,
   PerformanceReport,
-  ReportSummary,
+  PerformanceReportSummary,
   ReportBudgetAnalysis,
   AlertDestination,
   AlertDestinationType,
@@ -121,4 +121,5 @@ export {
 } from './alerts';
 
 // Constants
-export { DEFAULT_BUDGETS, EMPTY_METRICS, EMPTY_STATS } from './types';
+export { EMPTY_METRICS, EMPTY_STATS } from './types';
+

@@ -21,6 +21,11 @@ export class DevToolsBackend {
 
   // Table registration
   registerTable(table: any): void {
+    if (!table) {
+      console.warn('[GridKit DevTools] Cannot register null/undefined table')
+      return
+    }
+    
     const tableId = this.generateTableId(table)
     
     if (this.tables.has(tableId)) {
@@ -33,6 +38,7 @@ export class DevToolsBackend {
 
     const metadata = this.getTableMetadata(table)
     this.tableMetadata.set(tableId, metadata)
+    console.log('[GridKit DevTools] Registered table:', tableId, metadata)
 
     // Send registration event
     this.bridge.send({
@@ -42,6 +48,7 @@ export class DevToolsBackend {
         timestamp: Date.now()
       }
     })
+    console.log('[GridKit DevTools] Sent TABLE_REGISTERED event')
   }
 
   unregisterTable(table: any): void {
@@ -127,53 +134,82 @@ export class DevToolsBackend {
 
   // Table monitoring setup
   private setupTableListeners(tableId: string, table: any): void {
-    // State changes
-    const unsubscribeState = table.subscribe((state: any) => {
-      this.bridge.send({
-        type: 'STATE_UPDATE',
-        tableId,
-        payload: {
-          state,
-          timestamp: Date.now()
-        }
+    // State changes (optional - only if table.subscribe exists)
+    let unsubscribeState: (() => void) | undefined
+    if (typeof table.subscribe === 'function') {
+      unsubscribeState = table.subscribe((state: any) => {
+        this.bridge.send({
+          type: 'STATE_UPDATE',
+          tableId,
+          payload: {
+            state,
+            timestamp: Date.now()
+          }
+        })
       })
-    })
+    } else {
+      console.log('[GridKit DevTools] table.subscribe not available - using polling for state updates')
+      // Fallback: poll for state changes
+      const pollInterval = setInterval(() => {
+        const currentState = table.getState?.()
+        if (currentState) {
+          this.bridge.send({
+            type: 'STATE_UPDATE',
+            tableId,
+            payload: {
+              state: currentState,
+              timestamp: Date.now()
+            }
+          })
+        }
+      }, 500)
+      unsubscribeState = () => clearInterval(pollInterval)
+    }
 
-    // Events
-    const unsubscribeEvents = table.on('*', (event: any) => {
-      this.bridge.send({
-        type: 'EVENT_LOGGED',
-        tableId,
-        payload: {
-          event,
-          timestamp: Date.now()
-        }
+    // Events (optional - only if table.on exists)
+    let unsubscribeEvents: (() => void) | undefined
+    if (typeof table.on === 'function') {
+      unsubscribeEvents = table.on('*', (event: any) => {
+        this.bridge.send({
+          type: 'EVENT_LOGGED',
+          tableId,
+          payload: {
+            event,
+            timestamp: Date.now()
+          }
+        })
       })
-    })
+    }
 
-    // Performance updates
-    const unsubscribePerformance = table.on('performance:measured', (metrics: any) => {
-      this.bridge.send({
-        type: 'PERFORMANCE_UPDATE',
-        tableId,
-        payload: {
-          metrics,
-          timestamp: Date.now()
-        }
+    // Performance updates (optional)
+    let unsubscribePerformance: (() => void) | undefined
+    if (typeof table.on === 'function') {
+      unsubscribePerformance = table.on('performance:measured', (metrics: any) => {
+        this.bridge.send({
+          type: 'PERFORMANCE_UPDATE',
+          tableId,
+          payload: {
+            metrics,
+            timestamp: Date.now()
+          }
+        })
       })
-    })
+    }
 
-    // Memory updates
-    const unsubscribeMemory = table.on('memory:measured', (snapshot: any) => {
-      this.bridge.send({
-        type: 'MEMORY_UPDATE',
-        tableId,
-        payload: {
-          snapshot,
-          timestamp: Date.now()
-        }
+    // Memory updates (optional)
+    let unsubscribeMemory: (() => void) | undefined
+    if (typeof table.on === 'function') {
+      unsubscribeMemory = table.on('memory:measured', (snapshot: any) => {
+        this.bridge.send({
+          type: 'MEMORY_UPDATE',
+          tableId,
+          payload: {
+            snapshot,
+            timestamp: Date.now()
+          }
+        })
       })
-    })
+    }
 
     // Store unsubscribe functions
     const tableData = this.tables.get(tableId)
@@ -189,15 +225,52 @@ export class DevToolsBackend {
     const rowCount = table.getRowModel?.().rows?.length || 0
     const columnCount = table.getAllColumns?.().length || 0
 
+    // Safely get state - clone to remove functions that can't be serialized
+    let safeState: any = {}
+    try {
+      const rawState = table.getState?.()
+      if (rawState && typeof rawState === 'object') {
+        // Clone state to remove non-serializable properties
+        safeState = this.cloneState(rawState)
+      }
+    } catch (e) {
+      console.warn('[GridKit DevTools] Failed to get table state:', e)
+    }
+
     return {
       id: table.options?.tableId || this.generateTableId(table),
       rowCount,
       columnCount,
-      state: table.getState?.() || {},
+      state: safeState,
       performance: table.debug?.getPerformanceMetrics?.(),
       memory: table.debug?.getMemoryUsage?.(),
-      options: table.options
+      options: this.cloneState(table.options) // Clone options to remove non-serializable properties
     }
+  }
+
+  // Deep clone state object, removing non-serializable properties (functions, etc.)
+  private cloneState(obj: any): any {
+    if (obj === null || typeof obj !== 'object') {
+      return obj
+    }
+
+    if (obj instanceof Date) {
+      return obj.toISOString()
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.cloneState(item))
+    }
+
+    const result: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      // Skip functions, symbols, and other non-serializable types
+      if (typeof value !== 'function' && typeof value !== 'symbol') {
+        result[key] = this.cloneState(value)
+      }
+    }
+
+    return result
   }
 
   private generateTableId(table: any): string {

@@ -10,13 +10,12 @@ export function EventTimeline({ tableId }: { tableId: string }) {
 
   useEffect(() => {
     // Fetch events
-    {
+    devToolsBridge.sendCommand({
       type: 'GET_EVENTS',
       source: 'devtools',
       tableId,
-      timestamp: Date.now(,
-      filter
-    }).then(setEvents)
+      timestamp: Date.now()
+    }).then((data: any) => setEvents(data.events || []))
 
     // Subscribe to new events
     const unsubscribe = devToolsBridge.onResponse((response) => {
@@ -28,14 +27,15 @@ export function EventTimeline({ tableId }: { tableId: string }) {
     return () => {
       unsubscribe()
     }
-  }, [tableId, filter])
+  }, [tableId])
 
   const handleReplayEvent = (event: any) => {
-    {
+    devToolsBridge.sendCommand({
       type: 'REPLAY_EVENT',
+      source: 'devtools',
       tableId,
-      event
-    }
+      timestamp: Date.now()
+    })
   }
 
   return (

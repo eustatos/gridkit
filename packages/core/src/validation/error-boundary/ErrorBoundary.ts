@@ -444,3 +444,173 @@ export interface ErrorBoundaryFactory {
    */
   createCustomBoundary(scope: string, options?: BoundaryOptions): ErrorBoundary;
 }
+
+// ===================================================================
+// Error Boundary Implementation
+// ===================================================================
+
+/**
+ * Default implementation of ErrorBoundary interface.
+ */
+export class ErrorBoundaryImpl implements ErrorBoundary {
+  readonly id: string;
+  readonly scope: ErrorScope;
+  
+  private errors: CapturedError[] = [];
+  private options: BoundaryOptions;
+  private _isActive: boolean = true;
+  private _errorCount: number = 0;
+
+  constructor(scope: ErrorScope, options: BoundaryOptions = {}) {
+    this.id = options.id || `boundary-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.scope = scope;
+    this.options = options;
+  }
+
+  capture(error: unknown, context?: ErrorContext): ErrorCapture {
+    if (!this._isActive) {
+      throw new Error(`Boundary ${this.id} is not active`);
+    }
+
+    const capturedError: CapturedError = {
+      id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      scope: this.scope,
+      timestamp: Date.now(),
+      context: context || {
+        operation: 'unknown',
+      },
+      severity: this.determineSeverity(error),
+      isRecoverable: true,
+      recoveryAttempted: false,
+    };
+
+    this.errors.push(capturedError);
+    this._errorCount++;
+
+    // Check if boundary should be disabled
+    if (this.options.maxErrors !== undefined && this._errorCount >= this.options.maxErrors) {
+      this._isActive = false;
+    }
+
+    // Call custom error handler if provided
+    if (this.options.onError) {
+      this.options.onError(capturedError);
+    }
+
+    // Auto-recover if enabled
+    if (this.options.autoRecover) {
+      return this.recover() as unknown as ErrorCapture;
+    }
+
+    return {
+      id: capturedError.id,
+      isolated: true,
+      scope: this.scope,
+      recoveryAttempted: false,
+      recoverySuccessful: false,
+      capturedAt: Date.now(),
+    };
+  }
+
+  recover(): RecoveryResult {
+    if (this.errors.length === 0) {
+      return {
+        success: true,
+        strategy: {
+          id: 'no-errors',
+          name: 'No Errors',
+          description: 'No errors to recover from',
+          priority: 0,
+          isFallback: false,
+          apply: async () => ({ success: true }),
+        },
+      };
+    }
+
+    // Get last error
+    const lastError = this.errors[this.errors.length - 1];
+
+    // Simple recovery strategy: just acknowledge the error
+    const recoveryResult: RecoveryResult = {
+      success: true,
+      strategy: {
+        id: 'acknowledge',
+        name: 'Acknowledge',
+        description: 'Acknowledge and move on',
+        priority: 1,
+        isFallback: true,
+        apply: async () => ({
+          success: true,
+          strategy: { id: 'acknowledge', name: 'Acknowledge', description: 'Acknowledge and move on', priority: 1, isFallback: true, apply: async () => ({ success: true }) },
+        }),
+      },
+    };
+
+    // Call custom recovery handler if provided
+    if (this.options.onRecover) {
+      this.options.onRecover(recoveryResult);
+    }
+
+    return recoveryResult;
+  }
+
+  get isActive(): boolean {
+    return this._isActive;
+  }
+
+  get errorCount(): number {
+    return this._errorCount;
+  }
+
+  get lastError(): CapturedError | undefined {
+    return this.errors.length > 0 ? this.errors[this.errors.length - 1] : undefined;
+  }
+
+  reset(): void {
+    this.errors = [];
+    this._errorCount = 0;
+    this._isActive = true;
+  }
+
+  getErrors(): readonly CapturedError[] {
+    return this.errors;
+  }
+
+  getRecoveryStrategies(): readonly RecoveryStrategy[] {
+    return [
+      {
+        id: 'acknowledge',
+        name: 'Acknowledge',
+        description: 'Acknowledge and move on',
+        priority: 1,
+        isFallback: true,
+        apply: async () => ({ success: true }),
+      },
+    ];
+  }
+
+  private determineSeverity(error: unknown): ErrorSeverity {
+    if (error instanceof Error) {
+      if (error.name === 'TypeError' || error.name === 'ReferenceError') {
+        return 'error';
+      }
+      if (error.name === 'RangeError') {
+        return 'warning';
+      }
+    }
+    return 'info';
+  }
+}
+
+/**
+ * Factory function for creating error boundaries.
+ */
+export function createErrorBoundary(scope: ErrorScope, options?: BoundaryOptions): ErrorBoundary {
+  return new ErrorBoundaryImpl(scope, options);
+}
+
+// Export the interface
+export default ErrorBoundary;

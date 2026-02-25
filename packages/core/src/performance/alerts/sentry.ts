@@ -12,7 +12,7 @@ import type { BudgetViolation, AlertDestinationType } from '../types/metrics';
 /**
  * Sentry alert destination configuration.
  */
-export interface SentryOptions {
+export interface SentryOptions extends Record<string, unknown> {
   /** Sentry DSN */
   dsn?: string;
   /** Environment name */

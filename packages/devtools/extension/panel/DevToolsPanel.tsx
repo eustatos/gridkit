@@ -1,8 +1,8 @@
 // Main DevTools Panel Component
 
 import React, { useState, useEffect } from 'react'
-import { devToolsBridge } from '../bridge/DevToolsBridge'
-import { sendDevToolsCommand } from '../backend/hooks'
+import { devToolsBridge } from '@gridkit/devtools-bridge/DevToolsBridge'
+import { sendDevToolsCommand } from '@gridkit/devtools-backend/hooks'
 
 // Components
 import { TableInspector } from './components/TableInspector'
@@ -14,7 +14,7 @@ import { MemoryProfiler } from './components/MemoryProfiler'
 import { PluginInspector } from './components/PluginInspector'
 
 // Styles
-import '../styles/panel.css'
+import '../styles/index.css'
 
 export function DevToolsPanel({
   tables,

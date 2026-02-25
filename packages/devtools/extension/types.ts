@@ -10,7 +10,7 @@ export function createCommand<T extends string>(type: T, tableId?: string): DevT
     timestamp: Date.now(),
     tableId,
     payload: undefined
-  }
+  } as DevToolsCommand & { type: T }
 }
 
 // Helper to handle responses

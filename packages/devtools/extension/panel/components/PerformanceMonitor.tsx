@@ -9,9 +9,9 @@ export function PerformanceMonitor({ tableId }: { tableId: string }) {
 
   useEffect(() => {
     // Fetch performance data
-    {
+    devToolsBridge.sendCommand({
       type: 'GET_PERFORMANCE',
-      timestamp: Date.now(,
+      timestamp: Date.now(),
       tableId
     }).then(setMetrics)
 

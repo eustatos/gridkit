@@ -7,15 +7,36 @@ export function isGridKitTable(table: any): boolean {
   if (!table) return false
 
   // Check for GridKit-specific properties
-  return (
-    typeof table.getState === 'function' &&
-    typeof table.subscribe === 'function' &&
-    typeof table.on === 'function' &&
-    typeof table.off === 'function' &&
-    typeof table.getRowModel === 'function' &&
-    typeof table.getAllColumns === 'function' &&
-    table.options?.tableId !== undefined
+  // Note: TanStack Table uses getAllFlatColumns() instead of getAllColumns()
+  // subscribe is optional for DevTools integration
+  const hasGetState = typeof table.getState === 'function'
+  // const hasSubscribe = typeof table.subscribe === 'function' // Optional
+  const hasOn = typeof table.on === 'function'
+  const hasOff = typeof table.off === 'function'
+  const hasGetRowModel = typeof table.getRowModel === 'function'
+  const hasGetColumns = typeof table.getAllColumns === 'function' || typeof table.getAllFlatColumns === 'function'
+  const hasTableId = table.options?.tableId !== undefined
+  
+  // Log for debugging
+  if (!hasGetState) console.log('[GridKit DevTools] Missing getState')
+  // if (!hasSubscribe) console.log('[GridKit DevTools] Missing subscribe')
+  if (!hasOn) console.log('[GridKit DevTools] Missing on')
+  if (!hasOff) console.log('[GridKit DevTools] Missing off')
+  if (!hasGetRowModel) console.log('[GridKit DevTools] Missing getRowModel')
+  if (!hasGetColumns) console.log('[GridKit DevTools] Missing getAllColumns/getAllFlatColumns')
+  if (!hasTableId) console.log('[GridKit DevTools] Missing tableId in options')
+  
+  const isValid = (
+    hasGetState &&
+    // hasSubscribe && // Optional
+    hasOn &&
+    hasOff &&
+    hasGetRowModel &&
+    hasGetColumns &&
+    hasTableId
   )
+  
+  return isValid
 }
 
 // Detect all GridKit tables on the page

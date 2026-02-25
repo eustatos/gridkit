@@ -8,9 +8,9 @@ export function PluginInspector({ tableId }: { tableId: string }) {
 
   useEffect(() => {
     // Fetch plugins
-    {
+    devToolsBridge.sendCommand({
       type: 'GET_PLUGINS',
-      timestamp: Date.now(,
+      timestamp: Date.now(),
       tableId
     }).then(setPlugins)
 

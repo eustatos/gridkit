@@ -4,6 +4,8 @@
 import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
 import type { EnhancedTable, PerformanceConfig } from '../types/enhanced'
 import { createPerformanceMonitor, type PerformanceMonitor as CorePerformanceMonitor } from '@gridkit/core/performance'
+import { useMemo } from 'react'
+import { useReactTable } from '@tanstack/react-table'
 
 /**
  * High-order function to add performance monitoring to TanStack Table
@@ -58,7 +60,6 @@ export function createEnhancedTableWithPerformance<TData extends RowData>(
   config?: PerformanceConfig | boolean
 ): EnhancedTable<TData> {
   // First create TanStack table
-  const { useReactTable } = require('@tanstack/react-table')
   const tanstackTable = useReactTable(options)
 
   // Add performance monitoring
@@ -72,9 +73,6 @@ export function useTableWithPerformance<TData extends RowData>(
   options: any,
   config?: PerformanceConfig | boolean
 ): EnhancedTable<TData> {
-  const { useMemo } = require('react')
-  const { useReactTable } = require('@tanstack/react-table')
-  
   // First create TanStack table
   const tanstackTable = useReactTable(options)
 

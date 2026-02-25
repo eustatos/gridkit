@@ -99,7 +99,7 @@ export interface BudgetViolation {
 /**
  * Memory leak detection result.
  */
-export interface MemoryLeak {
+export interface PerformanceMemoryLeak {
   /** Category of leaked objects */
   category: string;
   /** Number of leaked objects */
@@ -117,7 +117,7 @@ export interface MemoryLeak {
 /**
  * Report generation options.
  */
-export interface ReportOptions {
+export interface PerformanceReportOptions {
   /** Include detailed operation data */
   detailed?: boolean;
   /** Include memory analysis */
@@ -135,7 +135,7 @@ export interface PerformanceReport {
   /** Report generation timestamp */
   timestamp: number;
   /** Summary statistics */
-  summary: ReportSummary;
+  summary: PerformanceReportSummary;
   /** Operation metrics */
   operations: Record<string, OperationMetrics>;
   /** Memory metrics */
@@ -143,7 +143,7 @@ export interface PerformanceReport {
   /** Budget analysis */
   budgets?: ReportBudgetAnalysis;
   /** Detected leaks */
-  leaks?: MemoryLeak[];
+  leaks?: PerformanceMemoryLeak[];
   /** Recommendations */
   recommendations: string[];
 }
@@ -151,7 +151,7 @@ export interface PerformanceReport {
 /**
  * Report summary.
  */
-export interface ReportSummary {
+export interface PerformanceReportSummary {
   /** Total operations tracked */
   totalOperations: number;
   /** Operations with budget violations */

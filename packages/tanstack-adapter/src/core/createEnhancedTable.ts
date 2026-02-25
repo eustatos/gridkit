@@ -3,6 +3,8 @@
 
 import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
 import type { EnhancedTable, EnhancedTableFeatures } from '../types/enhanced'
+import { useMemo } from 'react'
+import { useReactTable } from '@tanstack/react-table'
 
 /**
  * Interceptor for TanStack Table methods
@@ -188,7 +190,7 @@ export function createEnhancedTableFromOptions<TData extends RowData>(
   options: any
 ): EnhancedTable<TData> {
   // Import dynamically to avoid circular dependencies
-  const { useReactTable } = require('@tanstack/react-table')
+  // Note: useReactTable is now imported at the top of the file
   
   // Extract GridKit features from options
   const { features, ...tanstackOptions } = options
@@ -223,9 +225,6 @@ export function createDefaultEnhancedTable<TData extends RowData>(
 export function useEnhancedTable<TData extends RowData>(
   options: any
 ): EnhancedTable<TData> {
-  const { useMemo } = require('react')
-  const { useReactTable } = require('@tanstack/react-table')
-  
   // Extract GridKit features from options
   const { features, ...tanstackOptions } = options
 

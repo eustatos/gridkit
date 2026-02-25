@@ -5,7 +5,7 @@
  * @module @gridkit/core/debug/memory
  */
 
-import type { MemorySnapshot, MemoryDiff, MemoryLeak, TrackedObject, MemoryGrowthReport, RetainedObject, HeapSnapshot } from '@/debug/types';
+import type { MemorySnapshot, MemoryDiff, DebugMemoryLeak, TrackedObject, MemoryGrowthReport, RetainedObject, HeapSnapshot } from '@/debug/types';
 
 /**
  * Memory debugger for leak detection and analysis
@@ -75,7 +75,7 @@ export class MemoryDebugger {
   /**
    * Detect memory leaks
    */
-  detectLeaks(): MemoryLeak[] {
+  detectLeaks(): DebugMemoryLeak[] {
     return this.leakDetector.detectLeaks();
   }
 
@@ -309,8 +309,8 @@ class LeakDetector {
     this.threshold = threshold;
   }
 
-  analyze(snapshot: MemorySnapshot): MemoryLeak[] {
-    const leaks: MemoryLeak[] = [];
+  analyze(snapshot: MemorySnapshot): DebugMemoryLeak[] {
+    const leaks: DebugMemoryLeak[] = [];
 
     // Check for subscription leaks
     const subscriptionCount = this.referenceCounts.get('subscription') || 0;
@@ -339,7 +339,7 @@ class LeakDetector {
     return leaks;
   }
 
-  detectLeaks(): MemoryLeak[] {
+  detectLeaks(): DebugMemoryLeak[] {
     return this.analyze({
       timestamp: Date.now(),
       heapUsed: 0,

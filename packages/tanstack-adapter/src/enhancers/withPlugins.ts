@@ -4,6 +4,8 @@
 import type { Table as TanStackTable, RowData } from '@tanstack/react-table'
 import type { EnhancedTable, Plugin } from '../types/enhanced'
 import { PluginManager } from '@gridkit/core/plugin'
+import { useMemo } from 'react'
+import { useReactTable } from '@tanstack/react-table'
 
 /**
  * High-order function to add plugin management to TanStack Table
@@ -46,7 +48,6 @@ export function createEnhancedTableWithPlugins<TData extends RowData>(
   plugins: Plugin[] = []
 ): EnhancedTable<TData> {
   // First create TanStack table
-  const { useReactTable } = require('@tanstack/react-table')
   const tanstackTable = useReactTable(options)
 
   // Add plugins
@@ -60,9 +61,6 @@ export function useTableWithPlugins<TData extends RowData>(
   options: any,
   plugins: Plugin[] = []
 ): EnhancedTable<TData> {
-  const { useMemo } = require('react')
-  const { useReactTable } = require('@tanstack/react-table')
-  
   // First create TanStack table
   const tanstackTable = useReactTable(options)
 

@@ -10,9 +10,9 @@ export function StateDiffViewer({ tableId }: { tableId: string }) {
 
   useEffect(() => {
     // Fetch snapshots
-    {
+    devToolsBridge.sendCommand({
       type: 'GET_SNAPSHOTS',
-      timestamp: Date.now(,
+      timestamp: Date.now(),
       tableId
     }).then(setSnapshots)
   }, [tableId])

@@ -12,11 +12,11 @@ import type {
   MemoryMetrics,
   PerformanceBudget,
   BudgetViolation,
-  MemoryLeak,
-  ReportOptions,
+  PerformanceMemoryLeak,
+  PerformanceReportOptions,
   PerformanceReport,
   AlertDestination,
-  ReportSummary,
+  PerformanceReportSummary,
   ReportBudgetAnalysis,
 } from '../types/metrics';
 
@@ -279,10 +279,10 @@ export class EnhancedPerformanceMonitor implements PerformanceMonitor {
   /**
    * Detect memory leaks.
    */
-  detectMemoryLeaks(): MemoryLeak[] {
+  detectPerformanceMemoryLeaks(): PerformanceMemoryLeak[] {
     if (!this.enabled) return [];
 
-    const leaks: MemoryLeak[] = [];
+    const leaks: PerformanceMemoryLeak[] = [];
 
     for (const [category, durations] of this.memoryLeakCategories.entries()) {
       if (durations.length < 2) continue;
@@ -330,7 +330,7 @@ export class EnhancedPerformanceMonitor implements PerformanceMonitor {
   /**
    * Generate a performance report.
    */
-  generateReport(options: ReportOptions = {}): PerformanceReport {
+  generateReport(options: PerformanceReportOptions = {}): PerformanceReport {
     if (!this.enabled) {
       return {
         timestamp: Date.now(),
@@ -350,7 +350,7 @@ export class EnhancedPerformanceMonitor implements PerformanceMonitor {
     const operations = this.computeOperationMetrics();
     const violations = this.countViolations();
     const memory = this.getMemoryMetrics();
-    const leaks = this.detectMemoryLeaks();
+    const leaks = this.detectPerformanceMemoryLeaks();
 
     return {
       timestamp: Date.now(),
@@ -528,7 +528,7 @@ export class EnhancedPerformanceMonitor implements PerformanceMonitor {
     operations: Record<string, OperationMetrics>,
     violations: number,
     memory: MemoryMetrics
-  ): ReportSummary {
+  ): PerformanceReportSummary {
     const allTimes = Object.values(operations).map((m) => m.avgTime);
     const avgTime = allTimes.length > 0 ? allTimes.reduce((a, b) => a + b, 0) / allTimes.length : 0;
     const maxTime = allTimes.length > 0 ? Math.max(...allTimes) : 0;
@@ -583,7 +583,7 @@ export class EnhancedPerformanceMonitor implements PerformanceMonitor {
   private generateRecommendations(
     operations: Record<string, OperationMetrics>,
     memory: MemoryMetrics,
-    leaks: MemoryLeak[]
+    leaks: PerformanceMemoryLeak[]
   ): string[] {
     const recommendations: string[] = [];
 

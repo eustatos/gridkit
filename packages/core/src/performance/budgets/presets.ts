@@ -6,7 +6,7 @@
  * @module @gridkit/core/performance/budgets/presets
  */
 
-import type { PerformanceBudget } from '../types/metrics';
+import type { PerformanceBudget, PerformanceReportOptions, PerformanceReportSummary } from '../types/metrics';
 
 /**
  * Frame budget for 60fps (16ms per frame).

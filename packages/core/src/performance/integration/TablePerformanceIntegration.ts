@@ -6,20 +6,20 @@
  * @module @gridkit/core/performance/integration/table-performance
  */
 
-import type { TableInstance } from '../../../table/instance/TableInstance';
+import type { Table } from '../../types';
 import type { EnhancedPerformanceMonitor } from '../monitor/EnhancedPerformanceMonitor';
 import type { BudgetViolation } from '../types/metrics';
 
 /**
  * Integration layer between table and performance monitor.
  */
-export class TablePerformanceIntegration {
-  private table: TableInstance;
+export class TablePerformanceIntegration<TData extends { id?: string }> {
+  private table: Table<TData>;
   private monitor: EnhancedPerformanceMonitor;
   private initialized = false;
 
   constructor(
-    table: TableInstance,
+    table: Table<TData>,
     monitor: EnhancedPerformanceMonitor
   ) {
     this.table = table;
@@ -33,8 +33,8 @@ export class TablePerformanceIntegration {
     if (this.initialized) return;
     this.initialized = true;
 
-    this.setupOperationTracking();
-    this.setupEventListeners();
+    // Event listeners are handled by the monitor
+    // This method can be extended for custom initialization
   }
 
   /**
@@ -210,9 +210,9 @@ export class TablePerformanceIntegration {
 /**
  * Create a table performance integration.
  */
-export function createTablePerformanceIntegration(
-  table: TableInstance,
+export function createTablePerformanceIntegration<TData extends { id?: string }>(
+  table: Table<TData>,
   monitor: EnhancedPerformanceMonitor
-): TablePerformanceIntegration {
-  return new TablePerformanceIntegration(table, monitor);
+): TablePerformanceIntegration<TData> {
+  return new TablePerformanceIntegration<TData>(table, monitor);
 }

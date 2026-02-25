@@ -60,7 +60,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 window.addEventListener('message', (event) => {
   if (event.source !== window) return
   if (!event.data || typeof event.data !== 'object') return
-  if (event.data.source !== 'gridkit-devtools-backend') return
+  const source = event.data.source
+  if (source !== 'gridkit-devtools-backend' && source !== 'backend') return
 
   console.log('[GridKit DevTools] Content received from backend:', event.data.type)
 

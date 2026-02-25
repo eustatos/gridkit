@@ -13,7 +13,7 @@ import type {
   ValidationError,
   ValidationFix,
   ValidatorFactory,
-  PerformanceBudget,
+  ValidationPerformanceBudget,
   StringValidatorOptions,
   NumberValidatorOptions,
   ArrayValidatorOptions,
@@ -736,7 +736,7 @@ export const Validators: ValidatorFactory = {
   /**
    * Validates operation is within performance budget.
    */
-  withinBudget(budget: PerformanceBudget) {
+  withinBudget(budget: ValidationPerformanceBudget) {
     return createValidator({
       id: 'performance-budget',
       message: `Operation exceeded budget`,
