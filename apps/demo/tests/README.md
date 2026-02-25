@@ -95,6 +95,33 @@ pnpm test:e2e --project=webkit
 - ✅ Переключение тем без тормозов
 - ✅ Отзывчивость интерфейса
 
+### 9. `extension.test.ts` - DevTools Extension (новое)
+- ✅ Загрузка extension с страницей
+- ✅ Таблица готова для инспекции DevTools
+- ✅ Интеграция extension с демо-приложением
+- ✅ Инспекция state таблицы через extension
+- ✅ Мониторинг событий таблицы extension'ом
+- ✅ Доступ к данным таблицы через extension
+- ✅ Мониторинг производительности extension'ом
+
+## 📚 Extension Testing
+
+For testing the GridKit DevTools Chrome extension, see:
+
+- **Extension Testing Guide**: [EXTENSION-TESTING.md](EXTENSION-TESTING.md)
+- **Extension Tests**: `tests/e2e/extension.test.ts`
+- **Helper Script**: `scripts/test-extension.sh`
+
+### Run Extension Tests:
+```bash
+# Using helper script
+./apps/demo/scripts/test-extension.sh
+
+# Or manually
+pnpm build:extension
+npx playwright test tests/e2e/extension.test.ts --project=chromium-with-extension
+```
+
 ## 🎯 Цели тестирования
 
 ### Функциональность

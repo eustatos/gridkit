@@ -1,4 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+
+// Get extension path relative to config file
+const extensionPath = path.resolve(
+  __dirname,
+  '../packages/devtools/extension'
+);
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -12,9 +19,24 @@ export default defineConfig({
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    // Launch browser with extension loaded
+    launchOptions: {
+      args: [
+        `--load-extension=${extensionPath}`,
+        '--disable-extensions-except=' + extensionPath,
+        '--enable-chrome-browser-cloud-management',
+      ],
+    },
   },
 
   projects: [
+    {
+      name: 'chromium-with-extension',
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: 'chrome',
+      },
+    },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
