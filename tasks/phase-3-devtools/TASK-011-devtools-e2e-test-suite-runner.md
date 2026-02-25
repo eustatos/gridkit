@@ -1,0 +1,277 @@
+# TASK-011: E2E Test Suite Runner for DevTools
+
+## Цель
+Создать скрипт запуска всех E2E тестов DevTools и документацию по запуску.
+
+## Текущее состояние
+- ✅ Существует `apps/demo/playwright.config.ts` с конфигурацией
+- ✅ Существует `package.json` с `test:e2e` скриптом
+- ❌ Нет единого скрипта для запуска всех DevTools тестов
+- ❌ Нет документации по запуску тестов
+
+## Задача
+
+### 1. Добавить скрипт запуска DevTools E2E тестов
+
+**Файл**: `apps/demo/package.json`
+
+Добавь скрипт:
+```json
+{
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:devtools": "playwright test tests/e2e/devtools-integration.test.ts",
+    "test:e2e:devtools:ui": "playwright test tests/e2e/devtools-integration.test.ts --ui",
+    "test:e2e:devtools:headed": "playwright test tests/e2e/devtools-integration.test.ts --headed",
+    "test:e2e:devtools:debug": "playwright test tests/e2e/devtools-integration.test.ts --debug"
+  }
+}
+```
+
+### 2. Создать скрипт запуска всех тестов
+
+**Файл**: `apps/demo/scripts/run-devtools-tests.sh`
+
+```bash
+#!/bin/bash
+
+# Run all DevTools E2E tests
+echo "Running DevTools E2E tests..."
+
+# Запуск в нормальном режиме
+pnpm test:e2e:devtools
+
+# Проверка результата
+if [ $? -ne 0 ]; then
+    echo "❌ DevTools E2E tests failed"
+    exit 1
+fi
+
+echo "✅ DevTools E2E tests passed"
+```
+
+### 3. Создать документацию по запуску
+
+**Файл**: `apps/demo/DEVTOOLS-E2E-TESTS.md`
+
+```markdown
+# DevTools E2E Tests
+
+Документация по запуску E2E тестов для DevTools extension.
+
+## 📋 Предварительные требования
+
+- Node.js 16+
+- Chrome/Firefox/WebKit браузеры
+- Playwright тесты
+
+## 🚀 Запуск тестов
+
+### Быстрый старт
+
+```bash
+cd apps/demo
+pnpm install
+pnpm dev &  # Запускаем dev server
+pnpm test:e2e:devtools
+```
+
+### Запуск с UI
+
+```bash
+pnpm test:e2e:devtools:ui
+```
+
+### Запуск с headed режимом (видно браузер)
+
+```bash
+pnpm test:e2e:devtools:headed
+```
+
+### Запуск в debug режиме
+
+```bash
+pnpm test:e2e:devtools:debug
+```
+
+## 📊 Запуск конкретных тестов
+
+### По названию
+
+```bash
+pnpm test:e2e:devtools -- -g "DevTools Loading"
+```
+
+### По тегу
+
+```bash
+pnpm test:e2e:devtools -- -g "@smoke"
+```
+
+### По файлу
+
+```bash
+pnpm test:e2e:devtools tests/e2e/devtools-integration.test.ts
+```
+
+## ⚙️ Конфигурация
+
+### Playwright конфиг
+
+Файл: `apps/demo/playwright.config.ts`
+
+Настройки:
+- Chromium (по умолчанию)
+- Firefox
+- WebKit (Safari)
+
+### Запуск в CI
+
+```bash
+# Установка браузеров
+npx playwright install
+
+# Запуск
+pnpm test:e2e:devtools
+
+# С coverage
+pnpm test:e2e:devtools -- --coverage
+```
+
+## 🐛 Отладка
+
+### Визуальная отладка
+
+```bash
+pnpm test:e2e:devtools:headed
+```
+
+### Debug режим
+
+```bash
+pnpm test:e2e:devtools:debug
+```
+
+### Снимки экрана при ошибках
+
+Снимки сохраняются в `playwright-report/` при падении тестов.
+
+## 📈 Coverage
+
+```bash
+pnpm test:e2e:devtools -- --coverage
+```
+
+Coverage отчет сохраняется в `coverage/`.
+
+## 🔄 Обновление скриншотов
+
+```bash
+pnpm test:e2e:devtools -u
+```
+
+## 📝 best Practices
+
+1. ✅ Запускай тесты локально перед коммитом
+2. ✅ Используй `test.skip()` для временного пропуска
+3. ✅ Добавляй описания на русском языке
+4. ✅ Проверяй в нескольких браузерах
+5. ✅ Используй асинхронные ожидания (`waitForTimeout`)
+
+## 🆘 Troubleshooting
+
+### Тесты не проходят
+
+1. Проверь, что DevTools extension загружен в браузере
+2. Убедись, что dev server запущен
+3. Проверь консоль браузера на ошибки
+4. Запусти в headed режиме для визуальной отладки
+
+### Extension не обнаруживается
+
+1. Проверь manifest.json в extension
+2. Убедись, что background.js загружен
+3. Проверь console logs на READY сообщения
+
+## 📚 Связанные файлы
+
+- `apps/demo/tests/e2e/devtools-integration.test.ts` (тесты)
+- `apps/demo/playwright.config.ts` (конфигурация)
+- `packages/devtools/README.md` (DevTools extension)
+```
+
+### 4. Создать скрипт проверки окружения
+
+**Файл**: `apps/demo/scripts/check-devtools-env.sh`
+
+```bash
+#!/bin/bash
+
+echo "Checking DevTools E2E test environment..."
+
+# Проверка Node.js
+if ! command -v node &> /dev/null; then
+    echo "❌ Node.js not found"
+    exit 1
+fi
+echo "✅ Node.js found: $(node --version)"
+
+# Проверка pnpm
+if ! command -v pnpm &> /dev/null; then
+    echo "❌ pnpm not found"
+    exit 1
+fi
+echo "✅ pnpm found: $(pnpm --version)"
+
+# Проверка playwright
+if ! command -v npx &> /dev/null; then
+    echo "❌ Playwright not installed"
+    exit 1
+fi
+echo "✅ Playwright installed"
+
+# Проверка браузеров
+echo "Checking browsers..."
+npx playwright install chromium
+echo "✅ Chromium installed"
+
+echo "✅ Environment check passed"
+```
+
+## Инструкция для AI агента
+
+1. **Обнови** `apps/demo/package.json` - добавь скрипты для запуска DevTools тестов
+
+2. **Создай** `apps/demo/scripts/run-devtools-tests.sh` - скрипт запуска тестов
+
+3. **Создай** `apps/demo/DEVTOOLS-E2E-TESTS.md` - документацию по запуску тестов
+
+4. **Создай** `apps/demo/scripts/check-devtools-env.sh` - скрипт проверки окружения
+
+5. **Сделай скрипты исполняемыми**:
+   ```bash
+   chmod +x apps/demo/scripts/*.sh
+   ```
+
+6. **Протестируй скрипты**:
+   ```bash
+   cd apps/demo
+   ./scripts/check-devtools-env.sh
+   ./scripts/run-devtools-tests.sh
+   ```
+
+## Критерии успеха
+- ✅ Все скрипты созданы и работают
+- ✅ Документация создана и полная
+- ✅ Скрипты проверки окружения проходят
+- ✅ Тесты запускаются через скрипты
+
+## Связанные файлы
+- `apps/demo/package.json` (скрипты)
+- `apps/demo/playwright.config.ts` (конфигурация)
+- `apps/demo/README.md` (документация)
+
+## Заметки
+- Скрипты должны работать в macOS/Linux/Windows (если возможно)
+- Документация должна быть на русском языке (как в проекте)
+- Добавь примеры использования в README

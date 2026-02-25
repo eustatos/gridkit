@@ -76,11 +76,11 @@ test.describe('DevTools Integration', () => {
   });
 
   test('should show table is ready for DevTools', async ({ page }) => {
-    // Таблица должна быть отрендерена
+    // Table should be rendered
     const table = page.locator('table');
     await expect(table).toBeVisible();
     
-    // Debug должен быть включен (проверяется через console logs)
+    // Debug should be enabled (verified via console logs)
     const consoleLogs: string[] = [];
     page.on('console', msg => {
       if (msg.type() === 'log') {
@@ -88,19 +88,19 @@ test.describe('DevTools Integration', () => {
       }
     });
     
-    // Ждем, пока появится некоторая активность в console
+    // Wait for some console activity
     await page.waitForTimeout(500);
     
-    // Должны быть какие-то console output о таблице
+    // There should be some console output about the table
     expect(consoleLogs.length).toBeGreaterThanOrEqual(0);
   });
 
   test('should support DevTools protocol commands', async ({ page }) => {
-    // Проверяем, что таблица имеет необходимые свойства для DevTools
+    // Check table has necessary properties for DevTools
     const stats = page.locator('div strong:has-text("Statistics:")');
     await expect(stats).toBeVisible();
     
-    // Проверяем, что таблица отвечает
+    // Verify table responds
     const table = page.locator('table');
     const tableRect = await table.boundingBox();
     
@@ -110,26 +110,77 @@ test.describe('DevTools Integration', () => {
   });
 
   test('should work with DevTools state viewing', async ({ page }) => {
-    // Получаем состояние таблицы, проверяя видимый контент
+    // Get table state by checking visible content
     const rows = page.locator('tbody tr');
     const rowCount = await rows.count();
     
-    // Должно быть видно 10 строк
+    // Should display 10 rows
     expect(rowCount).toBe(10);
   });
 
   test('should allow DevTools performance monitoring', async ({ page }) => {
-    // Записываем время
+    // Record start time
     const startTime = Date.now();
     
-    // Выполняем некоторые действия
+    // Perform some actions
     await page.waitForTimeout(100);
     
     const endTime = Date.now();
     const duration = endTime - startTime;
     
-    // Должно завершиться за разумное время
+    // Should complete within reasonable time
     expect(duration).toBeGreaterThanOrEqual(100);
     expect(duration).toBeLessThan(200);
+  });
+});
+
+test.describe('DevTools State Inspection', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('should inspect table state through DevTools panel', async ({ page }) => {
+    // Verify table is displayed
+    const table = page.locator('table');
+    await expect(table).toBeVisible();
+    
+    // Check row count
+    const rows = page.locator('tbody tr');
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThan(0), 'Table should contain at least one row';
+    
+    // Verify columns exist
+    const columns = page.locator('thead th');
+    const colCount = await columns.count();
+    expect(colCount).toBeGreaterThan(0), 'Table should contain at least one column';
+  });
+
+  test('should inspect table data content', async ({ page }) => {
+    // Get first data row
+    const firstRow = page.locator('tbody tr:first-child');
+    await expect(firstRow).toBeVisible();
+    
+    // Verify row contains data (not empty)
+    const cells = firstRow.locator('td');
+    const cellCount = await cells.count();
+    
+    for (let i = 0; i < cellCount; i++) {
+      const cellText = await cells.nth(i).textContent();
+      expect(cellText).not.toBe(''), `Cell ${i} in first row should contain data`;
+    }
+  });
+
+  test('should inspect table metadata (id, rowCount, columnCount)', async ({ page }) => {
+    // Check statistics are present
+    const stats = page.locator('div strong:has-text("Statistics:")');
+    await expect(stats).toBeVisible();
+    
+    // Get statistics text from parent span element
+    const statsText = await stats.locator('xpath=../..').textContent();
+    
+    // Verify statistics contain table information
+    expect(statsText).toMatch(/rows?/i), 'Statistics should contain row information';
+    expect(statsText).toMatch(/per page/i), 'Statistics should contain per page information';
+    expect(statsText).toMatch(/page/i), 'Statistics should contain page information';
   });
 });
