@@ -16,3 +16,14 @@ export type {
   DeserializationOptions,
   Constructor,
 } from "./types";
+
+// Export advanced serialization system
+export { AdvancedSerializer } from "./advanced";
+export type {
+  SerializationStrategy,
+  SerializationContext,
+  DeserializationContext,
+  SerializationOptions as AdvancedSerializationOptions,
+  SerializedValue as AdvancedSerializedValue,
+  SerializationStrategy,
+} from "./advanced";

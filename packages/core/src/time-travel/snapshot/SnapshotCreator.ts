@@ -6,12 +6,14 @@ import { Atom, Store } from "../../types";
 import type { Snapshot, SnapshotStateEntry } from "../types";
 import type { SnapshotCreatorConfig, CreationResult } from "./types";
 import { atomRegistry } from "../../atom-registry";
+import { AdvancedSerializer, SerializationOptions } from "../../utils/snapshot-serialization/advanced";
 
 export class SnapshotCreator {
   private store: Store;
   private config: SnapshotCreatorConfig;
   private listeners: Set<(snapshot: Snapshot) => void> = new Set();
   private lastSnapshotState: Record<string, SnapshotStateEntry> | null = null;
+  private serializer: AdvancedSerializer;
 
   constructor(store: Store, config?: Partial<SnapshotCreatorConfig>) {
     this.store = store;
@@ -28,6 +30,19 @@ export class SnapshotCreator {
     if (this.config.includeTypes) {
       this.config.includeTypes = this.config.includeTypes.map((t) => String(t));
     }
+
+    // Initialize AdvancedSerializer with default options
+    const serializationOptions: SerializationOptions = {
+      detectCircular: true,
+      maxDepth: 100,
+      includeGetters: false,
+      includeNonEnumerable: false,
+      includeSymbols: false,
+      functionHandling: "source",
+      errorHandling: "replace",
+      circularHandling: "reference",
+    };
+    this.serializer = new AdvancedSerializer(serializationOptions);
   }
 
   /**
@@ -223,19 +238,12 @@ export class SnapshotCreator {
   }
 
   /**
-   * Serialize value for storage
+   * Serialize value for storage using AdvancedSerializer
    * @param value Value to serialize
    * @returns Serialized value
    */
   private serializeValue(value: unknown): unknown {
-    // Handle special cases
-    if (value instanceof Date) return value.toISOString();
-    if (value instanceof RegExp) return value.source;
-    if (value instanceof Map) return Array.from(value.entries());
-    if (value instanceof Set) return Array.from(value);
-
-    // Return as is for primitive types
-    return value;
+    return this.serializer.serialize(value);
   }
 
   /**
