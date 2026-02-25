@@ -4,16 +4,31 @@
 
 import { Atom, Store } from "../../types";
 import type { Snapshot, SnapshotStateEntry } from "../types";
-import type { SnapshotRestorerConfig, RestorationResult } from "./types";
+import type {
+  SnapshotRestorerConfig,
+  RestorationResult,
+  RestorationCheckpoint,
+  TransactionalRestorerConfig,
+  TransactionalRestorationResult,
+  RestorationError,
+  TransactionConfig,
+  RestorationOptions,
+  RestorationProgress,
+  CheckpointResult,
+  RollbackResult,
+} from "./types";
 import { atomRegistry } from "../../atom-registry";
 
 export class SnapshotRestorer {
   private store: Store;
   private config: SnapshotRestorerConfig;
+  private transactionalConfig: TransactionalRestorerConfig;
   private listeners: Set<(snapshot: Snapshot) => void> = new Set();
   private restoreInProgress: boolean = false;
+  private checkpoints: Map<string, RestorationCheckpoint> = new Map();
+  private activeCheckpointId: string | null = null;
 
-  constructor(store: Store, config?: Partial<SnapshotRestorerConfig>) {
+  constructor(store: Store, config?: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig>) {
     this.store = store;
     this.config = {
       validateBeforeRestore: true,
@@ -22,6 +37,17 @@ export class SnapshotRestorer {
       transform: null,
       batchRestore: true,
       skipErrors: true,
+      ...config,
+    };
+    this.transactionalConfig = {
+      enableTransactions: config?.enableTransactions ?? true,
+      rollbackOnError: config?.rollbackOnError ?? true,
+      validateBeforeRestore: config?.validateBeforeRestore ?? true,
+      batchSize: config?.batchSize ?? 0,
+      timeout: config?.timeout ?? 5000,
+      onError: config?.onError ?? "rollback",
+      maxCheckpoints: config?.maxCheckpoints ?? 10,
+      checkpointTimeout: config?.checkpointTimeout ?? 300000, // 5 minutes
       ...config,
     };
   }
@@ -406,8 +432,9 @@ export class SnapshotRestorer {
    * Update configuration
    * @param config New configuration
    */
-  configure(config: Partial<SnapshotRestorerConfig>): void {
+  configure(config: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig>): void {
     this.config = { ...this.config, ...config };
+    this.transactionalConfig = { ...this.transactionalConfig, ...config };
   }
 
   /**
@@ -415,5 +442,575 @@ export class SnapshotRestorer {
    */
   getConfig(): SnapshotRestorerConfig {
     return { ...this.config };
+  }
+
+  /**
+   * Get transactional configuration
+   */
+  getTransactionalConfig(): TransactionalRestorerConfig {
+    return { ...this.transactionalConfig };
+  }
+
+  /**
+   * Get all checkpoints
+   */
+  getCheckpoints(): RestorationCheckpoint[] {
+    return Array.from(this.checkpoints.values());
+  }
+
+  /**
+   * Get last checkpoint
+   */
+  getLastCheckpoint(): RestorationCheckpoint | null {
+    if (this.checkpoints.size === 0) {
+      return null;
+    }
+    // Get the most recent checkpoint
+    let lastCheckpoint: RestorationCheckpoint | null = null;
+    for (const checkpoint of this.checkpoints.values()) {
+      if (!lastCheckpoint || checkpoint.timestamp > lastCheckpoint.timestamp) {
+        lastCheckpoint = checkpoint;
+      }
+    }
+    return lastCheckpoint;
+  }
+
+  /**
+   * Create a checkpoint for transactional restoration
+   * @param snapshotId The snapshot ID being restored
+   * @returns Checkpoint result
+   */
+  private createCheckpoint(snapshotId: string): CheckpointResult {
+    const checkpointId = this.generateCheckpointId();
+    const timestamp = Date.now();
+
+    // Create checkpoint with empty previousValues (will be filled during restoration)
+    const checkpoint: RestorationCheckpoint = {
+      id: checkpointId,
+      timestamp,
+      snapshotId,
+      previousValues: new Map<symbol, unknown>(),
+      metadata: {
+        atomCount: 0,
+        duration: 0,
+        inProgress: true,
+        committed: false,
+      },
+    };
+
+    this.checkpoints.set(checkpointId, checkpoint);
+    this.activeCheckpointId = checkpointId;
+
+    // Clean up old checkpoints if needed
+    this.cleanupOldCheckpoints();
+
+    return {
+      checkpointId,
+      success: true,
+      atomCount: 0,
+      timestamp,
+    };
+  }
+
+  /**
+   * Generate unique checkpoint ID
+   */
+  private generateCheckpointId(): string {
+    return `checkpoint-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  }
+
+  /**
+   * Cleanup old checkpoints based on maxCheckpoints and timeout
+   */
+  private cleanupOldCheckpoints(): void {
+    const now = Date.now();
+    const checkpoints = Array.from(this.checkpoints.entries());
+    
+    // Sort by timestamp (newest first)
+    checkpoints.sort((a, b) => b[1].timestamp - a[1].timestamp);
+
+    // Remove old checkpoints
+    for (let i = this.transactionalConfig.maxCheckpoints!; i < checkpoints.length; i++) {
+      const [id, checkpoint] = checkpoints[i];
+      // Check if checkpoint has expired
+      if (now - checkpoint.timestamp > this.transactionalConfig.checkpointTimeout!) {
+        this.checkpoints.delete(id);
+      }
+    }
+
+    // Remove checkpoints beyond max
+    while (this.checkpoints.size > this.transactionalConfig.maxCheckpoints!) {
+      const oldestId = checkpoints[checkpoints.length - 1][0];
+      this.checkpoints.delete(oldestId);
+    }
+  }
+
+  /**
+   * Mark checkpoint as committed (successful restoration)
+   * @param checkpointId Checkpoint ID
+   */
+  private commitCheckpoint(checkpointId: string): void {
+    const checkpoint = this.checkpoints.get(checkpointId);
+    if (checkpoint) {
+      checkpoint.metadata.committed = true;
+      checkpoint.metadata.inProgress = false;
+    }
+  }
+
+  /**
+   * Get checkpoint by ID
+   * @param checkpointId Checkpoint ID
+   */
+  private getCheckpoint(checkpointId: string): RestorationCheckpoint | null {
+    return this.checkpoints.get(checkpointId) || null;
+  }
+
+  /**
+   * Create a checkpoint by capturing current atom values before restoration
+   * @param checkpointId Checkpoint ID
+   * @param atomsToRestore List of atoms to restore with their keys
+   * @returns Map of atom IDs to their current values
+   */
+  private capturePreviousValues(
+    checkpointId: string,
+    atomsToRestore: Array<{ key: string; entry: SnapshotStateEntry; atom: Atom<unknown> }>,
+  ): Map<symbol, unknown> {
+    const previousValues = new Map<symbol, unknown>();
+
+    for (const { atom } of atomsToRestore) {
+      try {
+        const currentValue = this.store.get(atom);
+        previousValues.set(atom.id, currentValue);
+      } catch (error) {
+        console.error(`Failed to capture previous value for atom ${atom.name}:`, error);
+      }
+    }
+
+    // Update checkpoint with previous values
+    const checkpoint = this.checkpoints.get(checkpointId);
+    if (checkpoint) {
+      checkpoint.previousValues = previousValues;
+      checkpoint.metadata.atomCount = atomsToRestore.length;
+    }
+
+    return previousValues;
+  }
+
+  /**
+   * Apply restoration with progress tracking
+   * @param snapshot Snapshot to restore
+   * @param options Restoration options
+   * @returns Transactional restoration result
+   */
+  async restoreWithTransaction(
+    snapshot: Snapshot,
+    options?: RestorationOptions,
+  ): Promise<TransactionalRestorationResult> {
+    const checkpointResult = this.createCheckpoint(snapshot.id);
+    const checkpointId = checkpointResult.checkpointId;
+    const startTime = Date.now();
+
+    try {
+      this.restoreInProgress = true;
+
+      // Phase 1: Validate
+      if (this.transactionalConfig.validateBeforeRestore) {
+        const validation = this.validateSnapshotWithDetails(snapshot);
+        if (!validation.valid) {
+          const error = new RestorationError("Validation failed", {
+            errors: validation.errors,
+          });
+          
+          if (this.transactionalConfig.onError === "throw") {
+            throw error;
+          }
+
+          await this.rollback(checkpointId);
+
+          return {
+            success: false,
+            restoredCount: 0,
+            totalAtoms: Object.keys(snapshot.state).length,
+            errors: validation.errors,
+            warnings: validation.warnings,
+            duration: Date.now() - startTime,
+            timestamp: startTime,
+            checkpointId,
+            rollbackPerformed: true,
+          };
+        }
+      }
+
+      // Phase 2: Capture previous values and prepare for restoration
+      const atomsToRestore: Array<{ key: string; entry: SnapshotStateEntry; atom: Atom<unknown> }> = [];
+
+      // First, find all atoms that will be restored
+      for (const [key, entry] of Object.entries(snapshot.state)) {
+        let atom = this.findAtomByName(entry.name || key);
+        
+        if (!atom && entry.name) {
+          const allAtoms = atomRegistry.getAll();
+          for (const [id, storedAtom] of allAtoms) {
+            const storedName = storedAtom.name || storedAtom.id?.description || "atom";
+            if (storedName === entry.name) {
+              atom = storedAtom as Atom<unknown>;
+              break;
+            }
+          }
+        }
+
+        if (atom) {
+          atomsToRestore.push({ key, entry, atom });
+        }
+      }
+
+      // Capture previous values
+      this.capturePreviousValues(checkpointId, atomsToRestore);
+
+      // Phase 3: Apply changes transactionally
+      const restoreResult = await this.applyChangesWithTransaction(
+        snapshot,
+        atomsToRestore,
+        checkpointId,
+        options,
+      );
+
+      // Commit checkpoint if successful
+      if (restoreResult.success) {
+        this.commitCheckpoint(checkpointId);
+      }
+
+      return {
+        success: restoreResult.success,
+        restoredCount: restoreResult.restoredCount,
+        totalAtoms: restoreResult.totalAtoms,
+        errors: restoreResult.errors,
+        warnings: restoreResult.warnings,
+        duration: Date.now() - startTime,
+        timestamp: startTime,
+        checkpointId,
+        rollbackPerformed: false,
+        successAtoms: restoreResult.successAtoms,
+        failedAtomDetails: restoreResult.failedAtomDetails,
+        failedAtoms: restoreResult.failedAtoms,
+        rolledBackCount: restoreResult.rolledBackCount,
+        interrupted: restoreResult.interrupted,
+      };
+    } catch (error) {
+      // Automatic rollback on error
+      await this.rollback(checkpointId);
+
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        success: false,
+        restoredCount: 0,
+        totalAtoms: Object.keys(snapshot.state).length,
+        errors: [errorMessage],
+        warnings: [],
+        duration: Date.now() - startTime,
+        timestamp: startTime,
+        checkpointId,
+        rollbackPerformed: true,
+        failedAtoms: [],
+      };
+    } finally {
+      this.restoreInProgress = false;
+    }
+  }
+
+  /**
+   * Apply changes with transaction support
+   * @param snapshot Snapshot to restore
+   * @param atomsToRestore List of atoms to restore
+   * @param checkpointId Checkpoint ID
+   * @param options Restoration options
+   * @returns Restoration result with transaction details
+   */
+  private async applyChangesWithTransaction(
+    snapshot: Snapshot,
+    atomsToRestore: Array<{ key: string; entry: SnapshotStateEntry; atom: Atom<unknown> }>,
+    checkpointId: string,
+    options?: RestorationOptions,
+  ): Promise<TransactionalRestorationResult> {
+    const startTime = Date.now();
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const successAtoms: Array<{ name: string; atomId: symbol }> = [];
+    const failedAtomDetails: Array<{ name: string; atomId: symbol; error: string; action: string }> = [];
+    let restoredCount = 0;
+    let interrupted = false;
+
+    const batchSize = options?.transactionConfig?.enabled
+      ? this.transactionalConfig.batchSize!
+      : 0;
+
+    // Process atoms in batches if batch size is specified
+    if (batchSize > 0) {
+      for (let i = 0; i < atomsToRestore.length; i += batchSize) {
+        if (interrupted) break;
+
+        const batch = atomsToRestore.slice(i, i + batchSize);
+        const batchResult = await this.restoreBatchAtoms(
+          batch,
+          checkpointId,
+          options?.onProgress,
+        );
+
+        successAtoms.push(...batchResult.successAtoms);
+        failedAtomDetails.push(...batchResult.failedAtomDetails);
+        restoredCount += batchResult.restoredCount;
+        errors.push(...batchResult.errors);
+        warnings.push(...batchResult.warnings);
+
+        if (batchResult.interrupted) {
+          interrupted = true;
+        }
+
+        // Check timeout
+        if (
+          this.transactionalConfig.timeout! > 0 &&
+          Date.now() - startTime > this.transactionalConfig.timeout!
+        ) {
+          warnings.push("Restoration timed out");
+          interrupted = true;
+          break;
+        }
+      }
+    } else {
+      // Restore all atoms at once
+      const result = await this.restoreBatchAtoms(
+        atomsToRestore,
+        checkpointId,
+        options?.onProgress,
+      );
+      successAtoms.push(...result.successAtoms);
+      failedAtomDetails.push(...result.failedAtomDetails);
+      restoredCount = result.restoredCount;
+      errors.push(...result.errors);
+      warnings.push(...result.warnings);
+      interrupted = result.interrupted;
+    }
+
+    return {
+      success: errors.length === 0,
+      restoredCount,
+      totalAtoms: atomsToRestore.length,
+      errors,
+      warnings,
+      duration: Date.now() - startTime,
+      timestamp: startTime,
+      checkpointId,
+      rollbackPerformed: false,
+      successAtoms,
+      failedAtomDetails,
+      failedAtoms: failedAtomDetails.map((item) => ({
+        name: item.name,
+        error: item.error,
+      })),
+      rolledBackCount: 0,
+      interrupted,
+    };
+  }
+
+  /**
+   * Restore a batch of atoms
+   * @param atomsToRestore List of atoms to restore
+   * @param checkpointId Checkpoint ID
+   * @param onProgress Progress callback
+   * @returns Batch restoration result
+   */
+  private async restoreBatchAtoms(
+    atomsToRestore: Array<{ key: string; entry: SnapshotStateEntry; atom: Atom<unknown> }>,
+    checkpointId: string,
+    onProgress?: (progress: RestorationProgress) => void,
+  ): Promise<{
+    restoredCount: number;
+    successAtoms: Array<{ name: string; atomId: symbol }>;
+    failedAtomDetails: Array<{ name: string; atomId: symbol; error: string; action: string }>;
+    errors: string[];
+    warnings: string[];
+    interrupted: boolean;
+  }> {
+    let restoredCount = 0;
+    const successAtoms: Array<{ name: string; atomId: symbol }> = [];
+    const failedAtomDetails: Array<{
+      name: string;
+      atomId: symbol;
+      error: string;
+      action: string;
+    }> = [];
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    let interrupted = false;
+
+    for (let i = 0; i < atomsToRestore.length; i++) {
+      if (interrupted) break;
+
+      const { key, entry, atom } = atomsToRestore[i];
+
+      // Report progress
+      if (onProgress) {
+        onProgress({
+          currentIndex: i,
+          totalAtoms: atomsToRestore.length,
+          currentAtomName: entry.name || key,
+          currentAtomId: atom.id,
+          isRollback: false,
+          timestamp: Date.now(),
+        });
+      }
+
+      try {
+        // Deserialize value if needed
+        const value = this.deserializeValue(entry.value, entry.type);
+
+        // Set the value
+        this.store.set(atom, value);
+
+        restoredCount++;
+        successAtoms.push({
+          name: entry.name || key,
+          atomId: atom.id,
+        });
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        errors.push(`Failed to restore atom ${key}: ${errorMsg}`);
+        failedAtomDetails.push({
+          name: entry.name || key,
+          atomId: atom.id,
+          error: errorMsg,
+          action: "restore",
+        });
+
+        if (this.transactionalConfig.onError === "throw") {
+          interrupted = true;
+          break;
+        }
+      }
+    }
+
+    return { restoredCount, successAtoms, failedAtomDetails, errors, warnings, interrupted };
+  }
+
+  /**
+   * Rollback to a checkpoint
+   * @param checkpointId Checkpoint ID
+   * @returns Rollback result
+   */
+  async rollback(checkpointId: string): Promise<RollbackResult> {
+    const checkpoint = this.checkpoints.get(checkpointId);
+    if (!checkpoint) {
+      return {
+        success: false,
+        checkpointId,
+        rolledBackCount: 0,
+        failedCount: 0,
+        timestamp: Date.now(),
+        error: `Checkpoint ${checkpointId} not found`,
+      };
+    }
+
+    const startTime = Date.now();
+    const failedAtoms: Array<{
+      name: string;
+      atomId: symbol;
+      error: string;
+    }> = [];
+    let rolledBackCount = 0;
+    let failedCount = 0;
+
+    // Restore previous values in reverse order
+    const reversedAtoms = Array.from(checkpoint.previousValues.entries()).reverse();
+
+    for (const [atomId, previousValue] of reversedAtoms) {
+      try {
+        // Use findAtomByName since we store atom references in checkpoint
+        // We need to look up the atom from the registry
+        const allAtoms = atomRegistry.getAll();
+        let atomFound: Atom<unknown> | null = null;
+        
+        // Try to find atom by ID first
+        for (const [id, atom] of allAtoms) {
+          if (id === atomId) {
+            atomFound = atom as Atom<unknown>;
+            break;
+          }
+        }
+        
+        // If not found by ID, try by description
+        if (!atomFound) {
+          for (const [id, atom] of allAtoms) {
+            if (id.description === atomId.description) {
+              atomFound = atom as Atom<unknown>;
+              break;
+            }
+          }
+        }
+
+        if (atomFound) {
+          this.store.set(atomFound, previousValue);
+          rolledBackCount++;
+        } else {
+          failedCount++;
+          failedAtoms.push({
+            name: `atom-${atomId.description}`,
+            atomId,
+            error: "Atom not found in registry",
+          });
+        }
+      } catch (error) {
+        failedCount++;
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        failedAtoms.push({
+          name: `atom-${atomId.description}`,
+          atomId,
+          error: errorMsg,
+        });
+        console.error(`Failed to rollback atom ${atomId.toString()}:`, error);
+        // Continue with other rollbacks
+      }
+    }
+
+    // Clean up checkpoint
+    this.checkpoints.delete(checkpointId);
+    if (this.activeCheckpointId === checkpointId) {
+      this.activeCheckpointId = null;
+    }
+
+    return {
+      success: failedCount === 0,
+      checkpointId,
+      rolledBackCount,
+      failedCount,
+      failedAtoms,
+      timestamp: Date.now(),
+      error: failedCount > 0 ? `Failed to rollback ${failedCount} atoms` : undefined,
+    };
+  }
+
+  /**
+   * Find atom by ID string
+   * @param atomIdString Atom ID string
+   * @returns Atom or null
+   */
+  private findAtomById(atomIdString: string): Atom<unknown> | null {
+    // Try to parse the symbol from string
+    try {
+      // Symbol.toString() returns "Symbol(description)" or "Symbol()"
+      // We need to extract the description
+      const match = atomIdString.match(/Symbol\((.*)\)$/);
+      if (match) {
+        const description = match[1] || undefined;
+        const allAtoms = atomRegistry.getAll();
+        for (const [id, atom] of allAtoms) {
+          if (id.description === description) {
+            return atom as Atom<unknown>;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to parse atom ID:", error);
+    }
+    return null;
   }
 }

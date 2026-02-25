@@ -306,6 +306,16 @@ export interface TimeTravelAPI {
   clearHistory(): void;
   getHistory(): Snapshot[];
   importState(state: Record<string, unknown>): boolean;
+
+  // Transactional restoration methods
+  restoreWithTransaction(
+    snapshotId: string,
+    options?: RestorationOptions,
+  ): Promise<TransactionalRestorationResult>;
+
+  getLastCheckpoint(): RestorationCheckpoint | null;
+  rollbackToCheckpoint(checkpointId: string): Promise<RollbackResult>;
+  getCheckpoints(): RestorationCheckpoint[];
 }
 
 // Enhanced store types

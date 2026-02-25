@@ -268,6 +268,16 @@ export class HistoryManager {
   }
 
   /**
+   * Get snapshot by ID
+   * @param snapshotId Snapshot ID
+   * @returns Snapshot or null if not found
+   */
+  getById(snapshotId: string): Snapshot | null {
+    const all = this.getAll();
+    return all.find((s) => s.id === snapshotId) || null;
+  }
+
+  /**
    * Subscribe to history events
    * @param listener Event listener
    * @returns Unsubscribe function

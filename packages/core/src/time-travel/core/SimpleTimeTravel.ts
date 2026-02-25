@@ -9,6 +9,10 @@ import type {
   TimeTravelOptions,
   Snapshot,
   TimeTravelAPI,
+  RestorationCheckpoint,
+  TransactionalRestorationResult,
+  RestorationOptions,
+  RollbackResult,
 } from "../types";
 
 import { HistoryManager } from "./HistoryManager";
@@ -366,6 +370,59 @@ export class SimpleTimeTravel implements TimeTravelAPI {
    */
   getSnapshotRestorer(): SnapshotRestorer {
     return this.snapshotRestorer;
+  }
+
+  /**
+   * Restore with transaction support
+   * @param snapshotId Snapshot ID to restore
+   * @param options Restoration options
+   * @returns Transactional restoration result
+   */
+  async restoreWithTransaction(
+    snapshotId: string,
+    options?: RestorationOptions,
+  ): Promise<TransactionalRestorationResult> {
+    const snapshot = this.historyManager.getById(snapshotId);
+    if (!snapshot) {
+      return {
+        success: false,
+        restoredCount: 0,
+        totalAtoms: 0,
+        errors: [`Snapshot ${snapshotId} not found`],
+        warnings: [],
+        duration: 0,
+        timestamp: Date.now(),
+        checkpointId: undefined,
+        rollbackPerformed: false,
+      };
+    }
+
+    return this.snapshotRestorer.restoreWithTransaction(snapshot, options);
+  }
+
+  /**
+   * Get last checkpoint
+   */
+  getLastCheckpoint(): RestorationCheckpoint | null {
+    return this.snapshotRestorer.getLastCheckpoint();
+  }
+
+  /**
+   * Rollback to checkpoint
+   * @param checkpointId Checkpoint ID
+   * @returns Rollback result
+   */
+  async rollbackToCheckpoint(
+    checkpointId: string,
+  ): Promise<RollbackResult> {
+    return this.snapshotRestorer.rollback(checkpointId);
+  }
+
+  /**
+   * Get all checkpoints
+   */
+  getCheckpoints(): RestorationCheckpoint[] {
+    return this.snapshotRestorer.getCheckpoints();
   }
 
   /**

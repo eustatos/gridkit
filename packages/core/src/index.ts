@@ -145,6 +145,15 @@ export type {
   Getter,
   Setter,
   Subscriber,
+  RestorationCheckpoint,
+  TransactionalRestorerConfig,
+  TransactionalRestorationResult,
+  RestorationError,
+  TransactionConfig,
+  RestorationOptions,
+  RestorationProgress,
+  CheckpointResult,
+  RollbackResult,
 } from "./types";
 // Export type guards
 export { isPrimitiveAtom, isComputedAtom, isWritableAtom } from "./types";

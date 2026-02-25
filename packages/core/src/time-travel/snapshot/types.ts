@@ -211,6 +211,221 @@ export interface RestorationResult {
 }
 
 /**
+ * Checkpoint for transactional restoration
+ */
+export interface RestorationCheckpoint {
+  /** Unique checkpoint ID */
+  id: string;
+
+  /** Timestamp when checkpoint was created */
+  timestamp: number;
+
+  /** Snapshot ID being restored */
+  snapshotId: string;
+
+  /** Previous values of atoms before restoration (atom ID -> previous value) */
+  previousValues: Map<symbol, unknown>;
+
+  /** Checkpoint metadata */
+  metadata: {
+    /** Number of atoms being restored */
+    atomCount: number;
+    /** Duration of restoration in milliseconds */
+    duration: number;
+    /** Whether restoration is in progress */
+    inProgress: boolean;
+    /** Whether checkpoint has been committed */
+    committed: boolean;
+  };
+}
+
+/**
+ * Configuration for transactional restoration
+ */
+export interface TransactionalRestorerConfig {
+  /** Enable transactional restoration */
+  enableTransactions: boolean;
+
+  /** Automatically rollback on error */
+  rollbackOnError: boolean;
+
+  /** Validate snapshot before restoration */
+  validateBeforeRestore: boolean;
+
+  /** Batch size for batch restoration (0 = no batching) */
+  batchSize?: number;
+
+  /** Maximum time for restoration in milliseconds */
+  timeout?: number;
+
+  /** Error handling strategy */
+  onError?: "rollback" | "continue" | "throw";
+
+  /** Maximum number of checkpoints to keep in memory */
+  maxCheckpoints?: number;
+
+  /** Checkpoint timeout in milliseconds (auto-cleanup) */
+  checkpointTimeout?: number;
+}
+
+/**
+ * Transactional restoration result
+ */
+export interface TransactionalRestorationResult extends RestorationResult {
+  /** Checkpoint ID if transactional restoration was used */
+  checkpointId?: string;
+
+  /** Whether rollback was performed */
+  rollbackPerformed?: boolean;
+
+  /** List of successfully restored atoms */
+  successAtoms?: Array<{
+    name: string;
+    atomId: symbol;
+  }>;
+
+  /** List of failed atoms with error details */
+  failedAtomDetails?: Array<{
+    name: string;
+    atomId: symbol;
+    error: string;
+    action: string;
+  }>;
+
+  /** Number of atoms that were rolled back */
+  rolledBackCount?: number;
+
+  /** Whether the operation was interrupted */
+  interrupted?: boolean;
+}
+
+/**
+ * Error class for restoration failures
+ */
+export class RestorationError extends Error {
+  constructor(
+    message: string,
+    public readonly details?: {
+      errors?: string[];
+      failedAtoms?: Array<{ name: string; atomId: symbol; error: string }>;
+    },
+  ) {
+    super(message);
+    this.name = "RestorationError";
+  }
+}
+
+/**
+ * Transaction configuration
+ */
+export interface TransactionConfig {
+  /** Enable transactions */
+  enabled: boolean;
+
+  /** Auto-rollback on error */
+  autoRollback: boolean;
+
+  /** Checkpoint timeout in milliseconds */
+  checkpointTimeout: number;
+
+  /** Maximum number of stored checkpoints */
+  maxCheckpoints: number;
+
+  /** Error handler */
+  onError: "rollback" | "continue" | "throw";
+}
+
+/**
+ * Restoration options with transaction support
+ */
+export interface RestorationOptions {
+  /** Enable transactional restoration */
+  transactional?: boolean;
+
+  /** Transaction configuration */
+  transactionConfig?: TransactionConfig;
+
+  /** Checkpoint ID for manual rollback */
+  checkpointId?: string;
+
+  /** Progress callback for batch operations */
+  onProgress?: (progress: RestorationProgress) => void;
+}
+
+/**
+ * Restoration progress information
+ */
+export interface RestorationProgress {
+  /** Current atom index */
+  currentIndex: number;
+
+  /** Total atoms to restore */
+  totalAtoms: number;
+
+  /** Current atom being restored */
+  currentAtomName: string;
+
+  /** Current atom ID */
+  currentAtomId?: symbol;
+
+  /** Whether this is a rollback operation */
+  isRollback: boolean;
+
+  /** Timestamp when this progress update was created */
+  timestamp: number;
+}
+
+/**
+ * Checkpoint management result
+ */
+export interface CheckpointResult {
+  /** Checkpoint ID */
+  checkpointId: string;
+
+  /** Whether creation was successful */
+  success: boolean;
+
+  /** Error message if failed */
+  error?: string;
+
+  /** Number of atoms in checkpoint */
+  atomCount: number;
+
+  /** Timestamp when checkpoint was created */
+  timestamp: number;
+}
+
+/**
+ * Rollback result
+ */
+export interface RollbackResult {
+  /** Whether rollback was successful */
+  success: boolean;
+
+  /** Checkpoint ID that was rolled back */
+  checkpointId: string;
+
+  /** Number of atoms successfully rolled back */
+  rolledBackCount: number;
+
+  /** Number of atoms that failed to rollback */
+  failedCount: number;
+
+  /** List of atoms that failed to rollback */
+  failedAtoms?: Array<{
+    name: string;
+    atomId: symbol;
+    error: string;
+  }>;
+
+  /** Error message if failed */
+  error?: string;
+
+  /** Timestamp when rollback completed */
+  timestamp: number;
+}
+
+/**
  * Snapshot filter function
  */
 export type SnapshotFilter = (snapshot: Snapshot) => boolean;

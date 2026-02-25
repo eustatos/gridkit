@@ -13,6 +13,19 @@ export type {
   SnapshotStateEntry,
 } from "../types";
 
+// Re-export snapshot module types
+export type {
+  RestorationCheckpoint,
+  TransactionalRestorerConfig,
+  TransactionalRestorationResult,
+  RestorationError,
+  TransactionConfig,
+  RestorationOptions,
+  RestorationProgress,
+  CheckpointResult,
+  RollbackResult,
+} from "./snapshot/types";
+
 // Define HistoryEvent for history manager compatibility
 export type HistoryEventType =
   | "capture"

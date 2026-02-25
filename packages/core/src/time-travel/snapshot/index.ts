@@ -36,6 +36,15 @@ export type {
   SnapshotComparator,
   SnapshotDiff,
   SnapshotPatch,
+  RestorationCheckpoint,
+  TransactionalRestorerConfig,
+  TransactionalRestorationResult,
+  RestorationError,
+  TransactionConfig,
+  RestorationOptions,
+  RestorationProgress,
+  CheckpointResult,
+  RollbackResult,
 } from "./types";
 
 // Re-export constants
