@@ -19,9 +19,11 @@ Browser DevTools extension for debugging GridKit Enhanced tables.
 1. Clone the GridKit repository
 2. Build the extension: `pnpm build:extension`
 3. Load the extension in your browser:
-   - **Chrome**: Go to `chrome://extensions/`, enable Developer mode, and load the `extension` directory
+   - **Chrome**: Go to `chrome://extensions/`, enable Developer mode, and load the `extension-dist` directory
    - **Firefox**: Go to `about:debugging`, click "This Firefox", and load the temporary extension
-   - **Edge**: Go to `edge://extensions/`, enable Developer mode, and load the `extension` directory
+   - **Edge**: Go to `edge://extensions/`, enable Developer mode, and load the `extension-dist` directory
+   
+   > Note: The built extension is located in `packages/devtools/extension-dist/` after running `pnpm build:extension`
 
 ### Package Installation
 

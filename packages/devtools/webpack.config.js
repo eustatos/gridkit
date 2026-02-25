@@ -2,10 +2,10 @@ const path = require('path')
 const fs = require('fs')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 
-// Ensure dist/extension directory exists
-const distExtensionPath = path.resolve(__dirname, 'dist/extension')
-if (!fs.existsSync(distExtensionPath)) {
-  fs.mkdirSync(distExtensionPath, { recursive: true })
+// Ensure extension-dist directory exists (for browser extension)
+const extensionDistPath = path.resolve(__dirname, 'extension-dist')
+if (!fs.existsSync(extensionDistPath)) {
+  fs.mkdirSync(extensionDistPath, { recursive: true })
 }
 
 module.exports = {
@@ -16,7 +16,7 @@ module.exports = {
     'panel/index': './extension/panel/index.tsx'
   },
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'extension-dist'),
     filename: '[name].js',
     library: {
       type: 'var',
@@ -63,6 +63,11 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
+        {
+          from: 'extension/devtools.js',
+          to: 'devtools.js',
+          context: path.resolve(__dirname)
+        },
         {
           from: 'extension/*.html',
           to: '[name][ext]',

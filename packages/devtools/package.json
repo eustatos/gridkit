@@ -7,11 +7,11 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "extension"
+    "extension-dist"
   ],
   "scripts": {
     "build": "tsup index.ts --format esm,cjs --dts",
-    "build:extension": "webpack --config webpack.config.js && node scripts/copy-extension.js",
+    "build:extension": "webpack --config webpack.config.js",
     "dev": "tsup index.ts --format esm,cjs --dts --watch",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -21,7 +21,7 @@
     "test:integration:watch": "vitest integration/",
     "test:integration:update": "vitest run integration/ -u",
     "test:all": "pnpm run test && pnpm run test:integration",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf extension-dist",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

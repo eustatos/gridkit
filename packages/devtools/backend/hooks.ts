@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { devToolsBackend } from './DevToolsBackend'
-import { isGridKitTable } from './detector'
+import { isGridKitTable, setupAutoDetection } from './detector'
 
 // Hook to register table with DevTools
 export function useDevToolsTable(table: any, enabled: boolean = true): void {
@@ -44,7 +44,6 @@ export function useAutoDetectDevTools(enabled: boolean = true): void {
   useEffect(() => {
     if (!enabled) return
 
-    const { setupAutoDetection } = require('./detector')
     const cleanupAutoDetection = setupAutoDetection()
 
     return () => {
