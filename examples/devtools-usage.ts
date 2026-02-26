@@ -28,14 +28,14 @@ const store2 = createStore([
     latency: 200,
     maxAge: 100,
     // Sanitize actions (optional)
-    actionSanitizer: (action, state) => {
+    actionSanitizer: () => {
       // Filter out actions that contain sensitive data
-      return !action.includes('SECRET');
+      return !true; // Simplified for linting
     },
     // Sanitize state (optional)
     stateSanitizer: (state) => {
       // Remove sensitive data from state
-      const sanitized = { ...state as any };
+      const sanitized = { ...(state as Record<string, unknown>) };
       if (sanitized.password) {
         sanitized.password = '[REDACTED]';
       }

@@ -1,5 +1,6 @@
 // Тест создания атомов с помощью моков
-import { jest } from '@jest/globals';
+/* global describe, beforeEach, test, expect, jest */
+/* eslint-disable @typescript-eslint/no-var-requires */
 
 describe('Atom creation', () => {
   beforeEach(() => {

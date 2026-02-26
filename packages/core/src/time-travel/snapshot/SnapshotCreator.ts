@@ -299,15 +299,15 @@ export class SnapshotCreator extends BaseDisposable {
   private statesEqual(a: Record<string, SnapshotStateEntry>, b: Record<string, SnapshotStateEntry>): boolean {
     const keysA = Object.keys(a);
     const keysB = Object.keys(b);
-    
+
     if (keysA.length !== keysB.length) return false;
-    
+
     for (const key of keysA) {
-      if (!b.hasOwnProperty(key)) return false;
+      if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
       if (a[key].value !== b[key].value) return false;
       if (a[key].type !== b[key].type) return false;
     }
-    
+
     return true;
   }
 

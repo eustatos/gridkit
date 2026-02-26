@@ -1,7 +1,7 @@
 // Performance tests for store enhancements
 // Implements requirements from TASK-002-ENHANCE-STORE-DEVTOOLS-INTEGRATION
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { atom } from '../../packages/core/atom';
 import { createEnhancedStore } from '../../packages/core/enhanced-store';
 import { createStore } from '../../packages/core/store';
@@ -133,15 +133,15 @@ describe('Store Performance Overhead', () => {
       
       baseStore.set(largeArrayAtom, largeArray);
       enhancedStore.set(largeArrayAtom, largeArray);
-      
+
       // Measure serialization performance
       const baseStart = performance.now();
-      const baseState = baseStore.getState();
+      void baseStore.getState();
       const baseEnd = performance.now();
       const baseTime = baseEnd - baseStart;
-      
+
       const enhancedStart = performance.now();
-      const enhancedState = enhancedStore.serializeState();
+      void enhancedStore.serializeState();
       const enhancedEnd = performance.now();
       const enhancedTime = enhancedEnd - enhancedStart;
       

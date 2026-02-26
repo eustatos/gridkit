@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import DevToolsDemo from '../DevToolsDemo'
 
 describe('DevToolsDemo Main Component', () => {

@@ -1,6 +1,7 @@
 // Используем CommonJS импорты для тестов
+/* global describe, beforeEach, afterEach, test, expect */
+/* eslint-disable @typescript-eslint/no-var-requires, no-unused-vars */
 const { atom, createStore } = require("@nexus-state/core");
-const { devTools } = require("@nexus-state/devtools");
 
 describe("Вычисляемые атомы и селективное обновление", () => {
   let store;
@@ -223,7 +224,7 @@ describe("Вычисляемые атомы и селективное обнов
   test("селективное обновление минимизирует пересчеты", () => {
     // Создаем атомы с счетчиками вычислений
     let computeCount = 0;
-    let dependencyComputeCount = 0;
+    void computeCount; // eslint-disable-line no-unused-vars
 
     const dependencyAtom = atom(1, "dependency");
 

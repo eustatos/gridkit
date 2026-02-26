@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 module.exports = async () => {
   // Запускаем сервер разработки перед всеми тестами
   const { spawn } = require("child_process");

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires, no-console */
 const { atom, createStore } = require("./packages/core/dist/cjs/index.js");
 const { devTools } = require("./packages/devtools/dist/cjs/src/index.js");
 

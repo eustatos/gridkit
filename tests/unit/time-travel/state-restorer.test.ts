@@ -1,21 +1,22 @@
 // tests/unit/time-travel/state-restorer.test.ts
-/** 
+/**
  * Unit tests for state restorer functionality
  * Implements requirements from TASK-004-IMPLEMENT-TIME-TRAVEL
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, it, expect, beforeEach } from 'vitest';
 import { StateRestorer } from '../../../packages/core/time-travel/state-restorer';
 import { StateSnapshot } from '../../../packages/core/time-travel/state-snapshot';
 import { createMockStore } from '../../fixtures/mock-devtools';
 
 describe('StateRestorer', () => {
   let restorer: StateRestorer;
-  let mockStore: any;
+  let mockStore: unknown;
 
   beforeEach(() => {
     mockStore = createMockStore();
-    restorer = new StateRestorer(mockStore);
+    restorer = new StateRestorer(mockStore as any);
   });
 
   describe('Snapshot Management', () => {

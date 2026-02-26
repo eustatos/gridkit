@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires, no-console */
 const { atom, createStore } = require("./packages/core/dist/cjs/index.js");
 
 console.log("Testing atom creation...");

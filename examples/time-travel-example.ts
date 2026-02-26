@@ -65,10 +65,9 @@ function demonstrateTimeTravel() {
   
   // Create initial snapshot
   createSnapshot('INITIAL_STATE');
-  
+
   // Make some changes
-  console.log('
---- Making changes ---');
+  console.log('--- Making changes ---');
   store.set(countAtom, 1);
   store.set(nameAtom, 'Jane Doe');
   console.log('Updated state:');
@@ -78,10 +77,9 @@ function demonstrateTimeTravel() {
   
   // Create snapshot after changes
   const snapshot1 = createSnapshot('UPDATE_USER');
-  
+
   // Make more changes
-  console.log('
---- Making more changes ---');
+  console.log('--- Making more changes ---');
   store.set(countAtom, 5);
   store.set(nameAtom, 'Bob Smith');
   console.log('Updated state:');
@@ -91,31 +89,30 @@ function demonstrateTimeTravel() {
   
   // Create another snapshot
   const snapshot2 = createSnapshot('UPDATE_USER_AGAIN');
-  
+
   // Make final changes
-  console.log('
---- Making final changes ---');
+  console.log('--- Making final changes ---');
   store.set(countAtom, 10);
   store.set(nameAtom, 'Alice Johnson');
   console.log('Final state:');
   console.log('Count:', store.get(countAtom));
   console.log('Name:', store.get(nameAtom));
   console.log('Greeting:', store.get(greetingAtom));
-  
+
   // Create final snapshot
+  // eslint-disable-next-line no-unused-vars
   const snapshot3 = createSnapshot('FINAL_UPDATE');
-  
+  void snapshot3; // Mark as intentionally unused
+
   // Demonstrate time travel
-  console.log('
---- Time Travel Demo ---');
+  console.log('--- Time Travel Demo ---');
   console.log('Current state:');
   console.log('Count:', store.get(countAtom));
   console.log('Name:', store.get(nameAtom));
   console.log('Greeting:', store.get(greetingAtom));
-  
+
   // Travel back to snapshot1
-  console.log('
---- Traveling back to first update ---');
+  console.log('--- Traveling back to first update ---');
   restoreFromSnapshot(snapshot1.id);
   console.log('Restored state:');
   console.log('Count:', store.get(countAtom));
@@ -123,8 +120,7 @@ function demonstrateTimeTravel() {
   console.log('Greeting:', store.get(greetingAtom));
   
   // Travel back to initial state
-  console.log('
---- Traveling back to initial state ---');
+  console.log('--- Traveling back to initial state ---');
   const snapshots = snapshotManager.getAllSnapshots();
   if (snapshots.length > 0) {
     restoreFromSnapshot(snapshots[0].id);
@@ -135,8 +131,7 @@ function demonstrateTimeTravel() {
   }
   
   // Travel forward to snapshot2
-  console.log('
---- Traveling forward to second update ---');
+  console.log('--- Traveling forward to second update ---');
   restoreFromSnapshot(snapshot2.id);
   console.log('Restored state:');
   console.log('Count:', store.get(countAtom));

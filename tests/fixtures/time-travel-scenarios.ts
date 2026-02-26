@@ -218,7 +218,7 @@ export const largeStateHistory = {
     type: 'UPDATE_ITEM',
     payload: { id: i % 100, counter: i },
   })),
-  states: [] as any[], // Will be computed during tests
+  states: [] as unknown[], // Will be computed during tests
 };
 
 // Empty and edge case histories

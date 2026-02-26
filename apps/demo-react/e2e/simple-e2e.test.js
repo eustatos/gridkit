@@ -1,3 +1,5 @@
+/* global describe, test, expect, beforeAll, afterAll */
+/* eslint-disable @typescript-eslint/no-var-requires, no-console */
 const puppeteer = require("puppeteer");
 const path = require("path");
 

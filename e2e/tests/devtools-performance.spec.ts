@@ -43,9 +43,8 @@ test.describe('DevTools Performance', () => {
 
   test('should not have memory leaks during extended usage', async ({ page, browser }) => {
     // This test simulates extended usage to check for memory leaks
-    
-    // Get browser context to potentially measure memory (if supported)
-    const context = browser.contexts()[0];
+    // Get browser context (not used directly but kept for future enhancements)
+    void browser.contexts()[0];
     
     // Perform multiple operations over time
     const incrementButton = page.locator('button:has-text("Increment")');

@@ -1,6 +1,8 @@
 // Базовые тесты функциональности атомов
 // Используем реальные импорты из пакетов
 
+/* global describe, test, expect */
+/* eslint-disable @typescript-eslint/no-var-requires */
 // Импортируем из CommonJS сборки
 const { atom, createStore } = require("@nexus-state/core");
 

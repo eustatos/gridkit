@@ -7,12 +7,8 @@ import { atomRegistry, AtomRegistry } from '../../packages/core/atom-registry';
 import { atom } from '../../packages/core/atom';
 import {
   primitiveAtom,
-  stringAtom,
-  booleanAtom,
   computedAtom,
   writableAtom,
-  unnamedAtom1,
-  unnamedAtom2,
   testAtoms
 } from '../fixtures/test-atoms';
 

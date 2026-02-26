@@ -1,3 +1,4 @@
+/* eslint-disable no-console, no-unused-vars */
 // Simple test to check if atom.read works
 const atom = {
   id: Symbol('test'),

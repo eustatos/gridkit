@@ -15,7 +15,7 @@ export class FunctionsStrategy implements SerializationStrategy {
   }
 
   serialize(value: unknown, context: SerializationContext): SerializedValue {
-    const func = value as Function;
+    const func = value as (...args: unknown[]) => unknown;
     const obj = value as object;
 
     // Check options for function handling

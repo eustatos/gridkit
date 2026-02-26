@@ -54,14 +54,14 @@ export const complexStates = {
 // Circular reference states (for testing serialization)
 export const circularStates = {
   circular: (() => {
-    const obj: any = { name: 'circular' };
+    const obj: Record<string, unknown> = { name: 'circular' };
     obj.self = obj;
     return atom(obj);
   })(),
-  
+
   mutual: (() => {
-    const a: any = { name: 'A' };
-    const b: any = { name: 'B' };
+    const a: Record<string, unknown> = { name: 'A' };
+    const b: Record<string, unknown> = { name: 'B' };
     a.ref = b;
     b.ref = a;
     return atom({ a, b });

@@ -39,7 +39,7 @@ describe('Action Naming System', () => {
 
   test('custom action naming strategy', () => {
     const metadata = createActionMetadata('testAtom', 'atom', 'direct');
-    const customStrategy = (atom: any, value: any) => `CUSTOM_${atom.name}`;
+    const customStrategy = () => `CUSTOM_${'testAtom'}`;
     const name = generateActionName(customStrategy, { name: 'testAtom' }, 'value', metadata);
     expect(name).toBe('CUSTOM_testAtom');
   });

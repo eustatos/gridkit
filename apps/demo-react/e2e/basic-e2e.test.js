@@ -1,3 +1,5 @@
+/* global describe, test, expect, beforeAll, page, consoleMessages, pageErrors */
+/* eslint-disable no-console */
 describe("Базовый E2E тест", () => {
   beforeAll(async () => {
     // Переходим на страницу

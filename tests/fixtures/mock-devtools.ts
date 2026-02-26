@@ -150,7 +150,7 @@ export function installMockDevTools(): void {
  */
 export function uninstallMockDevTools(): void {
   if (typeof window !== 'undefined' && window.__REDUX_DEVTOOLS_EXTENSION__ === mockDevToolsExtension) {
-    delete (window as any).__REDUX_DEVTOOLS_EXTENSION__;
+    delete (window as Record<string, unknown>).__REDUX_DEVTOOLS_EXTENSION__;
   }
 }
 
@@ -158,14 +158,14 @@ export function uninstallMockDevTools(): void {
  * Create a mock store for testing.
  * @returns A mock store object
  */
-export function createMockStore(): any {
+export function createMockStore() {
   const state: Record<string, unknown> = {};
   const listeners: Array<() => void> = [];
-  
+
   return {
     get: jest.fn(),
     set: jest.fn(),
-    subscribe: jest.fn((atom: any, listener: () => void) => {
+    subscribe: jest.fn((atom: unknown, listener: () => void) => {
       listeners.push(listener);
       return () => {
         const index = listeners.indexOf(listener);

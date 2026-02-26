@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { atom } from '../../packages/core/atom';
 import { createEnhancedStore } from '../../packages/core/enhanced-store';
 import { serializeState } from '../../packages/core/utils/serialization';
-import { ActionTracker, globalActionTracker } from '../../packages/core/utils/action-tracker';
+import { globalActionTracker } from '../../packages/core/utils/action-tracker';
 
 describe('Enhanced Store', () => {
   beforeEach(() => {
@@ -69,13 +69,14 @@ describe('Enhanced Store', () => {
     });
     
     it('should handle circular references safely', () => {
-      const obj: any = { a: 1 };
-      obj.self = obj; // Circular reference
-      
+      const obj: Record<string, unknown> = { a: 1, self: null as unknown };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (obj as any).self = obj; // Circular reference
+
       const circularAtom = atom(obj);
       const store = createEnhancedStore();
       store.set(circularAtom, obj);
-      
+
       const serialized = store.serializeState();
       expect(serialized[circularAtom.toString()]).toContain('[Circular Reference:');
     });

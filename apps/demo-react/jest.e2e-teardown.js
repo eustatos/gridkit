@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 module.exports = async () => {
   // Останавливаем сервер разработки после всех тестов
   if (global.__SERVER_PROCESS__) {
