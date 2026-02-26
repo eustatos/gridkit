@@ -40,7 +40,7 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
 
     // Wait for backend to be ready (with timeout)
     const waitForBackend = (attempts = 0, maxAttempts = 20) => {
-      const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+      const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND__
       const content = (window as any).__GRIDKIT_DEVTOOLS_CONTENT__
       
       if (backend && typeof backend.registerTable === 'function') {
@@ -69,7 +69,7 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
 
     // Cleanup
     return () => {
-      const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+      const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND__
       if (backend && typeof backend.unregisterTable === 'function') {
         backend.unregisterTable(tableId)
         console.log('[GridKit DevTools] Unregistered table from backend:', tableId)
@@ -101,24 +101,22 @@ export function useAutoDetectDevTools(enabled: boolean = true): void {
 
 // Helper to get DevTools backend from page context
 export function getDevToolsBackend(): any {
-  return (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+  return (window as any).__GRIDKIT_DEVTOOLS_BACKEND__
 }
 
 // Helper to check if DevTools is connected
 export function isDevToolsConnected(): boolean {
-  const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
-  return !!backend && typeof backend.getConnectionState === 'function' 
-    ? backend.getConnectionState() === 'connected'
-    : false
+  const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND__
+  return !!backend
 }
 
 // Helper to send a command to DevTools
 export async function sendDevToolsCommand<T = any>(command: any): Promise<T> {
-  const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+  const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND__
   if (!backend) {
     throw new Error('[GridKit DevTools] Backend not available. Extension may not be loaded.')
   }
-  return backend.sendCommand(command)
+  return backend.send(command)
 }
 
 // Setup function for non-React environments
@@ -130,7 +128,7 @@ export function setupDevTools(table: any, enabled: boolean = true): () => void {
     return () => {}
   }
 
-  const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+  const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND__
   if (backend && backend.registerTable) {
     backend.registerTable(table)
     console.log('[GridKit DevTools] Registered table with backend')
