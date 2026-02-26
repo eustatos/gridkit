@@ -1,127 +1,109 @@
-# 📋 Задачи E2E тестов для DevTools (phase-3)
+# Phase 3: DevTools Extension
 
-Сводная задача для создания полного набора E2E тестов DevTools extension в `apps/demo/tests/e2e/devtools-integration.test.ts`.
+Comprehensive E2E test suite and developer tools for GridKit table debugging and monitoring.
 
-## 🎯 Общая цель
-
-Создать комплексный набор E2E тестов, проверяющих все функциональные компоненты DevTools extension:
-- ✅ Загрузка extension
-- ✅ Инспекция состояния таблицы
-- ✅ Отслеживание событий
-- ✅ Мониторинг производительности
-- ✅ UI компоненты
-- ✅ Time travel
-- ✅ Multi-table поддержка
-- ✅ Управление памятью
-- ✅ Полная интеграция
-- ✅ Обработка ошибок
-
-## 📚 Список задач
-
-### Задачи 01-08: Конкретные E2E тесты
-
-| Номер | Название | Описание | Статус |
-|-------|----------|----------|--------|
-| [TASK-001](./TASK-001-devtools-e2e-extension-loading.md) | Extension Loading | Тесты загрузки DevTools extension в браузере | 📝 Не начата |
-| [TASK-002](./TASK-002-devtools-e2e-state-inspection.md) | State Inspection | Тесты инспекции состояния таблицы через DevTools | 📝 Не начата |
-| [TASK-003](./TASK-003-devtools-e2e-events-timeline.md) | Events Timeline | Тесты отслеживания событий через Event Timeline | 📝 Не начата |
-| [TASK-004](./TASK-004-devtools-e2e-performance-monitoring.md) | Performance Monitoring | Тесты мониторинга производительности | 📝 Не начата |
-| [TASK-005](./TASK-005-devtools-e2e-ui-components.md) | UI Components | Тесты UI компонентов DevTools | 📝 Не начата |
-| [TASK-006](./TASK-006-devtools-e2e-time-travel.md) | Time Travel | Тесты функциональности time travel | 📝 Не начата |
-| [TASK-007](./TASK-007-devtools-e2e-multi-table-support.md) | Multi-Table Support | Тесты поддержки нескольких таблиц | 📝 Не начата |
-| [TASK-008](./TASK-008-devtools-e2e-memory-management.md) | Memory Management | Тесты управления памятью | 📝 Не начата |
-
-### Задача 09: Полная интеграция
-
-| Номер | Название | Описание | Статус |
-|-------|----------|----------|--------|
-| [TASK-009](./TASK-009-devtools-e2e-full-integration.md) | Full Integration | Интеграционные тесты полного цикла | 📝 Не начата |
-
-### Задача 10: Обработка ошибок
-
-| Номер | Название | Описание | Статус |
-|-------|----------|----------|--------|
-| [TASK-010](./TASK-010-devtools-e2e-error-handling.md) | Error Handling | Тесты обработки ошибок и граничных случаев | 📝 Не начата |
-
-### Задача 11: Запуск тестов
-
-| Номер | Название | Описание | Статус |
-|-------|----------|----------|--------|
-| [TASK-011](./TASK-011-devtools-e2e-test-suite-runner.md) | Test Suite Runner | Скрипты запуска и документация | 📝 Не начата |
-
-## 🚀 Рекомендуемый порядок выполнения
-
-1. **TASK-001** - Extension Loading (базовая загрузка)
-2. **TASK-002** - State Inspection (инспекция данных)
-3. **TASK-011** - Test Suite Runner (настройка инфраструктуры)
-4. **TASK-003** - Events Timeline (отслеживание событий)
-5. **TASK-004** - Performance Monitoring (производительность)
-6. **TASK-005** - UI Components (UI компоненты)
-7. **TASK-009** - Full Integration (полная интеграция)
-8. **TASK-006** - Time Travel (time travel)
-9. **TASK-007** - Multi-Table Support (множество таблиц)
-10. **TASK-008** - Memory Management (память)
-11. **TASK-010** - Error Handling (ошибки)
-
-## 📝 Инструкция для AI агента
-
-1. **Последовательно пройди по задачам** от TASK-001 до TASK-011
-2. **Каждую задачу решай полностью**:
-   - Открой файл `apps/demo/tests/e2e/devtools-integration.test.ts`
-   - Добавь тесты согласно инструкции в задаче
-   - Запусти тесты и проверь результаты
-   - Перейди к следующей задаче
-3. **Используй существующий pattern** из файла:
-   - Группируй тесты через `test.describe()`
-   - Используй `page.on('console')` для захвата логов
-   - Используй `page.evaluate()` для проверки API
-   - Добавь описания на русском языке
-4. **Следи за качеством**:
-   - Все тесты должны проходить
-   - Тесты должны быть независимыми
-   - Добавь комментарии на русском
-
-## ✅ Критерии готовности
-
-- ✅ Все 11 задач выполнены
-- ✅ 30+ тестов добавлено
-- ✅ Все тесты проходят
-- ✅ Документация создана
-- ✅ Скрипты запуска работают
-
-## 📊 Ожидаемый результат
-
-После выполнения всех задач:
+## Structure
 
 ```
-apps/demo/tests/e2e/devtools-integration.test.ts
-├── DevTools Loading (3 теста)
-├── State Inspection (3 теста)
-├── Events Timeline (3 теста)
-├── Performance Monitoring (3 теста)
-├── UI Components (3 теста)
-├── Full Integration (3 теста)
-├── Time Travel (3 теста)
-├── Multi-Table Support (3 теста)
-├── Memory Management (3 теста)
-├── Error Handling (4 теста)
-└── Test Suite Runner (скрипты + документация)
-
-Итого: 31 тест + инфраструктура
+phase-3-devtools/
+├── phase-3a-mvp/          # Minimum Viable Product (high priority)
+│   ├── TASK-001          # Implement Event Timeline
+│   ├── TASK-002          # Implement Error Handling
+│   ├── TASK-003          # E2E Extension Loading Tests
+│   └── TASK-006          # E2E Events Timeline Tests
+│
+├── phase-3b-extended/     # Extended Functionality (medium priority)
+│   ├── TASK-004          # Implement Performance Monitoring
+│   └── TASK-005          # Implement Multi-Table Support
+│
+└── phase-3c-advanced/     # Advanced Features (low priority, optional)
+    └── (future tasks)
 ```
 
-## 🎉 Успех
+## Phase 3A: MVP (High Priority)
 
-Когда все задачи выполнены:
-- ✅ DevTools extension имеет полный набор E2E тестов
-- ✅ Тесты проверяют все функциональные компоненты
-- ✅ Тесты запускаются автоматически в CI
-- ✅ Документация полная и актуальная
-- ✅ Присутствует инфраструктура запуска и отладки
+**Goal:** Deliver a functional DevTools extension that helps developers debug table events and errors.
 
-## 📚 Связанные ресурсы
+| Task | Description | Status |
+|------|-------------|--------|
+| [TASK-001](./phase-3a-mvp/TASK-001-implement-event-timeline.md) | Implement Event Timeline component | 📝 Not Started |
+| [TASK-002](./phase-3a-mvp/TASK-002-implement-error-handling.md) | Implement Error Handling | 📝 Not Started |
+| [TASK-003](./phase-3a-mvp/TASK-003-e2e-extension-loading.md) | E2E Tests: Extension Loading | 📝 Not Started |
+| [TASK-006](./phase-3a-mvp/TASK-006-e2e-events-timeline.md) | E2E Tests: Events Timeline | 📝 Not Started |
 
-- [Документация Playwright](https://playwright.dev/)
-- [DevTools extension README](../../packages/devtools/README.md)
-- [Демо-приложение README](../../apps/demo/README.md)
-- [Документация отладки](../../docs/debug/debug-system.md)
+**Expected Outcome:**
+- Events timeline displays table events in real-time
+- Extension handles errors gracefully
+- Tests verify extension loads correctly
+- Tests verify events are captured
+
+## Phase 3B: Extended (Medium Priority)
+
+**Goal:** Add performance monitoring and multi-table support for advanced debugging.
+
+| Task | Description | Status |
+|------|-------------|--------|
+| [TASK-004](./phase-3b-extended/TASK-004-implement-performance-monitoring.md) | Implement Performance Monitoring | 📝 Not Started |
+| [TASK-005](./phase-3b-extended/TASK-005-implement-multi-table-support.md) | Implement Multi-Table Support | 📝 Not Started |
+
+**Expected Outcome:**
+- Performance metrics displayed in real-time
+- Support for multiple tables on single page
+- Table selector with metadata
+
+## Phase 3C: Advanced (Low Priority)
+
+**Goal:** Optional advanced features (Time Travel, Memory Profiler, etc.)
+
+**Future Tasks:**
+- Time Travel (state history navigation)
+- Memory Profiler (leak detection)
+- State Diff Viewer (visual comparison)
+- Plugin Inspector (extension ecosystem)
+
+## Execution Order
+
+1. **Start with Phase 3A** — delivers core value
+2. **Continue to Phase 3B** — extends functionality
+3. **Consider Phase 3C** — if time/resources allow
+
+## Development Guidelines
+
+### TypeScript Best Practices
+- **NO `any` types** — use proper interfaces
+- Define explicit return types
+- Use `unknown` with type guards for runtime checks
+- No type assertions (`as Type`) unless necessary
+
+### React Best Practices
+- Use hooks (`useState`, `useEffect`, `useCallback`, `useMemo`)
+- Proper cleanup in `useEffect`
+- Memoize expensive calculations
+- Error boundaries for all components
+
+### Code Quality
+- Follow ESLint rules (no warnings)
+- Add JSDoc comments for public APIs
+- Max component length: 200 lines
+- All UI text in English
+
+### Testing
+- E2E tests with Playwright
+- Test descriptions in Russian (project convention)
+- Independent tests (no shared state)
+- Run on Chromium browser
+
+## Related Documentation
+
+- [DevTools Extension README](../../packages/devtools/README.md)
+- [Demo Application README](../../apps/demo/README.md)
+- [Playwright Documentation](https://playwright.dev/)
+
+## Status Summary
+
+| Phase | Tasks | Completed | Progress |
+|-------|-------|-----------|----------|
+| 3A: MVP | 4 | 0 | 0% |
+| 3B: Extended | 2 | 0 | 0% |
+| 3C: Advanced | 0 | 0 | N/A |
+| **Total** | **6** | **0** | **0%** |
