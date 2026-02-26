@@ -1,23 +1,30 @@
 // Integration Hooks for DevTools
 
 import { useEffect, useRef } from 'react'
-import { devToolsBackend } from './DevToolsBackend'
-import { isGridKitTable, setupAutoDetection } from './detector'
+import { isGridKitTable } from './detector'
 
 // Hook to register table with DevTools
 export function useDevToolsTable(table: any, enabled: boolean = true): void {
   const tableRef = useRef(table)
   const enabledRef = useRef(enabled)
+  const tableIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     tableRef.current = table
     enabledRef.current = enabled
+    
+    // Generate or preserve table ID
+    if (table && !tableIdRef.current) {
+      tableIdRef.current = (table.options?.meta?.tableId as string) || 
+                          `table-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    }
   }, [table, enabled])
 
   useEffect(() => {
     if (!enabledRef.current) return
 
     const tableInstance = tableRef.current
+    const tableId = tableIdRef.current
 
     if (!tableInstance) {
       console.warn('[GridKit DevTools] No table instance provided')
@@ -29,44 +36,72 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
       return
     }
 
-    // Register table
-    devToolsBackend.registerTable(tableInstance)
+    // Register table with injected backend
+    const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+    if (backend && typeof backend.registerTable === 'function') {
+      backend.registerTable(tableId, tableInstance)
+      console.log('[GridKit DevTools] Registered table with backend:', tableId)
+    } else {
+      console.warn('[GridKit DevTools] Backend not available for registration')
+    }
+
+    // Also register via content script API if available
+    const content = (window as any).__GRIDKIT_DEVTOOLS_CONTENT__
+    if (content && typeof content.registerTable === 'function') {
+      content.registerTable(tableId, tableInstance)
+      console.log('[GridKit DevTools] Registered table via content script:', tableId)
+    }
 
     // Cleanup
     return () => {
-      devToolsBackend.unregisterTable(tableInstance)
+      const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+      if (backend && typeof backend.unregisterTable === 'function') {
+        backend.unregisterTable(tableId)
+        console.log('[GridKit DevTools] Unregistered table from backend:', tableId)
+      }
+      
+      const content = (window as any).__GRIDKIT_DEVTOOLS_CONTENT__
+      if (content && typeof content.unregisterTable === 'function') {
+        content.unregisterTable(tableId)
+      }
     }
   }, [table, enabled])
 }
 
 // Hook to auto-detect and register all GridKit tables
+// Note: Auto-detection is now handled by content script injection
 export function useAutoDetectDevTools(enabled: boolean = true): void {
   useEffect(() => {
     if (!enabled) return
 
-    const cleanupAutoDetection = setupAutoDetection()
+    console.log('[GridKit DevTools] Auto-detection enabled - content script will inject backend')
 
     return () => {
-      cleanupAutoDetection?.()
+      console.log('[GridKit DevTools] Auto-detection disabled')
     }
   }, [enabled])
 }
 
-// Helper to get DevTools backend
-export function getDevToolsBackend(): typeof devToolsBackend {
-  return devToolsBackend
+// Helper to get DevTools backend from page context
+export function getDevToolsBackend(): any {
+  return (window as any).__GRIDKIT_DEVTOOLS_BACKEND
 }
 
 // Helper to check if DevTools is connected
 export function isDevToolsConnected(): boolean {
-  const backend = devToolsBackend as any
-  return backend.bridge.isConnected()
+  const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+  return !!backend && typeof backend.getConnectionState === 'function' 
+    ? backend.getConnectionState() === 'connected'
+    : false
 }
 
 // Helper to send a command to DevTools
 export async function sendDevToolsCommand<T = any>(command: any): Promise<T> {
-  const backend = devToolsBackend as any
-  return backend.bridge.sendCommand(command)
+  const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+  if (!backend) {
+    throw new Error('[GridKit DevTools] Backend not available. Extension may not be loaded.')
+  }
+  return backend.sendCommand(command)
 }
 
 // Setup function for non-React environments
@@ -78,10 +113,19 @@ export function setupDevTools(table: any, enabled: boolean = true): () => void {
     return () => {}
   }
 
-  devToolsBackend.registerTable(table)
+  const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+  if (backend && backend.registerTable) {
+    backend.registerTable(table)
+    console.log('[GridKit DevTools] Registered table with backend')
+  } else {
+    console.warn('[GridKit DevTools] Backend not available for registration')
+  }
 
   return () => {
-    devToolsBackend.unregisterTable(table)
+    if (backend && backend.unregisterTable) {
+      backend.unregisterTable(table)
+      console.log('[GridKit DevTools] Unregistered table from backend')
+    }
   }
 }
 

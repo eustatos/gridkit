@@ -1,279 +1,500 @@
-// Content Script
+// GridKit DevTools Content Script
+// Handles communication between the page, backend, and DevTools panel
 
-console.log('[GridKit DevTools] Content script loaded')
+;(function() {
+  'use strict'
 
-;(() => {
+  console.log('[GridKit DevTools] Content script loaded')
+
   // Check if DevTools is already connected
   if (window.__GRIDKIT_DEVTOOLS_CONTENT__) {
     console.log('[GridKit DevTools] Content script already loaded')
     return
   }
 
-  window.__GRIDKIT_DEVTOOLS_CONTENT__ = true
+  // Connection state
+  let isConnected = false
+  let bridgePort = null
+  let backendPort = null
 
-// Connection state
-let isConnected = false
-let bridgePort = null
+  // Message handlers
+  const messageHandlers = new Map()
 
-// Message handlers
-const messageHandlers = new Map()
+  // Registered tables registry
+  const registeredTables = new Map()
 
-// Listen for messages from background script
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.source !== 'gridkit-devtools-background') return
+  /**
+   * Inject backend script into page context
+   * The backend runs in the page context to access React/Redux state
+   */
+  function injectBackend() {
+    console.log('[GridKit DevTools] Injecting backend script')
 
-  console.log('[GridKit DevTools] Content received:', message.type)
+    const backendScript = document.createElement('script')
+    backendScript.textContent = `
+      (function() {
+        console.log('[GridKit DevTools] Backend script injected')
 
-  switch (message.type) {
-    case 'BACKEND_READY':
-      // Backend is ready, establish connection
-      connectToBackend()
-      sendResponse({ type: 'CONTENT_READY' })
-      break
+        // Check if backend is already initialized
+        if (window.__GRIDKIT_DEVTOOLS_BACKEND__) {
+          console.log('[GridKit DevTools] Backend already initialized')
+          return
+        }
 
-    case 'COMMAND':
-      // Forward to backend
-      sendMessageToBackend(message.payload)
-        .then((response) => {
-          sendResponse({
-            type: 'RESPONSE',
-            payload: response
-          })
-        })
-        .catch((error) => {
-          sendResponse({
-            type: 'RESPONSE',
-            payload: {
-              success: false,
-              error: error.message
-            }
-          })
-        })
-      return true
+        // Registered tables registry
+        const registeredTables = new Map()
 
-    default:
-      console.warn('[GridKit DevTools] Unknown message type:', message.type)
-  }
-})
+        // Command handlers
+        const commandHandlers = new Map()
 
-// Listen for messages from backend (via window.postMessage)
-window.addEventListener('message', (event) => {
-  if (event.source !== window) return
-  if (!event.data || typeof event.data !== 'object') return
-  const source = event.data.source
-  if (source !== 'gridkit-devtools-backend' && source !== 'backend') return
+        // Listen for messages from content script
+        window.addEventListener('message', function(event) {
+          if (event.source !== window) return
+          if (!event.data || typeof event.data !== 'object') return
+          if (event.data.source !== 'gridkit-devtools-content') return
 
-  console.log('[GridKit DevTools] Content received from backend:', event.data.type)
+          const message = event.data
 
-  const message = event.data
+          switch (message.type) {
+            case 'CONTENT_READY':
+              // Notify content script that backend is ready
+              window.postMessage({
+                source: 'gridkit-devtools-backend',
+                type: 'BACKEND_READY',
+                timestamp: Date.now()
+              }, '*')
+              break
 
-  switch (message.type) {
-    case 'TABLE_REGISTERED':
-      console.log('[GridKit DevTools] Table registered:', message.payload?.table?.id)
-      break
+            case 'COMMAND':
+              // Handle command and send response
+              const response = handleCommand(message.payload)
+              window.postMessage({
+                source: 'gridkit-devtools-backend',
+                type: 'RESPONSE',
+                payload: response,
+                commandType: message.payload.type,
+                timestamp: Date.now()
+              }, '*')
+              break
 
-    case 'TABLE_UNREGISTERED':
-      console.log('[GridKit DevTools] Table unregistered:', message.payload?.tableId)
-      break
+            case 'REGISTER_TABLE':
+              // Register a table from the page
+              if (message.payload && message.payload.tableId && message.payload.table) {
+                registerTable(message.payload.tableId, message.payload.table)
+              }
+              break
 
-    case 'STATE_UPDATE':
-      console.log('[GridKit DevTools] State update for table:', message.tableId)
-      break
-
-    case 'EVENT_LOGGED':
-      console.log('[GridKit DevTools] Event logged for table:', message.tableId)
-      break
-
-    case 'PERFORMANCE_UPDATE':
-      console.log('[GridKit DevTools] Performance update for table:', message.tableId)
-      break
-
-    case 'MEMORY_UPDATE':
-      console.log('[GridKit DevTools] Memory update for table:', message.tableId)
-      break
-
-    default:
-      // Call registered handlers
-      if (messageHandlers.has(message.type)) {
-        messageHandlers.get(message.type).forEach((handler) => {
-          try {
-            handler(message)
-          } catch (error) {
-            console.error('[GridKit DevTools] Error in message handler:', error)
+            case 'UNREGISTER_TABLE':
+              // Unregister a table
+              if (message.payload && message.payload.tableId) {
+                unregisterTable(message.payload.tableId)
+              }
+              break
           }
         })
-      }
+
+        // Handle commands from DevTools
+        function handleCommand(payload) {
+          if (!payload || !payload.type) {
+            return { success: false, error: 'Invalid command' }
+          }
+
+          // Check for custom handler
+          const handler = commandHandlers.get(payload.type)
+          if (handler) {
+            try {
+              const result = handler(payload)
+              return { success: true, data: result }
+            } catch (error) {
+              return { success: false, error: error.message }
+            }
+          }
+
+          // Default handlers for standard commands
+          switch (payload.type) {
+            case 'GET_TABLES':
+              return {
+                success: true,
+                data: Array.from(registeredTables.entries()).map(([id, table]) => ({
+                  id,
+                  rowCount: table.getRowModel?.().rows?.length || 0,
+                  columnCount: table.getAllColumns?.().length || 0,
+                  state: table.getState?.() || {},
+                  options: table.options || {}
+                }))
+              }
+
+            case 'GET_STATE':
+              if (!payload.tableId) {
+                return { success: false, error: 'Missing tableId' }
+              }
+              const table = registeredTables.get(payload.tableId)
+              if (!table) {
+                return { success: false, error: 'Table not found: ' + payload.tableId }
+              }
+              return { success: true, data: table.getState?.() || null }
+
+            case 'GET_EVENTS':
+              return { success: true, data: { events: [] } }
+
+            case 'GET_PERFORMANCE':
+              return { success: true, data: { metrics: [] } }
+
+            default:
+              return { success: false, error: 'Unknown command: ' + payload.type }
+          }
+        }
+
+        // Register a table
+        function registerTable(tableId, table) {
+          if (!tableId || !table) {
+            console.error('[GridKit DevTools] Invalid table registration')
+            return
+          }
+          
+          registeredTables.set(tableId, table)
+          console.log('[GridKit DevTools] Backend registered table:', tableId)
+
+          // Notify content script
+          window.postMessage({
+            source: 'gridkit-devtools-backend',
+            type: 'TABLE_REGISTERED',
+            payload: {
+              table: {
+                id: tableId,
+                rowCount: table.getRowModel?.().rows?.length || 0,
+                columnCount: table.getAllColumns?.().length || 0
+              },
+              timestamp: Date.now()
+            }
+          }, '*')
+        }
+
+        // Unregister a table
+        function unregisterTable(tableId) {
+          registeredTables.delete(tableId)
+          console.log('[GridKit DevTools] Backend unregistered table:', tableId)
+
+          window.postMessage({
+            source: 'gridkit-devtools-backend',
+            type: 'TABLE_UNREGISTERED',
+            payload: { tableId },
+            timestamp: Date.now()
+          }, '*')
+        }
+
+        // Expose backend API
+        window.__GRIDKIT_DEVTOOLS_BACKEND__ = {
+          registerTable: registerTable,
+          unregisterTable: unregisterTable,
+          onCommand: function(type, handler) {
+            commandHandlers.set(type, handler)
+            return function() {
+              commandHandlers.delete(type)
+            }
+          },
+          send: function(message) {
+            window.postMessage({
+              ...message,
+              source: 'gridkit-devtools-backend',
+              timestamp: Date.now()
+            }, '*')
+          },
+          getTables: function() {
+            return Array.from(registeredTables.keys())
+          }
+        }
+
+        console.log('[GridKit DevTools] Backend initialized')
+      })()
+    `
+
+    document.documentElement.appendChild(backendScript)
+    backendScript.parentNode?.removeChild(backendScript)
+
+    console.log('[GridKit DevTools] Backend script injected successfully')
   }
-})
 
-// Connect to backend
-function connectToBackend() {
-  if (isConnected) return
+  /**
+   * Connect to backend in page context
+   */
+  function connectToBackend() {
+    if (isConnected) return
 
-  // Notify backend we're ready
-  window.postMessage(
-    {
+    // Notify backend we're ready
+    window.postMessage({
       source: 'gridkit-devtools-content',
       type: 'CONTENT_READY',
       timestamp: Date.now()
-    },
-    '*'
-  )
+    }, '*')
 
-  isConnected = true
-  console.log('[GridKit DevTools] Connected to backend')
-}
+    isConnected = true
+    console.log('[GridKit DevTools] Connected to backend')
+  }
 
-// Send message to backend
-function sendMessageToBackend(message) {
-  return new Promise((resolve, reject) => {
-    // Store callback
-    const messageId = Date.now() + Math.random()
-    const timeout = setTimeout(() => {
-      reject(new Error('Backend message timeout'))
-    }, 5000)
+  /**
+   * Send message to backend and wait for response
+   */
+  function sendMessageToBackend(message) {
+    return new Promise((resolve, reject) => {
+      const messageId = Date.now() + Math.random()
+      const timeout = setTimeout(() => {
+        reject(new Error('Backend message timeout'))
+      }, 5000)
 
-    const responseHandler = (event) => {
-      if (event.source !== window) return
-      if (!event.data || event.data.type !== 'RESPONSE') return
-      if (event.data.messageId !== messageId) return
+      const responseHandler = (event) => {
+        if (event.source !== window) return
+        if (!event.data || typeof event.data !== 'object') return
+        if (event.data.source !== 'gridkit-devtools-backend') return
 
-      clearTimeout(timeout)
-      window.removeEventListener('message', responseHandler)
-      resolve(event.data.payload)
-    }
+        // Check for RESPONSE from backend
+        if (event.data.type === 'RESPONSE' && event.data.commandType === message.type) {
+          clearTimeout(timeout)
+          window.removeEventListener('message', responseHandler)
+          resolve(event.data.payload)
+          return
+        }
+      }
 
-    window.addEventListener('message', responseHandler)
+      window.addEventListener('message', responseHandler)
 
-    // Send message
-    window.postMessage(
-      {
+      // Send message
+      window.postMessage({
         ...message,
         source: 'gridkit-devtools-content',
         messageId,
         timestamp: Date.now()
-      },
-      '*'
-    )
-  })
-}
+      }, '*')
+    })
+  }
 
-// Listen for DevTools panel connection
-function connectToDevTools() {
-  if (bridgePort) return
+  /**
+   * Connect to DevTools panel via Chrome runtime
+   */
+  function connectToDevTools() {
+    if (bridgePort) return
 
-  bridgePort = chrome.runtime.connect({
-    name: 'gridkit-devtools-content'
-  })
+    try {
+      bridgePort = chrome.runtime.connect({
+        name: 'gridkit-devtools-content'
+      })
 
-  bridgePort.onMessage.addListener((message) => {
-    console.log('[GridKit DevTools] Received from DevTools:', message)
+      bridgePort.onMessage.addListener((message) => {
+        console.log('[GridKit DevTools] Received from DevTools:', message.type)
 
-    switch (message.type) {
-      case 'GET_TABLES':
-        sendMessageToBackend(message)
-          .then((response) => {
-            bridgePort.postMessage(response)
-          })
-          .catch((error) => {
+        switch (message.type) {
+          case 'GET_TABLES':
+          case 'GET_STATE':
+          case 'GET_EVENTS':
+          case 'GET_PERFORMANCE':
+            sendMessageToBackend(message)
+              .then((response) => {
+                bridgePort.postMessage(response)
+              })
+              .catch((error) => {
+                bridgePort.postMessage({
+                  type: 'ERROR',
+                  error: error.message
+                })
+              })
+            break
+
+          default:
             bridgePort.postMessage({
               type: 'ERROR',
-              error: error.message
+              error: 'Unknown command: ' + message.type
             })
-          })
-        break
+        }
+      })
 
-      case 'GET_STATE':
-        sendMessageToBackend(message)
-          .then((response) => {
-            bridgePort.postMessage(response)
-          })
-          .catch((error) => {
-            bridgePort.postMessage({
-              type: 'ERROR',
-              error: error.message
-            })
-          })
-        break
+      bridgePort.onDisconnect.addListener(() => {
+        console.log('[GridKit DevTools] DevTools disconnected')
+        bridgePort = null
+      })
 
-      default:
-        bridgePort.postMessage({
-          type: 'ERROR',
-          error: 'Unknown command: ' + message.type
-        })
+      console.log('[GridKit DevTools] Connected to DevTools panel')
+    } catch (error) {
+      console.warn('[GridKit DevTools] Could not connect to DevTools:', error.message)
     }
-  })
+  }
 
-  bridgePort.onDisconnect.addListener(() => {
-    console.log('[GridKit DevTools] DevTools disconnected')
-    bridgePort = null
-  })
+  /**
+   * Detect GridKit tables on the page
+   */
+  function detectGridKitTables() {
+    const tables = []
 
-  console.log('[GridKit DevTools] Connected to DevTools panel')
-}
-
-// Detect GridKit tables on the page
-function detectGridKitTables() {
-  const tables = []
-
-  // Check for global tables registry
-  if (window.__GRIDKIT_TABLES__ instanceof Map) {
-    for (const table of window.__GRIDKIT_TABLES__.values()) {
-      if (table && typeof table.getState === 'function') {
-        tables.push(table)
+    // Check for global tables registry
+    if (window.__GRIDKIT_TABLES__ instanceof Map) {
+      for (const [id, table] of window.__GRIDKIT_TABLES__.entries()) {
+        if (table && typeof table.getState === 'function') {
+          tables.push({ id, table })
+        }
       }
     }
-  }
 
-  // Check window for direct table references
-  if (window.gridkitTables instanceof Array) {
-    tables.push(...window.gridkitTables)
-  }
-
-  // Try to find via React DevTools
-  if (window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
-    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__
-    if (hook.rendererIDToRenderer) {
-      // Find GridKit tables in React components
-      findGridKitTablesInReact(hook, tables)
+    // Check window for direct table references
+    if (window.gridkitTables instanceof Array) {
+      for (const table of window.gridkitTables) {
+        if (table && typeof table.getState === 'function') {
+          tables.push({ id: table.options?.meta?.tableId || 'unknown', table })
+        }
+      }
     }
+
+    return tables
   }
 
-  return tables
-}
+  /**
+   * Register table with backend
+   */
+  function registerTableWithBackend(tableId, table) {
+    window.postMessage({
+      source: 'gridkit-devtools-content',
+      type: 'REGISTER_TABLE',
+      payload: { tableId, table },
+      timestamp: Date.now()
+    }, '*')
+  }
 
-// Find GridKit tables in React components
-function findGridKitTablesInReact(hook, tables) {
-  // This is a simplified detection
-  // In production, you'd use the full React DevTools API
-}
+  /**
+   * Unregister table from backend
+   */
+  function unregisterTableFromBackend(tableId) {
+    window.postMessage({
+      source: 'gridkit-devtools-content',
+      type: 'UNREGISTER_TABLE',
+      payload: { tableId },
+      timestamp: Date.now()
+    }, '*')
+  }
 
-// Setup auto-detection
-function setupAutoDetection() {
-  // Register existing tables
-  const tables = detectGridKitTables()
-  console.log('[GridKit DevTools] Found', tables.length, 'GridKit tables')
-
-  // Poll for new tables
-  const intervalId = setInterval(() => {
+  /**
+   * Setup auto-detection for GridKit tables
+   */
+  function setupAutoDetection() {
+    // Register existing tables
     const tables = detectGridKitTables()
-    console.log('[GridKit DevTools] Found', tables.length, 'GridKit tables (poll)')
-  }, 2000)
+    console.log('[GridKit DevTools] Found', tables.length, 'GridKit tables')
 
-  return intervalId
-}
+    tables.forEach(({ id, table }) => {
+      registerTableWithBackend(id, table)
+      registeredTables.set(id, table)
+    })
 
-// Initialize
-console.log('[GridKit DevTools] Initializing content script')
-connectToDevTools()
+    // Poll for new tables every 2 seconds
+    const intervalId = setInterval(() => {
+      const newTables = detectGridKitTables()
+      console.log('[GridKit DevTools] Poll: Found', newTables.length, 'GridKit tables')
 
-// Setup auto-detection
-setupAutoDetection()
+      newTables.forEach(({ id, table }) => {
+        if (!registeredTables.has(id)) {
+          registerTableWithBackend(id, table)
+          registeredTables.set(id, table)
+        }
+      })
+    }, 2000)
 
-// Expose API for external use
+    return intervalId
+  }
+
+  /**
+   * Listen for messages from backend (via window.postMessage)
+   */
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return
+    if (!event.data || typeof event.data !== 'object') return
+    if (event.data.source !== 'gridkit-devtools-backend') return
+
+    const message = event.data
+
+    console.log('[GridKit DevTools] Content received from backend:', message.type)
+
+    switch (message.type) {
+      case 'BACKEND_READY':
+        connectToBackend()
+        break
+
+      case 'TABLE_REGISTERED':
+        console.log('[GridKit DevTools] Table registered:', message.payload?.table?.id)
+        break
+
+      case 'TABLE_UNREGISTERED':
+        console.log('[GridKit DevTools] Table unregistered:', message.payload?.tableId)
+        break
+
+      case 'STATE_UPDATE':
+      case 'EVENT_LOGGED':
+      case 'PERFORMANCE_UPDATE':
+      case 'MEMORY_UPDATE':
+        // Call registered handlers
+        if (messageHandlers.has(message.type)) {
+          messageHandlers.get(message.type).forEach((handler) => {
+            try {
+              handler(message)
+            } catch (error) {
+              console.error('[GridKit DevTools] Error in message handler:', error)
+            }
+          })
+        }
+        break
+    }
+  })
+
+  /**
+   * Listen for messages from background script
+   */
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.source !== 'gridkit-devtools-background') return
+
+    console.log('[GridKit DevTools] Content received from background:', message.type)
+
+    switch (message.type) {
+      case 'BACKEND_READY':
+        connectToBackend()
+        sendResponse({ type: 'CONTENT_READY' })
+        break
+
+      case 'COMMAND':
+        sendMessageToBackend(message.payload)
+          .then((response) => {
+            sendResponse({
+              type: 'RESPONSE',
+              payload: response
+            })
+          })
+          .catch((error) => {
+            sendResponse({
+              type: 'RESPONSE',
+              payload: {
+                success: false,
+                error: error.message
+              }
+            })
+          })
+        return true
+
+      default:
+        console.warn('[GridKit DevTools] Unknown message type:', message.type)
+    }
+  })
+
+  // Initialize
+  console.log('[GridKit DevTools] Initializing content script')
+
+  // Inject backend into page context
+  injectBackend()
+
+  // Connect to DevTools panel
+  connectToDevTools()
+
+  // Setup auto-detection
+  const detectionInterval = setupAutoDetection()
+
+  // Expose API for external use
   window.__GRIDKIT_DEVTOOLS_CONTENT__ = {
     isConnected: () => isConnected,
-    detectTables: detectGridKitTables,
+    detectTables: () => Array.from(registeredTables.keys()),
     sendMessageToBackend: sendMessageToBackend,
     addMessageHandler: (type, handler) => {
       if (!messageHandlers.has(type)) {
@@ -285,6 +506,18 @@ setupAutoDetection()
       if (messageHandlers.has(type)) {
         messageHandlers.get(type).delete(handler)
       }
-    }
+    },
+    registerTable: registerTableWithBackend,
+    unregisterTable: unregisterTableFromBackend
   }
+
+  // Cleanup on page unload
+  window.addEventListener('unload', () => {
+    if (detectionInterval) {
+      clearInterval(detectionInterval)
+    }
+    if (bridgePort) {
+      bridgePort.disconnect()
+    }
+  })
 })()
