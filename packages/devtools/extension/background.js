@@ -3,8 +3,10 @@ console.log('[GridKit DevTools] Background script loaded');
 
 // Store ports for each tab
 const tabPorts = new Map();
+// Store content script ports for each tab
+const contentPorts = new Map();
 
-// Handle connections from DevTools panel
+// Handle connections from DevTools panel and content script
 chrome.runtime.onConnect.addListener((port) => {
   console.log('[GridKit DevTools] Background received connection:', port.name);
 
@@ -12,17 +14,17 @@ chrome.runtime.onConnect.addListener((port) => {
     // For DevTools panels, sender.tab is undefined
     // We need to get tabId from chrome.devtools.inspectedWindow
     // But that's only available in devtools.js context
-    
+
     console.log('[GridKit DevTools] Waiting for tabId from panel...');
-    
+
     // Wait for panel to send tabId
     port.onMessage.addListener((message) => {
       console.log('[GridKit DevTools] Panel message:', message.type);
-      
+
       if (message.type === 'INIT' && message.tabId) {
         const tabId = message.tabId;
         console.log('[GridKit DevTools] Got tabId from panel:', tabId);
-        
+
         // Store port for this tab
         tabPorts.set(tabId, port);
 
@@ -44,7 +46,7 @@ chrome.runtime.onConnect.addListener((port) => {
               })
               return
             }
-            
+
             if (response && response.success && response.data) {
               console.log('[GridKit DevTools] Initial tables:', response.data)
               port.postMessage({
@@ -104,6 +106,55 @@ chrome.runtime.onConnect.addListener((port) => {
       }
     });
   }
+  
+  // Handle connections from content script
+  if (port.name === 'gridkit-devtools-content') {
+    console.log('[GridKit DevTools] Content script connected');
+    
+    // Get tabId from sender.tab
+    const tabId = port.sender?.tab?.id;
+    if (tabId) {
+      console.log('[GridKit DevTools] Content script connected for tab:', tabId);
+      contentPorts.set(tabId, port);
+      
+      // Listen for messages from content script via port
+      port.onMessage.addListener((message) => {
+        console.log('[GridKit DevTools] Message from content port:', message.type, message);
+        
+        // Forward events to panel
+        if (message.type === 'EVENT_LOGGED' || 
+            message.type === 'STATE_UPDATE' || 
+            message.type === 'PERFORMANCE_UPDATE' ||
+            message.type === 'MEMORY_UPDATE' ||
+            message.type === 'TABLE_REGISTERED' ||
+            message.type === 'TABLE_UNREGISTERED') {
+          const panelPort = tabPorts.get(tabId);
+          console.log('[GridKit DevTools] Panel port found:', !!panelPort);
+          if (panelPort) {
+            console.log('[GridKit DevTools] Forwarding to panel via port:', message.type);
+            try {
+              panelPort.postMessage({
+                type: message.type,
+                tableId: message.tableId,
+                payload: message.payload,
+                timestamp: message.timestamp
+              });
+              console.log('[GridKit DevTools] Event forwarded successfully via port');
+            } catch (error) {
+              console.error('[GridKit DevTools] Error forwarding via port:', error);
+            }
+          } else {
+            console.warn('[GridKit DevTools] No panel port found for tab:', tabId);
+          }
+        }
+      });
+      
+      port.onDisconnect.addListener(() => {
+        console.log('[GridKit DevTools] Content script disconnected for tab:', tabId);
+        contentPorts.delete(tabId);
+      });
+    }
+  }
 });
 
 // Handle messages from DevTools panel (non-port messages)
@@ -136,46 +187,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true;
   }
-});
-
-// Listen for messages from content script (table registered/unregistered)
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  
+  // Ignore messages from content script - they are now handled via port
   if (message.source === 'gridkit-content') {
-    console.log('[GridKit DevTools] Message from content:', message.type);
-
-    if (message.type === 'TABLE_REGISTERED' || message.type === 'TABLE_UNREGISTERED') {
-      const tabId = sender.tab?.id;
-      if (tabId) {
-        const port = tabPorts.get(tabId);
-        if (port) {
-          console.log('[GridKit DevTools] Forwarding to panel:', message.type);
-          port.postMessage({
-            type: message.type,
-            payload: message.payload
-          });
-        }
-      }
-    }
-    
-    // Forward events and updates to panel
-    if (message.type === 'EVENT_LOGGED' || 
-        message.type === 'STATE_UPDATE' || 
-        message.type === 'PERFORMANCE_UPDATE' ||
-        message.type === 'MEMORY_UPDATE') {
-      const tabId = sender.tab?.id;
-      if (tabId) {
-        const port = tabPorts.get(tabId);
-        if (port) {
-          console.log('[GridKit DevTools] Forwarding event to panel:', message.type);
-          port.postMessage({
-            type: message.type,
-            tableId: message.tableId,
-            payload: message.payload,
-            timestamp: message.timestamp
-          });
-        }
-      }
-    }
+    return true;
   }
 });
 

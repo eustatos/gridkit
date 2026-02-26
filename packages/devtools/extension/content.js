@@ -294,6 +294,9 @@
       case 'EVENT_LOGGED':
       case 'PERFORMANCE_UPDATE':
       case 'MEMORY_UPDATE':
+        console.log('[GridKit DevTools] Content processing event:', message.type)
+        console.log('[GridKit DevTools] Content bridgePort exists:', !!bridgePort)
+        
         // Call registered handlers
         if (messageHandlers.has(message.type)) {
           messageHandlers.get(message.type).forEach((handler) => {
@@ -307,10 +310,13 @@
         // Forward events to DevTools panel
         if (bridgePort) {
           try {
+            console.log('[GridKit DevTools] Content forwarding event to panel:', message.type)
             bridgePort.postMessage(message)
           } catch (error) {
             console.error('[GridKit DevTools] Failed to forward message to panel:', error)
           }
+        } else {
+          console.warn('[GridKit DevTools] Content cannot forward event: bridgePort not connected')
         }
         break
     }
