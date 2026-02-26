@@ -304,6 +304,14 @@
             }
           })
         }
+        // Forward events to DevTools panel
+        if (bridgePort) {
+          try {
+            bridgePort.postMessage(message)
+          } catch (error) {
+            console.error('[GridKit DevTools] Failed to forward message to panel:', error)
+          }
+        }
         break
     }
   })
