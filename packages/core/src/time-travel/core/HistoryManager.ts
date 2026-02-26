@@ -4,29 +4,50 @@ import type { HistoryEvent, HistoryStats } from "./types";
 // Import compression types
 import type { CompressionStrategy, CompressionStrategyConfig } from "../compression";
 
-export class HistoryManager {
+// Import disposal infrastructure
+import { BaseDisposable, type DisposableConfig } from "./disposable";
+
+export class HistoryManager extends BaseDisposable {
   private past: Snapshot[] = [];
   private future: Snapshot[] = [];
   private current: Snapshot | null = null;
   private maxHistory: number;
   private listeners: Set<(event: HistoryEvent) => void> = new Set();
-  
+  private timers: Set<ReturnType<typeof setTimeout>> = new Set();
+
   // Compression support
   private compressionStrategy: CompressionStrategy | null = null;
   private compressionConfig: CompressionStrategyConfig | null = null;
-  
+
   // Memory tracking before/after compression
   private originalHistorySize: number = 0;
   private compressedHistorySize: number = 0;
 
-  constructor(maxHistory: number = 50, compressionConfig?: CompressionStrategyConfig) {
+  constructor(
+    maxHistory: number = 50,
+    compressionConfig?: CompressionStrategyConfig,
+    disposalConfig?: DisposableConfig,
+  ) {
+    super(disposalConfig);
     this.maxHistory = maxHistory;
-    
+
     if (compressionConfig) {
       this.compressionConfig = compressionConfig;
       // Import compression factory dynamically to avoid circular dependencies
       // This will be replaced with actual implementation
     }
+  }
+
+  /**
+   * Helper to track timers for cleanup
+   */
+  protected setTimeout(
+    callback: () => void,
+    ms: number,
+  ): ReturnType<typeof setTimeout> {
+    const timer = setTimeout(callback, ms);
+    this.timers.add(timer);
+    return timer;
   }
   
   /**
@@ -317,6 +338,44 @@ export class HistoryManager {
    */
   private emit(event: HistoryEvent): void {
     this.listeners.forEach((listener) => listener(event));
+  }
+
+  /**
+   * Dispose the history manager and clean up all resources
+   */
+  async dispose(): Promise<void> {
+    if (this.disposed) {
+      return;
+    }
+
+    this.log("Disposing HistoryManager");
+
+    // Clear all listeners
+    this.listeners.clear();
+
+    // Clear all timers
+    this.timers.forEach(clearTimeout);
+    this.timers.clear();
+
+    // Clear references to snapshots (helps GC)
+    this.past = [];
+    this.future = [];
+    this.current = null;
+
+    // Reset compression tracking
+    this.originalHistorySize = 0;
+    this.compressedHistorySize = 0;
+    this.compressionStrategy = null;
+    this.compressionConfig = null;
+
+    // Dispose children
+    await this.disposeChildren();
+
+    // Run callbacks
+    await this.runDisposeCallbacks();
+
+    this.disposed = true;
+    this.log("HistoryManager disposed");
   }
 }
 

@@ -24,6 +24,7 @@ import { SnapshotRestorer } from "../snapshot/SnapshotRestorer";
 import type {
   SnapshotCreatorConfig,
   SnapshotRestorerConfig,
+  TransactionalRestorerConfig,
 } from "../snapshot/types";
 
 import { AtomTracker } from "../tracking/AtomTracker";
@@ -32,12 +33,41 @@ import type { TrackerConfig, TrackingEvent } from "../tracking/types";
 import { atomRegistry } from "../../atom-registry";
 import { Atom, Store } from "../../types";
 
+// Comparison imports
+import {
+  SnapshotComparator,
+  ComparisonFormatter,
+  type SnapshotComparison,
+  type ComparisonOptions,
+  type VisualizationFormat,
+  type ExportFormat,
+} from "../comparison";
+
+// Delta imports for incremental snapshots
+import { DeltaAwareHistoryManager } from "../delta/delta-history-manager";
+import { DeltaCalculatorImpl } from "../delta/calculator";
+import { SnapshotReconstructor } from "../delta/reconstructor";
+import type {
+  DeltaSnapshot,
+  IncrementalSnapshotConfig,
+  DeltaCompressionFactoryConfig,
+  DeltaCompressionStrategyType,
+} from "../delta/types";
+
+// Import disposal infrastructure
+import {
+  BaseDisposable,
+  type DisposableConfig,
+  LeakDetector,
+  FinalizationHelper,
+} from "./disposable";
+
 /**
  * Main SimpleTimeTravel class
  * Provides time travel debugging capabilities for Nexus State
  */
-export class SimpleTimeTravel implements TimeTravelAPI {
-  private historyManager: HistoryManager;
+export class SimpleTimeTravel extends BaseDisposable implements TimeTravelAPI {
+  private historyManager: HistoryManager | DeltaAwareHistoryManager;
   private historyNavigator: HistoryNavigator;
   private snapshotCreator: SnapshotCreator;
   private snapshotRestorer: SnapshotRestorer;
@@ -49,49 +79,141 @@ export class SimpleTimeTravel implements TimeTravelAPI {
     atom: Atom<Value>,
     update: Value | ((prev: Value) => Value),
   ) => void;
+  private subscriptions: Set<() => void> = new Set();
+  private finalizationRegistry: FinalizationHelper;
+  private instanceId: string;
+
+  // Delta-specific fields
+  private deltaCalculator: DeltaCalculatorImpl;
+  private deltaReconstructor: SnapshotReconstructor;
+  private deltaConfig: IncrementalSnapshotConfig;
+  private useDeltaSnapshots: boolean = false;
+
+  // Comparison fields
+  private snapshotComparator: SnapshotComparator;
+  private comparisonFormatter: ComparisonFormatter;
 
   /**
    * Create a new SimpleTimeTravel instance
    * @param store - The store to track
    * @param options - Configuration options
    */
-  constructor(store: Store, options: TimeTravelOptions = {}) {
+  constructor(store: Store, options: TimeTravelOptions & DisposableConfig = {}) {
+    super(options);
     this.store = store;
     this.autoCapture = options.autoCapture ?? true;
     this.originalSet = store.set.bind(store);
 
-    // Initialize components
-    this.atomTracker = new AtomTracker(store, {
-      autoTrack: true,
-      maxAtoms: options.maxHistory || 50,
-      trackComputed: true,
-      trackWritable: true,
-      trackPrimitive: true,
-      ...options.trackingConfig,
-    } as TrackerConfig);
+    // Generate instance ID for tracking
+    this.instanceId = `TimeTravel-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-    this.snapshotCreator = new SnapshotCreator(store, {
-      includeTypes: ["primitive", "computed", "writable"],
-      excludeAtoms: options.excludeAtoms || [],
-      validate: true,
-      generateId: () => Math.random().toString(36).substring(2, 9),
-      autoCapture: options.autoCapture ?? true,
-      skipStateCheck: true, // Skip state check for initial capture
-      ...options.snapshotConfig,
-    } as SnapshotCreatorConfig);
+    // Initialize finalization registry
+    this.finalizationRegistry = new FinalizationHelper((msg) => {
+      if (this.config.logDisposal) {
+        console.log(`[FINALIZATION] ${msg}`);
+      }
+    });
+    this.finalizationRegistry.track(this, this.instanceId);
 
-    this.snapshotRestorer = new SnapshotRestorer(store, {
-      validateBeforeRestore: true,
-      strictMode: false,
-      onAtomNotFound: "warn",
-      batchRestore: true,
-      ...options.restoreConfig,
-    } as SnapshotRestorerConfig);
+    // Track instance for leak detection
+    if (options.detectLeaks) {
+      LeakDetector.track(this, this.instanceId);
+    }
 
-    this.historyManager = new HistoryManager(options.maxHistory || 50);
+    // Initialize delta configuration
+    this.deltaConfig = {
+      enabled: options.deltaSnapshots?.enabled ?? false,
+      fullSnapshotInterval: options.deltaSnapshots?.fullSnapshotInterval ?? 10,
+      maxDeltaChainLength: options.deltaSnapshots?.maxDeltaChainLength ?? 20,
+      maxDeltaChainAge: options.deltaSnapshots?.maxDeltaChainAge ?? 5 * 60 * 1000,
+      maxDeltaChainSize: options.deltaSnapshots?.maxDeltaChainSize ?? 1024 * 1024,
+      changeDetection: options.deltaSnapshots?.changeDetection ?? "deep",
+      reconstructOnDemand: options.deltaSnapshots?.reconstructOnDemand ?? true,
+      cacheReconstructed: options.deltaSnapshots?.cacheReconstructed ?? true,
+      maxCacheSize: options.deltaSnapshots?.maxCacheSize ?? 100,
+      compressionLevel: options.deltaSnapshots?.compressionLevel ?? "light",
+    };
 
+    this.useDeltaSnapshots = this.deltaConfig.enabled;
+
+    // Initialize components with disposal tracking
+    this.atomTracker = new AtomTracker(
+      store,
+      {
+        autoTrack: true,
+        maxAtoms: options.maxHistory || 50,
+        trackComputed: true,
+        trackWritable: true,
+        trackPrimitive: true,
+        ...options.trackingConfig,
+      } as Partial<TrackerConfig>,
+      { logDisposal: options.logDisposal },
+    );
+    this.registerChild(this.atomTracker);
+
+    this.snapshotCreator = new SnapshotCreator(
+      store,
+      {
+        includeTypes: ["primitive", "computed", "writable"],
+        excludeAtoms: options.excludeAtoms || [],
+        validate: true,
+        generateId: () => Math.random().toString(36).substring(2, 9),
+        autoCapture: options.autoCapture ?? true,
+        skipStateCheck: true, // Skip state check for initial capture
+        ...options.snapshotConfig,
+      } as Partial<SnapshotCreatorConfig>,
+      { logDisposal: options.logDisposal },
+    );
+    this.registerChild(this.snapshotCreator);
+
+    this.snapshotRestorer = new SnapshotRestorer(
+      store,
+      {
+        validateBeforeRestore: true,
+        strictMode: false,
+        onAtomNotFound: "warn",
+        batchRestore: true,
+        ...options.restoreConfig,
+      } as SnapshotRestorerConfig & Partial<TransactionalRestorerConfig>,
+      { logDisposal: options.logDisposal },
+    );
+    this.registerChild(this.snapshotRestorer);
+
+    // Initialize delta components
+    this.deltaCalculator = new DeltaCalculatorImpl({
+      deepEqual: this.deltaConfig.changeDetection === "deep",
+      skipEmpty: true,
+    });
+
+    this.deltaReconstructor = new SnapshotReconstructor({
+      cache: this.deltaConfig.cacheReconstructed,
+      maxCacheSize: this.deltaConfig.maxCacheSize,
+      optimizePath: true,
+    });
+
+    // Initialize comparison components
+    this.snapshotComparator = new SnapshotComparator();
+    this.comparisonFormatter = new ComparisonFormatter(false);
+
+    // Use DeltaAwareHistoryManager if delta snapshots are enabled
+    if (this.useDeltaSnapshots) {
+      this.historyManager = new DeltaAwareHistoryManager({
+        incrementalSnapshot: this.deltaConfig,
+        maxHistory: options.maxHistory || 50,
+        compressionEnabled: true,
+      });
+    } else {
+      this.historyManager = new HistoryManager(
+        options.maxHistory || 50,
+        undefined,
+        { logDisposal: options.logDisposal },
+      );
+    }
+    this.registerChild(this.historyManager as any);
+
+    // HistoryNavigator works with both types via HistoryProvider interface
     this.historyNavigator = new HistoryNavigator(
-      this.historyManager,
+      this.historyManager as any, // Safe cast since both implement required methods
       this.snapshotRestorer,
     );
 
@@ -108,6 +230,9 @@ export class SimpleTimeTravel implements TimeTravelAPI {
 
     // Wrap store.set
     store.set = this.wrappedSet.bind(this);
+
+    // Track all subscriptions
+    this.trackSubscriptions();
 
     // Always capture initial state (to have something to undo to)
     // The autoCapture setting will control subsequent auto-captures
@@ -312,9 +437,114 @@ export class SimpleTimeTravel implements TimeTravelAPI {
    * @param b - Second snapshot
    * @returns Diff between snapshots
    */
-  compareSnapshots(a: Snapshot, b: Snapshot) {
-    // compare not implemented in SnapshotCreator
-    return undefined;
+  compareSnapshots(
+    a: Snapshot | string,
+    b: Snapshot | string,
+    options?: Partial<ComparisonOptions>,
+  ): SnapshotComparison {
+    const snapshotA = typeof a === "string" ? this.getSnapshotById(a) : a;
+    const snapshotB = typeof b === "string" ? this.getSnapshotById(b) : b;
+
+    if (!snapshotA || !snapshotB) {
+      throw new Error("Invalid snapshot reference");
+    }
+
+    return this.snapshotComparator.compare(snapshotA, snapshotB, options);
+  }
+
+  /**
+   * Compare snapshot with current state
+   * @param snapshot - Snapshot or snapshot ID to compare with current state
+   * @param options - Comparison options
+   * @returns Comparison result
+   */
+  compareWithCurrent(
+    snapshot: Snapshot | string,
+    options?: Partial<ComparisonOptions>,
+  ): SnapshotComparison {
+    const targetSnapshot = typeof snapshot === "string"
+      ? this.getSnapshotById(snapshot)
+      : snapshot;
+
+    if (!targetSnapshot) {
+      throw new Error("Invalid snapshot reference");
+    }
+
+    const currentSnapshot = this.getCurrentSnapshot();
+    if (!currentSnapshot) {
+      throw new Error("Failed to capture current state");
+    }
+
+    return this.snapshotComparator.compare(targetSnapshot, currentSnapshot, options);
+  }
+
+  /**
+   * Get diff since specific action or time
+   * @param action - Action name to compare since (optional)
+   * @param options - Comparison options
+   * @returns Comparison result or null if no snapshot found
+   */
+  getDiffSince(
+    action?: string,
+    options?: Partial<ComparisonOptions>,
+  ): SnapshotComparison | null {
+    const history = this.getHistory();
+
+    if (history.length < 2) {
+      return null;
+    }
+
+    let baseSnapshot: Snapshot | null = null;
+
+    if (action) {
+      // Find snapshot by action name
+      baseSnapshot = history.find((s) => s.metadata.action === action) || null;
+    }
+
+    if (!baseSnapshot) {
+      // Use the oldest snapshot as base
+      baseSnapshot = history[0];
+    }
+
+    // Compare with the most recent snapshot
+    const recentSnapshot = history[history.length - 1];
+
+    return this.snapshotComparator.compare(baseSnapshot, recentSnapshot, options);
+  }
+
+  /**
+   * Visualize changes between snapshots
+   * @param comparison - Comparison result to visualize
+   * @param format - Visualization format (tree or list)
+   * @returns Formatted visualization string
+   */
+  visualizeChanges(
+    comparison: SnapshotComparison,
+    format: VisualizationFormat = "list",
+  ): string {
+    return this.comparisonFormatter.visualize(comparison, format);
+  }
+
+  /**
+   * Export comparison result
+   * @param comparison - Comparison result to export
+   * @param format - Export format (json, html, md)
+   * @returns Exported string
+   */
+  exportComparison(
+    comparison: SnapshotComparison,
+    format: ExportFormat,
+  ): string {
+    return this.comparisonFormatter.export(comparison, format);
+  }
+
+  /**
+   * Get snapshot by ID from history
+   * @param id - Snapshot ID
+   * @returns Snapshot or null if not found
+   */
+  private getSnapshotById(id: string): Snapshot | null {
+    return this.historyManager.getById(id);
   }
 
   /**
@@ -354,7 +584,7 @@ export class SimpleTimeTravel implements TimeTravelAPI {
   /**
    * Get history manager instance
    */
-  getHistoryManager(): HistoryManager {
+  getHistoryManager(): HistoryManager | DeltaAwareHistoryManager {
     return this.historyManager;
   }
 
@@ -508,18 +738,209 @@ export class SimpleTimeTravel implements TimeTravelAPI {
   }
 
   /**
-   * Dispose time travel instance
+   * Get delta chain (raw delta snapshots)
+   * @returns Array of delta snapshots
    */
-  dispose(): void {
-    // Restore original store.set
-    this.store.set = this.originalSet;
+  getDeltaChain(): DeltaSnapshot[] {
+    if (this.historyManager instanceof DeltaAwareHistoryManager) {
+      return this.historyManager.getDeltaSnapshots();
+    }
+    return [];
+  }
 
-    // Clear all listeners and history
-    // Clear not implemented in HistoryManager
-    this.atomTracker.clear();
+  /**
+   * Force creation of a full snapshot
+   * Converts any pending deltas to a full snapshot
+   */
+  forceFullSnapshot(): void {
+    if (this.historyManager instanceof DeltaAwareHistoryManager) {
+      this.historyManager.forceFullSnapshot();
+    } else {
+      // For regular history manager, just capture current state
+      this.capture("force-full");
+    }
+  }
 
-    // @ts-expect-error - Clean up references
-    this.store = null;
+  /**
+   * Set delta compression strategy
+   * @param strategy - Strategy configuration
+   */
+  setDeltaStrategy(strategy: DeltaCompressionFactoryConfig): void {
+    if (this.historyManager instanceof DeltaAwareHistoryManager) {
+      // Update delta config based on strategy
+      const config = this.updateConfigFromStrategy(this.deltaConfig, strategy);
+      this.deltaConfig = config;
+      // Note: DeltaAwareHistoryManager would need a method to update config
+      // For now, this updates the local config for future operations
+    }
+  }
+
+  /**
+   * Reconstruct to specific index
+   * @param index - Index in history to reconstruct
+   * @returns Reconstructed snapshot or null
+   */
+  reconstructTo(index: number): Snapshot | null {
+    if (this.historyManager instanceof DeltaAwareHistoryManager) {
+      return this.historyManager.getSnapshot(index);
+    }
+    // For regular history manager, just return the snapshot
+    const snapshots = this.historyManager.getAll();
+    return snapshots[index] || null;
+  }
+
+  /**
+   * Get delta statistics
+   */
+  getDeltaStats() {
+    if (this.historyManager instanceof DeltaAwareHistoryManager) {
+      return this.historyManager.getDeltaStats();
+    }
+    return {
+      deltaCount: 0,
+      fullSnapshotCount: this.historyManager.getAll().length,
+      activeChains: 0,
+      totalDeltasInChains: 0,
+      memoryUsage: 0,
+    };
+  }
+
+  /**
+   * Check if delta snapshots are enabled
+   */
+  isDeltaEnabled(): boolean {
+    return this.useDeltaSnapshots;
+  }
+
+  /**
+   * Get delta calculator instance
+   */
+  getDeltaCalculator(): DeltaCalculatorImpl {
+    return this.deltaCalculator;
+  }
+
+  /**
+   * Get delta reconstructor instance
+   */
+  getDeltaReconstructor(): SnapshotReconstructor {
+    return this.deltaReconstructor;
+  }
+
+  /**
+   * Update config from strategy helper
+   */
+  private updateConfigFromStrategy(
+    config: IncrementalSnapshotConfig,
+    strategy: DeltaCompressionFactoryConfig,
+  ): IncrementalSnapshotConfig {
+    // Update config based on strategy type
+    if (strategy.strategy === "time" && strategy.time?.maxAge) {
+      return { ...config, maxDeltaChainAge: strategy.time.maxAge };
+    }
+    if (strategy.strategy === "changes" && strategy.changes?.maxDeltas) {
+      return { ...config, maxDeltaChainLength: strategy.changes.maxDeltas };
+    }
+    if (strategy.strategy === "size" && strategy.size?.maxSize) {
+      return { ...config, maxDeltaChainSize: strategy.size.maxSize };
+    }
+    return config;
+  }
+
+  /**
+   * Track all subscriptions for cleanup
+   */
+  private trackSubscriptions(): void {
+    // Track history subscriptions
+    const unsubscribeHistory = this.historyManager.subscribe((event) => {
+      // Handle event - can be extended
+      if (this.config.logDisposal) {
+        console.log(`[TIME_TRAVEL.history] Event: ${event.type}`);
+      }
+    });
+    this.subscriptions.add(unsubscribeHistory);
+
+    // Track snapshot subscriptions
+    const unsubscribeSnapshots = this.snapshotCreator.subscribe((snapshot) => {
+      // Handle snapshot - can be extended
+      if (this.config.logDisposal) {
+        console.log(`[TIME_TRAVEL.snapshot] Created: ${snapshot.id}`);
+      }
+    });
+    this.subscriptions.add(unsubscribeSnapshots);
+
+    // Track tracking subscriptions
+    const unsubscribeTracking = this.atomTracker.subscribe((event) => {
+      // Handle tracking event - can be extended
+      if (this.config.logDisposal) {
+        console.log(`[TIME_TRAVEL.tracking] Event: ${event.type}`);
+      }
+    });
+    this.subscriptions.add(unsubscribeTracking);
+  }
+
+  /**
+   * Dispose time travel instance and clean up all resources
+   */
+  async dispose(): Promise<void> {
+    if (this.disposed) {
+      return;
+    }
+
+    this.log("Disposing SimpleTimeTravel");
+
+    // 1. Stop all operations
+    this.pauseAutoCapture();
+
+    // 2. Restore original store.set
+    if (this.store && this.originalSet) {
+      this.store.set = this.originalSet;
+    }
+
+    // 3. Clear all subscriptions
+    this.subscriptions.forEach((unsubscribe) => {
+      try {
+        unsubscribe();
+      } catch (e) {
+        // Ignore errors during unsubscribe
+      }
+    });
+    this.subscriptions.clear();
+
+    // 4. Dispose all child components (in reverse order)
+    const children = Array.from(this.children).reverse();
+    for (const child of children) {
+      try {
+        await child.dispose();
+      } catch (error) {
+        console.error("Error disposing child:", error);
+      }
+    }
+    this.children.clear();
+
+    // 5. Clean up delta components
+    if (this.deltaReconstructor) {
+      this.deltaReconstructor.clearCache();
+    }
+
+    // 6. Clean up comparison components
+    if (this.snapshotComparator) {
+      this.snapshotComparator.clearCache();
+    }
+
+    // 7. Clear references
+    this.store = null as any;
+    this.originalSet = null as any;
+    this.wrappedSet = null as any;
+
+    // 8. Untrack from leak detector
+    LeakDetector.untrack(this.instanceId);
+    this.finalizationRegistry.untrack(this.instanceId);
+
+    // 9. Run final callbacks
+    await this.runDisposeCallbacks();
+
+    this.disposed = true;
+    this.log("SimpleTimeTravel disposed");
   }
 }
 
@@ -536,5 +957,7 @@ declare module "../types" {
     restoreConfig?: Partial<SnapshotRestorerConfig>;
     /** History manager configuration */
     historyConfig?: HistoryManagerConfig;
+    /** Disposal configuration */
+    detectLeaks?: boolean;
   }
 }

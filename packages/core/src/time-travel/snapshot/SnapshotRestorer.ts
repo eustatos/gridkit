@@ -20,36 +20,51 @@ import type {
 } from "./types";
 import { atomRegistry } from "../../atom-registry";
 
-export class SnapshotRestorer {
+// Import disposal infrastructure
+import { BaseDisposable, type DisposableConfig } from "../core/disposable";
+
+export class SnapshotRestorer extends BaseDisposable {
   private store: Store;
-  private config: SnapshotRestorerConfig;
+  private restorerConfig: SnapshotRestorerConfig;
   private transactionalConfig: TransactionalRestorerConfig;
   private listeners: Set<(snapshot: Snapshot) => void> = new Set();
   private restoreInProgress: boolean = false;
   private checkpoints: Map<string, RestorationCheckpoint> = new Map();
   private activeCheckpointId: string | null = null;
+  private activeRestoration: boolean = false;
+  private transactionLog: any | null = null; // TransactionLog type not available
 
-  constructor(store: Store, config?: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig>) {
+  constructor(
+    store: Store,
+    config?: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig>,
+    disposalConfig?: DisposableConfig,
+  ) {
+    super(disposalConfig);
     this.store = store;
-    this.config = {
+    // Extract only SnapshotRestorerConfig properties, explicitly excluding DisposableConfig
+    const restorerConfig = config as Partial<SnapshotRestorerConfig> | undefined;
+    const transactionalConfigParam = config as Partial<TransactionalRestorerConfig> | undefined;
+    
+    this.restorerConfig = {
       validateBeforeRestore: true,
       strictMode: false,
       onAtomNotFound: "skip",
       transform: null,
       batchRestore: true,
       skipErrors: true,
-      ...config,
+      ...(restorerConfig || {}),
     };
+    // Extract only TransactionalRestorerConfig properties
     this.transactionalConfig = {
-      enableTransactions: config?.enableTransactions ?? true,
-      rollbackOnError: config?.rollbackOnError ?? true,
-      validateBeforeRestore: config?.validateBeforeRestore ?? true,
-      batchSize: config?.batchSize ?? 0,
-      timeout: config?.timeout ?? 5000,
-      onError: config?.onError ?? "rollback",
-      maxCheckpoints: config?.maxCheckpoints ?? 10,
-      checkpointTimeout: config?.checkpointTimeout ?? 300000, // 5 minutes
-      ...config,
+      enableTransactions: transactionalConfigParam?.enableTransactions ?? true,
+      rollbackOnError: transactionalConfigParam?.rollbackOnError ?? true,
+      validateBeforeRestore: transactionalConfigParam?.validateBeforeRestore ?? true,
+      batchSize: transactionalConfigParam?.batchSize ?? 0,
+      timeout: transactionalConfigParam?.timeout ?? 5000,
+      onError: transactionalConfigParam?.onError ?? "rollback",
+      maxCheckpoints: transactionalConfigParam?.maxCheckpoints ?? 10,
+      checkpointTimeout: transactionalConfigParam?.checkpointTimeout ?? 300000, // 5 minutes
+      ...(transactionalConfigParam || {}),
     };
   }
 
@@ -68,19 +83,19 @@ export class SnapshotRestorer {
     try {
       // Validate if configured
       if (
-        this.config.validateBeforeRestore &&
+        this.restorerConfig.validateBeforeRestore &&
         !this.validateSnapshot(snapshot)
       ) {
         return false;
       }
 
       // Apply transforms
-      const snapshotToRestore = this.config.transform
-        ? this.config.transform(snapshot)
+      const snapshotToRestore = this.restorerConfig.transform
+        ? this.restorerConfig.transform(snapshot)
         : snapshot;
 
       // Restore state
-      if (this.config.batchRestore) {
+      if (this.restorerConfig.batchRestore) {
         this.restoreBatch(snapshotToRestore.state);
       } else {
         this.restoreSequential(snapshotToRestore.state);
@@ -123,11 +138,11 @@ export class SnapshotRestorer {
 
     try {
       // Validate
-      if (this.config.validateBeforeRestore) {
+      if (this.restorerConfig.validateBeforeRestore) {
         const validation = this.validateSnapshotWithDetails(snapshot);
         if (!validation.valid) {
           errors.push(...validation.errors);
-          if (this.config.strictMode) {
+          if (this.restorerConfig.strictMode) {
             return {
               success: false,
               restoredCount: 0,
@@ -152,7 +167,7 @@ export class SnapshotRestorer {
         }
       });
 
-      const success = errors.length === 0 || !this.config.strictMode;
+      const success = errors.length === 0 || !this.restorerConfig.strictMode;
 
       if (success) {
         this.emit("restore", snapshot);
@@ -230,10 +245,10 @@ export class SnapshotRestorer {
     }
 
     if (!atom) {
-      if (this.config.onAtomNotFound === "throw") {
+      if (this.restorerConfig.onAtomNotFound === "throw") {
         throw new Error(`Atom not found: ${key}`);
       }
-      if (this.config.onAtomNotFound === "warn") {
+      if (this.restorerConfig.onAtomNotFound === "warn") {
         console.warn(`Atom not found: ${key}`);
       }
       console.log(`[RESTORE] Atom NOT FOUND: ${key}`);
@@ -424,7 +439,7 @@ export class SnapshotRestorer {
    * @param config New configuration
    */
   configure(config: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.restorerConfig = { ...this.restorerConfig, ...config };
     this.transactionalConfig = { ...this.transactionalConfig, ...config };
   }
 
@@ -432,7 +447,7 @@ export class SnapshotRestorer {
    * Get current configuration
    */
   getConfig(): SnapshotRestorerConfig {
-    return { ...this.config };
+    return { ...this.restorerConfig };
   }
 
   /**
@@ -1003,5 +1018,68 @@ export class SnapshotRestorer {
       console.error("Failed to parse atom ID:", error);
     }
     return null;
+  }
+
+  /**
+   * Abort any active restoration
+   */
+  private async abortActiveRestoration(): Promise<void> {
+    this.activeRestoration = false;
+    // Rollback any pending changes
+    await this.rollbackAll();
+  }
+
+  /**
+   * Rollback all pending changes
+   */
+  private async rollbackAll(): Promise<void> {
+    // Clean up all checkpoints
+    for (const checkpointId of this.checkpoints.keys()) {
+      await this.rollback(checkpointId);
+    }
+  }
+
+  /**
+   * Dispose the snapshot restorer and clean up all resources
+   */
+  async dispose(): Promise<void> {
+    if (this.disposed) {
+      return;
+    }
+
+    this.log("Disposing SnapshotRestorer");
+
+    // Abort any active restoration
+    if (this.activeRestoration) {
+      await this.abortActiveRestoration();
+    }
+
+    // Clear checkpoints
+    this.checkpoints.clear();
+    this.activeCheckpointId = null;
+
+    // Clear listeners
+    this.listeners.clear();
+
+    // Dispose transaction log if exists
+    if (this.transactionLog) {
+      if (typeof this.transactionLog.dispose === "function") {
+        await this.transactionLog.dispose();
+      }
+      this.transactionLog = null;
+    }
+
+    // Clear references
+    // @ts-expect-error - Clean up references
+    this.store = null;
+
+    // Dispose children
+    await this.disposeChildren();
+
+    // Run callbacks
+    await this.runDisposeCallbacks();
+
+    this.disposed = true;
+    this.log("SnapshotRestorer disposed");
   }
 }

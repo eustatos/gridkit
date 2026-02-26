@@ -32,6 +32,9 @@ export type Subscriber<Value> = (value: Value) => void;
  */
 export type Plugin = (store: Store) => void;
 
+// Import delta types for TimeTravelAPI
+import type { DeltaSnapshot } from "./time-travel/delta/types";
+
 /**
  * Metadata about an action for DevTools integration
  */
@@ -517,10 +520,12 @@ export interface TimeTravelOptions {
   maxHistory?: number;
   autoCapture?: boolean;
   registryMode?: "global" | "isolated";
-  /** Enable incremental snapshots (delta-based history) */
+  /** Enable incremental snapshots (delta-based history) - legacy alias */
   enableIncrementalSnapshots?: boolean;
-  /** Configuration for incremental snapshots */
+  /** Configuration for incremental snapshots - legacy alias */
   incrementalSnapshotConfig?: Partial<IncrementalSnapshotConfig>;
+  /** Delta snapshots configuration (preferred) */
+  deltaSnapshots?: Partial<IncrementalSnapshotConfig>;
   atoms?: any[]; // Add atoms property to TimeTravelOptions
 }
 
@@ -543,6 +548,15 @@ export interface Snapshot {
   metadata: SnapshotMetadata;
 }
 
+// Import comparison types
+import type {
+  SnapshotComparison,
+  ComparisonOptions,
+  ComparisonFormat,
+  VisualizationFormat,
+  ExportFormat,
+} from "./time-travel/comparison/types";
+
 export interface TimeTravelAPI {
   capture(action?: string): Snapshot | undefined;
   undo(): boolean;
@@ -563,6 +577,76 @@ export interface TimeTravelAPI {
   getLastCheckpoint(): RestorationCheckpoint | null;
   rollbackToCheckpoint(checkpointId: string): Promise<RollbackResult>;
   getCheckpoints(): RestorationCheckpoint[];
+
+  // Delta snapshot methods (incremental snapshots)
+  /** Get raw delta chain */
+  getDeltaChain?(): DeltaSnapshot[];
+  /** Force creation of full snapshot */
+  forceFullSnapshot?(): void;
+  /** Set delta compression strategy */
+  setDeltaStrategy?(strategy: any): void;
+  /** Reconstruct to specific index */
+  reconstructTo?(index: number): Snapshot | null;
+  /** Get delta statistics */
+  getDeltaStats?(): any;
+
+  // Snapshot comparison methods
+  /**
+   * Compare two snapshots
+   * @param a - First snapshot or snapshot ID
+   * @param b - Second snapshot or snapshot ID
+   * @param options - Comparison options
+   * @returns Comparison result
+   */
+  compareSnapshots(
+    a: Snapshot | string,
+    b: Snapshot | string,
+    options?: Partial<ComparisonOptions>,
+  ): SnapshotComparison;
+
+  /**
+   * Compare snapshot with current state
+   * @param snapshot - Snapshot or snapshot ID to compare with current state
+   * @param options - Comparison options
+   * @returns Comparison result
+   */
+  compareWithCurrent(
+    snapshot: Snapshot | string,
+    options?: Partial<ComparisonOptions>,
+  ): SnapshotComparison;
+
+  /**
+   * Get diff since specific action or time
+   * @param action - Action name to compare since (optional)
+   * @param options - Comparison options
+   * @returns Comparison result or null if no snapshot found
+   */
+  getDiffSince(
+    action?: string,
+    options?: Partial<ComparisonOptions>,
+  ): SnapshotComparison | null;
+
+  /**
+   * Visualize changes between snapshots
+   * @param comparison - Comparison result to visualize
+   * @param format - Visualization format (tree or list)
+   * @returns Formatted visualization string
+   */
+  visualizeChanges(
+    comparison: SnapshotComparison,
+    format?: VisualizationFormat,
+  ): string;
+
+  /**
+   * Export comparison result
+   * @param comparison - Comparison result to export
+   * @param format - Export format (json, html, md)
+   * @returns Exported string
+   */
+  exportComparison(
+    comparison: SnapshotComparison,
+    format: ExportFormat,
+  ): string;
 }
 
 // Enhanced store types

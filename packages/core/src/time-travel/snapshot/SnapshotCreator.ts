@@ -8,27 +8,40 @@ import type { SnapshotCreatorConfig, CreationResult } from "./types";
 import { atomRegistry } from "../../atom-registry";
 import { AdvancedSerializer, SerializationOptions } from "../../utils/snapshot-serialization/advanced";
 
-export class SnapshotCreator {
+// Import disposal infrastructure
+import { BaseDisposable, type DisposableConfig } from "../core/disposable";
+
+export class SnapshotCreator extends BaseDisposable {
   private store: Store;
-  private config: SnapshotCreatorConfig;
+  private creatorConfig: SnapshotCreatorConfig;
   private listeners: Set<(snapshot: Snapshot) => void> = new Set();
   private lastSnapshotState: Record<string, SnapshotStateEntry> | null = null;
   private serializer: AdvancedSerializer;
+  private workerPool: any | null = null; // WorkerPool type not available
 
-  constructor(store: Store, config?: Partial<SnapshotCreatorConfig>) {
+  constructor(
+    store: Store,
+    config?: Partial<SnapshotCreatorConfig>,
+    disposalConfig?: DisposableConfig,
+  ) {
+    super(disposalConfig);
     this.store = store;
-    this.config = {
+    // Extract only SnapshotCreatorConfig properties, explicitly excluding DisposableConfig
+    const snapshotConfig = config as Partial<SnapshotCreatorConfig> | undefined;
+    this.creatorConfig = {
       includeTypes: ["primitive", "computed", "writable"],
       excludeAtoms: [],
       transform: null,
       validate: true,
       generateId: () => Math.random().toString(36).substring(2, 9),
       includeMetadata: true,
-      ...config,
+      skipStateCheck: false,
+      autoCapture: true,
+      ...(snapshotConfig || {}),
     };
     // Ensure includeTypes is string array (for backward compatibility)
-    if (this.config.includeTypes) {
-      this.config.includeTypes = this.config.includeTypes.map((t) => String(t));
+    if (this.creatorConfig.includeTypes) {
+      this.creatorConfig.includeTypes = this.creatorConfig.includeTypes.map((t) => String(t));
     }
 
     // Initialize AdvancedSerializer with default options
@@ -61,14 +74,14 @@ export class SnapshotCreator {
 
       // Check if state has changed since last snapshot
       // Only check for state changes when auto-capturing (action is not provided)
-      if (!this.config.skipStateCheck && this.config.autoCapture === false && !action && this.lastSnapshotState) {
+      if (!this.creatorConfig.skipStateCheck && this.creatorConfig.autoCapture === false && !action && this.lastSnapshotState) {
         if (this.statesEqual(state, this.lastSnapshotState)) {
           return null; // State hasn't changed
         }
       }
 
       const snapshot: Snapshot = {
-        id: this.config.generateId(),
+        id: this.creatorConfig.generateId(),
         state,
         metadata: {
           timestamp: Date.now(),
@@ -78,12 +91,12 @@ export class SnapshotCreator {
       };
 
       // Apply transforms
-      const transformed = this.config.transform
-        ? this.config.transform(snapshot)
+      const transformed = this.creatorConfig.transform
+        ? this.creatorConfig.transform(snapshot)
         : snapshot;
 
       // Validate if configured
-      if (this.config.validate && !this.validateSnapshot(transformed)) {
+      if (this.creatorConfig.validate && !this.validateSnapshot(transformed)) {
         return null;
       }
 
@@ -191,11 +204,11 @@ export class SnapshotCreator {
       const atomType = this.getAtomType(atom);
 
       // Filter by type
-      if (!this.config.includeTypes.includes(atomType)) return;
+      if (!this.creatorConfig.includeTypes.includes(atomType)) return;
 
       // Filter by exclude list
       const atomName = atom.name || atom.id.description || String(atom.id);
-      if (this.config.excludeAtoms.includes(atomName)) return;
+      if (this.creatorConfig.excludeAtoms.includes(atomName)) return;
 
       const value = this.store.get(atom);
 
@@ -303,13 +316,54 @@ export class SnapshotCreator {
    * @param config New configuration
    */
   configure(config: Partial<SnapshotCreatorConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.creatorConfig = { ...this.creatorConfig, ...config };
   }
 
   /**
    * Get current configuration
    */
   getConfig(): SnapshotCreatorConfig {
-    return { ...this.config };
+    return { ...this.creatorConfig };
+  }
+
+  /**
+   * Dispose the snapshot creator and clean up all resources
+   */
+  async dispose(): Promise<void> {
+    if (this.disposed) {
+      return;
+    }
+
+    this.log("Disposing SnapshotCreator");
+
+    // Clear listeners
+    this.listeners.clear();
+
+    // Dispose worker pool if exists
+    if (this.workerPool) {
+      if (typeof this.workerPool.dispose === "function") {
+        await this.workerPool.dispose();
+      }
+      this.workerPool = null;
+    }
+
+    // Dispose serializer if it has dispose method
+    if (this.serializer && typeof (this.serializer as any).dispose === "function") {
+      await (this.serializer as any).dispose();
+    }
+
+    // Clear references
+    this.lastSnapshotState = null;
+    // @ts-expect-error - Clean up references
+    this.store = null;
+
+    // Dispose children
+    await this.disposeChildren();
+
+    // Run callbacks
+    await this.runDisposeCallbacks();
+
+    this.disposed = true;
+    this.log("SnapshotCreator disposed");
   }
 }

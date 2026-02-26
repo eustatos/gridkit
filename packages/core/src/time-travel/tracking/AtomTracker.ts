@@ -13,18 +13,28 @@ import type {
   TrackerRestorePoint,
 } from "./types";
 
-export class AtomTracker {
+// Import disposal infrastructure
+import { BaseDisposable, type DisposableConfig } from "../core/disposable";
+
+export class AtomTracker extends BaseDisposable {
   private atoms: Map<symbol, TrackedAtom> = new Map();
   private atomsByName: Map<string, symbol> = new Map();
   private store: Store;
-  private config: TrackerConfig;
+  private trackerConfig: TrackerConfig;
   private listeners: Set<(event: TrackingEvent) => void> = new Set();
   private version: number = 0;
   private startTime: number = Date.now();
 
-  constructor(store: any, config?: Partial<TrackerConfig>) {
+  constructor(
+    store: any,
+    config?: Partial<TrackerConfig>,
+    disposalConfig?: DisposableConfig,
+  ) {
+    super(disposalConfig);
     this.store = store;
-    this.config = {
+    // Extract only TrackerConfig properties, explicitly excluding DisposableConfig
+    const trackerConfig = config as Partial<TrackerConfig> | undefined;
+    this.trackerConfig = {
       autoTrack: true,
       maxAtoms: 1000,
       trackComputed: true,
@@ -33,7 +43,7 @@ export class AtomTracker {
       validateOnTrack: true,
       trackAccess: true,
       trackChanges: true,
-      ...config,
+      ...(trackerConfig || {}),
     };
   }
 
@@ -45,8 +55,8 @@ export class AtomTracker {
    */
   track<Value>(atom: Atom<Value>, name?: string): boolean {
     console.log(`[TRACKER.track] Tracking atom: ${atom.name}, id: ${atom.id?.toString()}, atoms.size: ${this.atoms.size}`);
-    
-    if (this.atoms.size >= this.config.maxAtoms) {
+
+    if (this.atoms.size >= this.trackerConfig.maxAtoms) {
       this.emit("error", { message: "Max atoms limit reached" });
       return false;
     }
@@ -64,7 +74,7 @@ export class AtomTracker {
 
     // Validate if configured
     if (
-      this.config.validateOnTrack &&
+      this.trackerConfig.validateOnTrack &&
       !this.validateAtom(atom as Atom<unknown>)
     ) {
       return false;
@@ -338,11 +348,11 @@ export class AtomTracker {
   private shouldTrackType(type: string): boolean {
     switch (type) {
       case "primitive":
-        return this.config.trackPrimitive;
+        return this.trackerConfig.trackPrimitive;
       case "computed":
-        return this.config.trackComputed;
+        return this.trackerConfig.trackComputed;
       case "writable":
-        return this.config.trackWritable;
+        return this.trackerConfig.trackWritable;
       default:
         return true;
     }
@@ -380,7 +390,7 @@ export class AtomTracker {
       atoms: this.getAllTracked(),
       version: this.version,
       timestamp: Date.now(),
-      config: { ...this.config },
+      config: { ...this.trackerConfig },
     };
   }
 
@@ -453,14 +463,14 @@ export class AtomTracker {
    * @param config New configuration
    */
   configure(config: Partial<TrackerConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.trackerConfig = { ...this.trackerConfig, ...config };
   }
 
   /**
    * Get current configuration
    */
   getConfig(): TrackerConfig {
-    return { ...this.config };
+    return { ...this.trackerConfig };
   }
 
   /**
@@ -475,5 +485,36 @@ export class AtomTracker {
    */
   size(): number {
     return this.atoms.size;
+  }
+
+  /**
+   * Dispose the atom tracker and clean up all resources
+   */
+  async dispose(): Promise<void> {
+    if (this.disposed) {
+      return;
+    }
+
+    this.log("Disposing AtomTracker");
+
+    // Clear all listeners
+    this.listeners.clear();
+
+    // Clear atom references
+    this.atoms.clear();
+    this.atomsByName.clear();
+
+    // Remove store reference
+    // @ts-expect-error - Clean up references
+    this.store = null;
+
+    // Dispose children
+    await this.disposeChildren();
+
+    // Run callbacks
+    await this.runDisposeCallbacks();
+
+    this.disposed = true;
+    this.log("AtomTracker disposed");
   }
 }

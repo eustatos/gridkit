@@ -115,6 +115,20 @@ export class DeltaAwareHistoryManager {
   }
 
   /**
+   * Get snapshot by ID
+   */
+  getById(snapshotId: string): Snapshot | null {
+    const all = this.historyManager.getAll();
+    const snapshot = all.find((s) => s.id === snapshotId);
+    
+    if (snapshot && this.isDeltaSnapshot(snapshot)) {
+      return this.reconstructFullSnapshot(snapshot) || snapshot;
+    }
+    
+    return snapshot || null;
+  }
+
+  /**
    * Get delta snapshots only
    */
   getDeltaSnapshots(): DeltaSnapshot[] {

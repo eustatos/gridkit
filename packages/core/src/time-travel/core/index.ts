@@ -28,3 +28,16 @@ export type {
   HistoryIndex,
   HistoryBounds,
 } from "./types";
+
+// Re-export disposal infrastructure
+export {
+  BaseDisposable,
+  LeakDetector,
+  FinalizationHelper,
+  DisposalError,
+  AggregateDisposalError,
+} from "./disposable";
+export type {
+  Disposable,
+  DisposableConfig,
+} from "./disposable";

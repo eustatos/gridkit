@@ -1,9 +1,20 @@
 import { SnapshotRestorer } from "../snapshot";
 import { HistoryManager } from "./HistoryManager";
+import { DeltaAwareHistoryManager } from "../delta/delta-history-manager";
+import type { Snapshot } from "../types";
+
+// Interface that both HistoryManager and DeltaAwareHistoryManager implement
+interface HistoryProvider {
+  canUndo(): boolean;
+  canRedo(): boolean;
+  undo(): Snapshot | null;
+  redo(): Snapshot | null;
+  jumpTo(index: number): Snapshot | null;
+}
 
 export class HistoryNavigator {
   constructor(
-    private historyManager: HistoryManager,
+    private historyManager: HistoryProvider,
     private snapshotRestorer: SnapshotRestorer,
   ) {}
 
