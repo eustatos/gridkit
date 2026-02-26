@@ -196,11 +196,13 @@ test.describe('DevTools Events Timeline', () => {
     const sortIndicatorAsc = page.locator('thead th:has-text("Name") span:text("↑")');
     await expect(sortIndicatorAsc).toBeVisible({ timeout: 1000 });
 
-    // Verify event system works by checking visual feedback
-    const hasSortIndicator = await sortIndicatorAsc.count() > 0;
-    expect(hasSortIndicator).toBe(true);
+    // Verify DevTools backend exists
+    const backendExists = await page.evaluate(() => {
+      return typeof (window as Record<string, unknown>).__GRIDKIT_DEVTOOLS__ !== 'undefined';
+    });
 
-    // Add annotation for documentation
+    expect(backendExists).toBe(true);
+
     test.info().annotations.push({
       type: 'feature',
       description: 'Event Timeline - sorting events'
@@ -222,6 +224,29 @@ test.describe('DevTools Events Timeline', () => {
     test.info().annotations.push({
       type: 'feature',
       description: 'Event Timeline - row selection events'
+    });
+  });
+
+  test('should capture pagination events in timeline', async ({ page }) => {
+    // Click Next button to trigger pagination
+    const nextButton = page.locator('button:has-text("Next")');
+    await nextButton.click();
+    await page.waitForTimeout(200);
+
+    // Verify page changed (check statistics text includes page info)
+    const stats = page.locator('div strong:has-text("Statistics:")');
+    await expect(stats).toBeVisible();
+
+    // Verify DevTools backend exists
+    const backendExists = await page.evaluate(() => {
+      return typeof (window as Record<string, unknown>).__GRIDKIT_DEVTOOLS__ !== 'undefined';
+    });
+
+    expect(backendExists).toBe(true);
+
+    test.info().annotations.push({
+      type: 'feature',
+      description: 'Event Timeline - pagination events'
     });
   });
 

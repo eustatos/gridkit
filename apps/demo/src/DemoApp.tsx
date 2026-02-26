@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useEnhancedTable } from '@gridkit/tanstack-adapter';
 import { useDevToolsTable } from '@gridkit/devtools';
 import { flexRender, getCoreRowModel, getSortedRowModel, getPaginationRowModel, ColumnDef } from '@tanstack/react-table';
@@ -78,6 +78,8 @@ export function DemoApp() {
   const [showNotifications, setShowNotifications] = useState(true);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [prevSorting, setPrevSorting] = useState([]);
+  const [prevPagination, setPrevPagination] = useState({ pageIndex: 0, pageSize: 10 });
 
   const table = useEnhancedTable<Person>({
     data: MOCK_DATA,
@@ -102,6 +104,60 @@ export function DemoApp() {
 
   // Register table with DevTools
   useDevToolsTable(table, true);
+
+  // Send events to DevTools when table state changes
+  useEffect(() => {
+    if (JSON.stringify(sorting) !== JSON.stringify(prevSorting)) {
+      // Send sorting event
+      const backend = (window as unknown as Record<string, unknown>).__GRIDKIT_DEVTOOLS_BACKEND__ as
+        | { send?: (msg: Record<string, unknown>) => void }
+        | undefined;
+      if (backend && typeof backend.send === 'function') {
+        backend.send({
+          type: 'EVENT_LOGGED',
+          tableId: table.options.tableId || 'demo-table',
+          payload: {
+            event: {
+              type: 'sorting',
+              sorting: sorting,
+              timestamp: Date.now()
+            },
+            timestamp: Date.now()
+          }
+        });
+        console.log('[DemoApp] Sorting event sent to DevTools:', sorting);
+      }
+      setPrevSorting(sorting);
+    }
+  }, [sorting, prevSorting, table.options.tableId]);
+
+  useEffect(() => {
+    if (
+      pagination.pageIndex !== prevPagination.pageIndex ||
+      pagination.pageSize !== prevPagination.pageSize
+    ) {
+      // Send pagination event
+      const backend = (window as unknown as Record<string, unknown>).__GRIDKIT_DEVTOOLS_BACKEND__ as
+        | { send?: (msg: Record<string, unknown>) => void }
+        | undefined;
+      if (backend && typeof backend.send === 'function') {
+        backend.send({
+          type: 'EVENT_LOGGED',
+          tableId: table.options.tableId || 'demo-table',
+          payload: {
+            event: {
+              type: 'pagination',
+              pagination: pagination,
+              timestamp: Date.now()
+            },
+            timestamp: Date.now()
+          }
+        });
+        console.log('[DemoApp] Pagination event sent to DevTools:', pagination);
+      }
+      setPrevPagination(pagination);
+    }
+  }, [pagination, prevPagination, table.options.tableId]);
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
