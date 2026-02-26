@@ -53,8 +53,10 @@ apps/*/dist/
 !apps/.gitkeep
 
 # Playwright test artifacts
-apps/demo/playwright-report/
-apps/demo/test-results/
+playwright-report/
+test-results/
+playwright/.cache/
+*.playwright-snapshot.png
 
 # OS
 .DS_Store
