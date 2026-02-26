@@ -8,20 +8,22 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
   const tableRef = useRef(table)
   const enabledRef = useRef(enabled)
   const tableIdRef = useRef<string | null>(null)
+  const registeredRef = useRef(false)
 
   useEffect(() => {
     tableRef.current = table
     enabledRef.current = enabled
-    
+
     // Generate or preserve table ID
     if (table && !tableIdRef.current) {
-      tableIdRef.current = (table.options?.meta?.tableId as string) || 
+      tableIdRef.current = (table.options?.meta?.tableId as string) ||
                           `table-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     }
   }, [table, enabled])
 
   useEffect(() => {
     if (!enabledRef.current) return
+    if (registeredRef.current) return
 
     const tableInstance = tableRef.current
     const tableId = tableIdRef.current
@@ -36,21 +38,34 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
       return
     }
 
-    // Register table with injected backend
-    const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
-    if (backend && typeof backend.registerTable === 'function') {
-      backend.registerTable(tableId, tableInstance)
-      console.log('[GridKit DevTools] Registered table with backend:', tableId)
-    } else {
-      console.warn('[GridKit DevTools] Backend not available for registration')
+    // Wait for backend to be ready (with timeout)
+    const waitForBackend = (attempts = 0, maxAttempts = 20) => {
+      const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND
+      const content = (window as any).__GRIDKIT_DEVTOOLS_CONTENT__
+      
+      if (backend && typeof backend.registerTable === 'function') {
+        backend.registerTable(tableId, tableInstance)
+        console.log('[GridKit DevTools] Registered table with backend:', tableId)
+        registeredRef.current = true
+        return
+      }
+      
+      // Also try via content script
+      if (content && typeof content.registerTable === 'function') {
+        content.registerTable(tableId, tableInstance)
+        console.log('[GridKit DevTools] Registered table via content script:', tableId)
+        registeredRef.current = true
+        return
+      }
+      
+      if (attempts < maxAttempts) {
+        setTimeout(() => waitForBackend(attempts + 1, maxAttempts), 100)
+      } else {
+        console.warn('[GridKit DevTools] Backend not available after waiting')
+      }
     }
 
-    // Also register via content script API if available
-    const content = (window as any).__GRIDKIT_DEVTOOLS_CONTENT__
-    if (content && typeof content.registerTable === 'function') {
-      content.registerTable(tableId, tableInstance)
-      console.log('[GridKit DevTools] Registered table via content script:', tableId)
-    }
+    waitForBackend()
 
     // Cleanup
     return () => {
@@ -59,11 +74,13 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
         backend.unregisterTable(tableId)
         console.log('[GridKit DevTools] Unregistered table from backend:', tableId)
       }
-      
+
       const content = (window as any).__GRIDKIT_DEVTOOLS_CONTENT__
       if (content && typeof content.unregisterTable === 'function') {
         content.unregisterTable(tableId)
       }
+      
+      registeredRef.current = false
     }
   }, [table, enabled])
 }
