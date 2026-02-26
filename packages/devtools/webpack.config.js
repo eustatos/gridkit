@@ -77,6 +77,11 @@ module.exports = {
           context: path.resolve(__dirname)
         },
         {
+          from: 'extension/backend.js',
+          to: 'backend.js',
+          context: path.resolve(__dirname)
+        },
+        {
           from: 'extension/icons',
           to: 'icons',
           context: path.resolve(__dirname)

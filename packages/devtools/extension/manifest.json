@@ -35,7 +35,8 @@
       "resources": [
         "panel/*",
         "*.html",
-        "*.js"
+        "*.js",
+        "backend.js"
       ],
       "matches": [
         "<all_urls>"
