@@ -17,38 +17,7 @@
  * @packageDocumentation
  */
 
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
-
-/**
- * Helper function to get extension ID from chrome://extensions
- */
-async function getExtensionId(context: BrowserContext): Promise<string> {
-  const page = await context.newPage();
-  
-  try {
-    await page.goto('chrome://extensions/');
-    await page.waitForSelector('extensions-item', { timeout: 5000 });
-    
-    const extensionId = await page.evaluate(() => {
-      const items = document.querySelectorAll('extensions-item');
-      for (const item of items) {
-        const name = item.querySelector('.extension-name');
-        if (name?.textContent?.includes('GridKit')) {
-          return item.getAttribute('id');
-        }
-      }
-      return null;
-    });
-    
-    if (!extensionId) {
-      throw new Error('GridKit DevTools extension not found');
-    }
-    
-    return extensionId;
-  } finally {
-    await page.close();
-  }
-}
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Helper to wait for content script initialization
@@ -76,29 +45,14 @@ async function waitForTableRegistration(page: Page, timeout = 5000): Promise<voi
 }
 
 test.describe('GridKit DevTools Extension - Loading & Initialization', () => {
-  let extensionId: string;
-
-  test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext();
-    try {
-      extensionId = await getExtensionId(context);
-      console.log('[E2E] Extension ID:', extensionId);
-    } catch (error) {
-      console.warn('[E2E] Could not get extension ID:', error);
-      extensionId = 'test-extension-id';
-    } finally {
-      await context.close();
-    }
-  });
-
   test('should load extension successfully', async ({ page }) => {
     await page.goto('/');
-    
+
     // Extension should be loaded in the browser
     const hasExtension = await page.evaluate(() => {
       return typeof chrome !== 'undefined' && chrome.runtime !== undefined;
     });
-    
+
     expect(hasExtension).toBe(true);
   });
 

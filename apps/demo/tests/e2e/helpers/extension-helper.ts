@@ -1,79 +1,32 @@
 /**
  * GridKit DevTools Extension Testing Helper
- * 
+ *
  * Provides utilities for testing the GridKit DevTools browser extension
- * using Playwright. Handles extension ID detection, communication,
- * and content script interaction.
- * 
+ * using Playwright. Handles content script interaction and table detection.
+ *
+ * Note: Extension ID detection via chrome://extensions/ is not available
+ * in Playwright test context. Tests rely on content script injection
+ * and window object APIs instead.
+ *
  * @packageDocumentation
  * @example
  * ```typescript
- * import { 
- *   getExtensionId,
+ * import {
  *   waitForContentScript,
- *   getDetectedTables 
+ *   getDetectedTables
  * } from './helpers/extension-helper';
- * 
- * test('should detect tables', async ({ page, browser }) => {
- *   const context = await browser.newContext();
- *   const extensionId = await getExtensionId(context);
- *   
+ *
+ * test('should detect tables', async ({ page }) => {
  *   await page.goto('/');
  *   await waitForContentScript(page);
- *   
+ *
  *   const tables = await getDetectedTables(page);
  *   expect(tables.length).toBeGreaterThan(0);
  * });
  * ```
  */
 
-import { type Page, type Locator, type BrowserContext } from '@playwright/test';
-
-/**
- * Get the GridKit DevTools extension ID from chrome://extensions/
- * 
- * @param context - Playwright browser context instance
- * @returns Promise resolving to extension ID string
- * 
- * @throws Error if GridKit DevTools extension is not found
- * 
- * @example
- * ```typescript
- * const extensionId = await getExtensionId(context);
- * console.log('Extension ID:', extensionId);
- * ```
- */
-export async function getExtensionId(context: BrowserContext): Promise<string> {
-  const page = await context.newPage();
-  
-  try {
-    // Navigate to chrome://extensions/
-    await page.goto('chrome://extensions/');
-    
-    // Wait for extensions list to load
-    await page.waitForSelector('extensions-item', { timeout: 5000 });
-    
-    // Find GridKit DevTools extension
-    const extensionId = await page.evaluate(() => {
-      const items = document.querySelectorAll('extensions-item');
-      for (const item of items) {
-        const name = item.querySelector('.extension-name');
-        if (name && name.textContent?.includes('GridKit')) {
-          return item.getAttribute('id');
-        }
-      }
-      return null;
-    });
-    
-    if (!extensionId) {
-      throw new Error('GridKit DevTools extension not found. Make sure it\'s loaded.');
-    }
-    
-    return extensionId;
-  } finally {
-    await page.close();
-  }
-}
+import { type Page, type Locator } from '@playwright/test';
 
 /**
  * Open the extension popup page

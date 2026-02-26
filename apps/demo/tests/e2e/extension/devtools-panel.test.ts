@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import {
-  getExtensionId,
   hasContentScript,
   waitForContentScript,
   getDetectedTables,
@@ -9,26 +8,7 @@ import {
   simulateUserInteraction,
 } from '../helpers/extension-helper';
 
-// Test fixture for extension ID
-let extensionId: string;
-
 test.describe('GridKit DevTools Extension - DevTools Panel', () => {
-  test.beforeAll(async ({ browser }) => {
-    // Get extension ID in a separate context
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    try {
-      extensionId = await getExtensionId(page);
-      console.log('[Panel Test] Got extension ID:', extensionId);
-    } catch (error) {
-      console.warn('[Panel Test] Could not get extension ID:', error);
-      extensionId = 'dummy-extension-id';
-    } finally {
-      await page.close();
-      await context.close();
-    }
-  });
-
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await waitForTableRegistration(page);
