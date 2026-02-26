@@ -10,6 +10,7 @@ coverage/
 # Build outputs
 dist/
 build/
+extension-dist/
 *.tsbuildinfo
 
 # Environment

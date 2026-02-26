@@ -26,11 +26,11 @@
     "backend/**/*",
     "index.ts"
   ],
-  "exclude": [
+    "exclude": [
     "node_modules",
     "dist",
+    "extension-dist",
     "extension/**/*",
-    "extension-dist/**/*",
     "src/**/*",
     "**/*.test.ts",
     "**/*.test.tsx"

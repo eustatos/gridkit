@@ -9,10 +9,11 @@
     "dist",
     "extension-dist"
   ],
-  "scripts": {
-    "build": "tsup index.ts --format esm,cjs --dts",
+    "scripts": {
+    "build": "tsup",
     "build:extension": "webpack --config webpack.config.js",
-    "dev": "tsup index.ts --format esm,cjs --dts --watch",
+    "build:all": "pnpm run build && pnpm run build:extension",
+    "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -24,10 +25,7 @@
     "clean": "rm -rf dist extension-dist",
     "type-check": "tsc --noEmit"
   },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
+    "dependencies": {},
   "devDependencies": {
     "@babel/plugin-syntax-jsx": "^7.28.6",
     "@babel/plugin-transform-modules-commonjs": "^7.28.6",

@@ -4,12 +4,13 @@
         "**/.env.*local"
     ],
     "pipeline": {
-        "build": {
+                "build": {
             "dependsOn": [
                 "^build"
             ],
             "outputs": [
                 "dist/**",
+                "extension-dist/**",
                 ".next/**",
                 "!.next/cache/**"
             ],

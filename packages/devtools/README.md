@@ -87,6 +87,8 @@ cd packages/devtools
 pnpm build:extension
 ```
 
+This builds the browser extension to `extension-dist/` directory.
+
 ### Build the Package
 
 ```bash
@@ -94,12 +96,16 @@ cd packages/devtools
 pnpm build
 ```
 
-### Run in Development Mode
+This builds the npm package to `dist/` directory.
+
+### Build Both
 
 ```bash
 cd packages/devtools
-pnpm dev
+pnpm build:all
 ```
+
+This builds both the extension and the package.
 
 ## API
 
@@ -143,38 +149,37 @@ React hook to automatically detect and register GridKit tables.
 
 ## Extension Structure
 
+### Build Output
+
 ```
 packages/devtools/
-├── extension/
-│   ├── manifest.json           # Browser extension manifest
-│   ├── background.js           # Background script
-│   ├── content.js              # Content script (injected)
-│   ├── devtools.html          # DevTools panel HTML
-│   ├── devtools.js            # DevTools panel script
-│   ├── panel/                 # DevTools panel UI
+├── dist/                      # NPM package build
+│   ├── index.js              # Main ESM bundle
+│   ├── index.cjs             # CommonJS bundle
+│   ├── index.d.ts            # TypeScript definitions
+│   ├── backend/              # Backend integration code
+│   └── bridge/               # Communication bridge code
+├── extension-dist/           # Browser extension build
+│   ├── manifest.json
+│   ├── background.js
+│   ├── content.js
+│   ├── devtools.html
+│   ├── devtools.js
+│   ├── panel/
 │   │   ├── index.html
-│   │   ├── index.tsx
+│   │   ├── index.js
 │   │   ├── components/
-│   │   │   ├── TableInspector.tsx
-│   │   │   ├── EventTimeline.tsx
-│   │   │   ├── PerformanceMonitor.tsx
-│   │   │   ├── TimeTravelControls.tsx
-│   │   │   ├── StateDiffViewer.tsx
-│   │   │   ├── MemoryProfiler.tsx
-│   │   │   └── PluginInspector.tsx
 │   │   └── styles/
-│   ├── icons/                 # Extension icons
-│   └── assets/
-├── bridge/                    # Communication bridge
-│   ├── DevToolsBridge.ts      # Core bridge
-│   ├── messages.ts            # Message types
-│   └── protocol.ts            # Communication protocol
-├── backend/                   # Table integration
-│   ├── DevToolsBackend.ts     # Backend API
-│   ├── detector.ts            # Table detection
-│   └── hooks.ts              # Integration hooks
-├── src/
-│   └── index.ts              # Package entry point
+│   └── icons/
+├── extension/                # Extension source (not built)
+│   ├── manifest.json
+│   ├── background.js
+│   ├── content.js
+│   ├── devtools.html
+│   ├── devtools.js
+│   └── panel/
+├── bridge/                   # Communication bridge source
+├── backend/                  # Backend integration source
 ├── package.json
 ├── tsconfig.json
 └── webpack.config.js
