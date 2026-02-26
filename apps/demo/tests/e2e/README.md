@@ -1,279 +1,393 @@
-# GridKit DevTools E2E Tests
+# GridKit DevTools E2E Testing Guide
 
-This directory contains end-to-end tests for the GridKit DevTools browser extension using Playwright.
+Comprehensive end-to-end testing suite for the GridKit DevTools browser extension using Playwright.
+
+## Overview
+
+This test suite validates the GridKit DevTools extension functionality including:
+
+- Extension loading and initialization
+- Content script injection and API
+- DevTools panel rendering and UI
+- Table detection and inspection
+- Real-time event monitoring
+- Performance profiling
+- State management and time travel
+- Plugin system
+
+## Prerequisites
+
+1. **Node.js** v18+ and **pnpm** v8+
+2. **Playwright** browsers installed
+3. Built extension in `packages/devtools/extension-dist`
+
+## Quick Start
+
+```bash
+# Install dependencies
+pnpm install
+
+# Install Playwright browsers
+pnpm exec playwright install chromium
+
+# Build the extension
+pnpm build:extension
+
+# Run all e2e tests
+pnpm test:e2e
+
+# Run extension-specific tests
+pnpm test:e2e:extension
+```
+
+## Test Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm test:e2e` | Run all e2e tests |
+| `pnpm test:e2e:ui` | Run tests with Playwright UI mode |
+| `pnpm test:e2e:debug` | Run tests in debug mode |
+| `pnpm test:e2e:headed` | Run tests with visible browser |
+| `pnpm test:e2e:extension` | Run extension tests only |
+| `pnpm test:e2e:devtools` | Run DevTools integration tests |
 
 ## Test Structure
 
 ```
 tests/e2e/
-├── extension/              # Extension-specific tests
-│   ├── extension-core.test.ts      # Core extension functionality
-│   ├── devtools-panel.test.ts      # DevTools panel interactions
-│   └── performance.test.ts         # Performance benchmarks
-├── helpers/                # Test helpers and utilities
-│   ├── extension-helper.ts         # Extension interaction helpers
-│   └── types.ts                    # TypeScript type definitions
-├── extension.test.ts       # Basic extension tests
-└── [other demo tests]
+├── extension/
+│   ├── devtools-extension.test.ts    # Core extension functionality
+│   ├── devtools-panel-ui.test.ts     # Panel UI components
+│   ├── extension-core.test.ts        # Content script API
+│   └── performance.test.ts           # Performance tests
+├── helpers/
+│   ├── extension-helper.ts           # Test utilities
+│   ├── README.md                     # Helper documentation
+│   └── types.ts                      # TypeScript types
+├── devtools-integration.test.ts      # DevTools integration
+├── devtools-state.test.ts            # State management tests
+├── devtools-performance.test.ts      # Performance monitoring
+├── devtools-ui-components.test.ts    # UI component tests
+└── README.md                         # This file
 ```
 
 ## Test Categories
 
-### 1. Extension Core Tests (`extension/extension-core.test.ts`)
-Tests for the extension's core functionality:
-- Content script injection verification
-- Content script API availability
-- Table structure inspection
-- Cell highlighting on hover
-- Table interaction capture
-- Communication with background script
+### 1. Extension Loading & Initialization
 
-### 2. DevTools Panel Tests (`extension/devtools-panel.test.ts`)
-Tests for the DevTools panel UI:
-- Panel opening and loading
-- Table information display
-- Table selection functionality
-- Column statistics display
-- Data export functionality (CSV)
-- Panel UI interactions
+Tests that verify the extension loads correctly in the browser.
 
-### 3. Performance Tests (`extension/performance.test.ts`)
-Tests for extension performance:
-- Page load performance impact (<30% overhead)
-- Large table handling (1000+ rows, <100ms inspection)
-- Memory leak detection during rapid interactions
-- Interaction handling performance
+```typescript
+test('should load extension successfully', async ({ page }) => {
+  await page.goto('/');
+  
+  const hasExtension = await page.evaluate(() => {
+    return typeof chrome !== 'undefined' && chrome.runtime !== undefined;
+  });
+  
+  expect(hasExtension).toBe(true);
+});
+```
 
-### 4. Helper Module (`helpers/`)
-Utilities for testing:
-- `getExtensionId()`: Get extension ID from chrome://extensions/
-- `openExtensionPopup()`: Open extension popup page
-- `sendMessageToExtension()`: Send message to background script
-- `hasContentScript()`: Check if content script is injected
-- `getContentScriptData()`: Get data from content script
-- `waitForContentScript()`: Wait for content script initialization
-- `getDetectedTables()`: Get detected GridKit tables
-- And more...
+### 2. Content Script Injection
 
-### 5. Type Definitions (`helpers/types.ts`)
-TypeScript interfaces:
-- `TableInspectionResult`: Structure for table inspection results
-- `ExtensionPanelData`: Data structure for extension panel
-- `PerformanceMetrics`: Performance metrics structure
-- `LoggedEvent`: Event logged by the extension
-- `TableStateSnapshot`: Table state snapshot
-- And more...
+Tests for content script injection and API availability.
 
-## Running Tests
+```typescript
+test('should inject content script', async ({ page }) => {
+  await page.goto('/');
+  await waitForContentScript(page);
+  
+  const hasScript = await hasContentScript(page);
+  expect(hasScript).toBe(true);
+});
+```
 
-### All Tests
+### 3. Table Detection
+
+Tests for GridKit table detection and inspection.
+
+```typescript
+test('should detect tables', async ({ page }) => {
+  await page.goto('/');
+  await waitForTableRegistration(page);
+  
+  const tables = await getDetectedTables(page);
+  expect(tables.length).toBeGreaterThan(0);
+});
+```
+
+### 4. Event Monitoring
+
+Tests for real-time event capture and replay.
+
+```typescript
+test('should capture state events', async ({ page }) => {
+  await page.goto('/');
+  await waitForContentScript(page);
+  
+  const eventsCaptured = await page.evaluate(async () => {
+    const content = window.__GRIDKIT_DEVTOOLS_CONTENT__;
+    let eventCount = 0;
+    
+    const handler = () => { eventCount++; };
+    content.addMessageHandler('STATE_UPDATE', handler);
+    
+    await new Promise(r => setTimeout(r, 200));
+    
+    content.removeMessageHandler('STATE_UPDATE', handler);
+    return eventCount >= 0;
+  });
+  
+  expect(eventsCaptured).toBe(true);
+});
+```
+
+### 5. Performance Monitoring
+
+Tests for performance profiling and metrics.
+
+```typescript
+test('should measure inspection performance', async ({ page }) => {
+  await page.goto('/');
+  await waitForContentScript(page);
+  
+  const performance = await page.evaluate(() => {
+    const startTime = performance.now();
+    const content = window.__GRIDKIT_DEVTOOLS_CONTENT__;
+    const tables = content?.detectTables?.() || [];
+    const endTime = performance.now();
+    
+    return {
+      tableCount: tables.length,
+      inspectionTime: endTime - startTime,
+    };
+  });
+  
+  expect(performance.inspectionTime).toBeLessThan(100);
+});
+```
+
+### 6. Panel UI Components
+
+Tests for DevTools panel UI (simulated).
+
+```typescript
+test('should display table selector', async ({ page }) => {
+  await page.goto('/');
+  await waitForTableRegistration(page);
+  
+  const hasSelector = await page.evaluate(() => {
+    const content = window.__GRIDKIT_DEVTOOLS_CONTENT__;
+    const tables = content?.detectTables?.() || [];
+    return tables.length > 0;
+  });
+  
+  expect(hasSelector).toBe(true);
+});
+```
+
+## Helper Functions
+
+### Core Helpers
+
+| Function | Description |
+|----------|-------------|
+| `getExtensionId(context)` | Get extension ID from chrome://extensions |
+| `hasContentScript(page)` | Check if content script is injected |
+| `waitForContentScript(page, timeout)` | Wait for content script initialization |
+| `waitForTableRegistration(page, timeout)` | Wait for table registration |
+| `getDetectedTables(page)` | Get array of detected table IDs |
+| `getExtensionAPI(page)` | Get content script API instance |
+| `getTableState(page, tableId)` | Get table state through content script |
+
+### Interaction Helpers
+
+| Function | Description |
+|----------|-------------|
+| `simulateUserInteraction(page, element, type)` | Simulate click/hover/scroll |
+| `triggerStateUpdate(page, action, timeout)` | Trigger and wait for state update |
+| `openExtensionPopup(page, extensionId)` | Open extension popup page |
+| `sendMessageToExtension(page, id, message)` | Send message to background script |
+
+## Running Specific Tests
+
+### Run single test file
 ```bash
-# Run all E2E tests
-pnpm test:e2e
+pnpm test:e2e tests/e2e/extension/devtools-extension.test.ts
+```
 
-# Run with UI mode
+### Run tests by name pattern
+```bash
+pnpm test:e2e --grep "Table Detection"
+```
+
+### Run tests in specific project
+```bash
+pnpm test:e2e --project chromium-with-extension
+```
+
+### Run tests with video recording
+```bash
+pnpm test:e2e --reporter=list
+```
+
+## Debugging Tests
+
+### Playwright UI Mode
+```bash
 pnpm test:e2e:ui
+```
 
-# Run in headed mode
+### Debug Mode
+```bash
+pnpm test:e2e:debug
+```
+
+### Headed Mode (visible browser)
+```bash
 pnpm test:e2e:headed
 ```
 
-### Extension-Specific Tests
+### Generate Playwright Report
 ```bash
-# Run only extension tests
-pnpm test:e2e:extension
-
-# Run extension tests with UI
-pnpm test:e2e:extension:ui
-
-# Run extension tests in debug mode
-pnpm test:e2e:extension:debug
-
-# Run extension tests in headed mode
-pnpm test:e2e:extension:headed
-```
-
-### Individual Test Files
-```bash
-# Run core extension tests
-pnpm test:e2e -- tests/e2e/extension/extension-core.test.ts
-
-# Run panel tests
-pnpm test:e2e -- tests/e2e/extension/devtools-panel.test.ts
-
-# Run performance tests
-pnpm test:e2e -- tests/e2e/extension/performance.test.ts
+pnpm test:e2e
+pnpm exec playwright show-report
 ```
 
 ## Test Configuration
 
-The tests use the following configuration:
+Configuration is in `playwright.config.ts`:
 
-- **Browser**: Chrome (required for extension support)
-- **Mode**: Headless and headed modes supported
-- **Test Environment**: Playwright with extension-loaded context
-
-## Helper Functions
-
-### Extension ID Management
 ```typescript
-import { getExtensionId } from './helpers/extension-helper';
-
-// Get extension ID from chrome://extensions/
-const extensionId = await getExtensionId(page);
-```
-
-### Content Script Detection
-```typescript
-import { hasContentScript, waitForContentScript } from './helpers/extension-helper';
-
-// Check if content script is injected
-const isInjected = await hasContentScript(page);
-
-// Wait for content script to be ready
-await waitForContentScript(page);
-```
-
-### Table Detection
-```typescript
-import { getDetectedTables } from './helpers/extension-helper';
-
-// Get detected GridKit tables
-const tables = await getDetectedTables(page);
-```
-
-### Extension API Access
-```typescript
-import { getExtensionAPI } from './helpers/extension-helper';
-
-// Get extension API from window object
-const api = await getExtensionAPI(page);
-
-// Use API methods
-const tables = api.detectTables();
-const isConnected = api.isConnected();
-```
-
-### User Interaction Simulation
-```typescript
-import { simulateUserInteraction } from './helpers/extension-helper';
-
-// Simulate user interactions
-await simulateUserInteraction(page, element, 'click');
-await simulateUserInteraction(page, element, 'hover');
-await simulateUserInteraction(page, element, 'scroll');
-```
-
-## Writing New Tests
-
-### Basic Test Structure
-```typescript
-import { test, expect } from '@playwright/test';
-import {
-  getExtensionId,
-  hasContentScript,
-  waitForContentScript,
-} from './helpers/extension-helper';
-
-let extensionId: string;
-
-test.describe('Feature Name', () => {
-  test.beforeAll(async ({ browser }) => {
-    // Setup extension ID
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    extensionId = await getExtensionId(page);
-    await page.close();
-    await context.close();
-  });
-
-  test.beforeEach(async ({ page }) => {
-    // Navigate and wait for extension
-    await page.goto('/');
-    await waitForContentScript(page);
-  });
-
-  test('should do something', async ({ page }) => {
-    // Test implementation
-    expect(await hasContentScript(page)).toBe(true);
-  });
+export default defineConfig({
+  testDir: './tests/e2e',
+  fullyParallel: true,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: 'html',
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+    video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+  webServer: {
+    command: 'pnpm dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+  },
 });
 ```
-
-### Testing Content Script API
-```typescript
-test('should expose content script API', async ({ page }) => {
-  const api = await getExtensionAPI(page);
-  
-  expect(api).toBeDefined();
-  expect(api).toHaveProperty('isConnected');
-  expect(api).toHaveProperty('detectTables');
-});
-```
-
-### Testing Performance
-```typescript
-test('should have minimal performance impact', async ({ page }) => {
-  const startTime = Date.now();
-  await page.goto('/');
-  
-  const endTime = Date.now();
-  const loadTime = endTime - startTime;
-  
-  expect(loadTime).toBeLessThan(3000); // < 3 seconds
-});
-```
-
-## Best Practices
-
-1. **Isolation**: Each test should have a clean state
-2. **Wait for Extension**: Always wait for content script before testing
-3. **Error Handling**: Handle cases where extension might not be loaded
-4. **Performance Checks**: Monitor memory usage and performance impact
-5. **Type Safety**: Use TypeScript interfaces from `helpers/types.ts`
-6. **Documentation**: Add comments explaining complex test logic
-7. **Artifacts**: Use Playwright's built-in screenshot/video recording
-
-## Troubleshooting
-
-### Extension Not Found
-- Make sure the extension is loaded in Chrome
-- Check that the extension path is correct in `playwright.config.ts`
-- Verify extension ID extraction is working
-
-### Content Script Not Injected
-- Check browser console for errors
-- Verify content script is registered in `manifest.json`
-- Ensure the page URL matches content script matches
-
-### Tests Failing
-- Run tests in headed mode to see browser actions
-- Check test logs for detailed error messages
-- Verify the demo app is running (`pnpm dev`)
 
 ## CI/CD Integration
 
-The tests are ready for CI/CD integration:
+### GitHub Actions Example
 
 ```yaml
-# .github/workflows/e2e-tests.yml
 name: E2E Tests
-on: [pull_request, push]
+
+on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v2
         with:
-          node-version: '18'
+          version: 8
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      
       - run: pnpm install
+      
+      - run: pnpm build:extension
+      
+      - run: pnpm exec playwright install chromium
+      
       - run: pnpm test:e2e
+      
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
 ```
 
-## Additional Resources
+## Common Issues
 
-- [Playwright Documentation](https://playwright.dev/)
-- [Chrome Extensions Documentation](https://developer.chrome.com/docs/extensions/)
-- [GridKit DevTools](../../packages/devtools/README.md)
+### Extension Not Found
+```
+Error: GridKit DevTools extension not found
+```
+**Solution:** Build the extension first: `pnpm build:extension`
+
+### Content Script Not Injected
+```
+Timeout waiting for content script
+```
+**Solution:** Ensure extension is loaded with `--load-extension` flag
+
+### Port Already in Use
+```
+Error: listen EADDRINUSE: address already in use :::3000
+```
+**Solution:** Kill existing process or use different port
+
+### Browser Not Found
+```
+Error: Executable doesn't exist at /path/to/chromium
+```
+**Solution:** Run `pnpm exec playwright install chromium`
+
+## Best Practices
+
+1. **Always wait for initialization** - Use `waitForContentScript()` and `waitForTableRegistration()`
+2. **Clean up handlers** - Remove message handlers after tests
+3. **Use helper functions** - Leverage `extension-helper.ts` utilities
+4. **Test error scenarios** - Verify graceful error handling
+5. **Keep tests isolated** - Each test should be independent
+6. **Use meaningful assertions** - Test actual functionality, not just DOM
+
+## Writing New Tests
+
+```typescript
+import { test, expect } from '@playwright/test';
+import { 
+  waitForContentScript, 
+  waitForTableRegistration,
+  getDetectedTables 
+} from '../helpers/extension-helper';
+
+test.describe('My New Feature', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await waitForContentScript(page);
+    await waitForTableRegistration(page);
+  });
+
+  test('should do something', async ({ page }) => {
+    // Test implementation
+    const tables = await getDetectedTables(page);
+    expect(tables.length).toBeGreaterThan(0);
+  });
+});
+```
+
+## Resources
+
+- [Playwright Documentation](https://playwright.dev)
+- [Chrome Extensions API](https://developer.chrome.com/docs/extensions/reference/)
+- [GridKit DevTools README](../../../packages/devtools/README.md)
+
+## Support
+
+For issues or questions:
+- Check existing issues in the repository
+- Review the [CONTRIBUTING.md](../../../CONTRIBUTING.md)
+- Open a new issue with test details
