@@ -32,14 +32,6 @@ export default defineConfig({
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    // Launch browser with extension loaded
-    launchOptions: {
-      args: [
-        `--load-extension=${extensionPath}`,
-        '--disable-extensions-except=' + extensionPath,
-        '--enable-chrome-browser-cloud-management',
-      ],
-    },
   },
 
   projects: [
@@ -47,12 +39,22 @@ export default defineConfig({
       name: 'chromium-with-extension',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome',
+        launchOptions: {
+          args: [
+            `--load-extension=${extensionPath}`,
+            '--disable-extensions-except=' + extensionPath,
+          ],
+        },
       },
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--disable-extensions'],
+        },
+      },
     },
     {
       name: 'firefox',
