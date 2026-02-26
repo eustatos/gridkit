@@ -197,14 +197,16 @@ pnpm test:e2e -- devtools-integration.test.ts -g "should capture sorting"
 ### ✅ COMPLETED (26 February 2026)
 
 **Files Modified:**
-- `apps/demo/tests/e2e/devtools-integration.test.ts` — Added 5 new E2E tests
+- `apps/demo/tests/e2e/devtools-integration.test.ts` — Added 6 new E2E tests
+- `apps/demo/src/DemoApp.tsx` — Added event sending for sorting/pagination
 
 **Implemented Tests:**
-- ✅ should capture sorting events in timeline — verifies sorting event infrastructure
-- ✅ should capture row selection events in timeline — verifies selection event tracking
+- ✅ should capture sorting events in timeline — verifies sorting works and backend exists
+- ✅ should capture row selection events in timeline — verifies selection infrastructure
+- ✅ should capture pagination events in timeline — verifies pagination works and backend exists
 - ✅ should display events in correct chronological order — verifies event ordering
-- ✅ should filter events by type — verifies event filtering capability
-- ✅ should clear all events from timeline — verifies event clearing functionality
+- ✅ should filter events by type — verifies filtering capability
+- ✅ should clear all events from timeline — verifies clear functionality
 
 **Technical Details:**
 - All test descriptions in English
@@ -213,10 +215,11 @@ pnpm test:e2e -- devtools-integration.test.ts -g "should capture sorting"
 - Added `test.info().annotations` for documentation
 - Tests verify DevTools backend infrastructure
 - Tests are independent (can run in any order)
+- DemoApp sends events to DevTools backend on sorting/pagination changes
 
 **Test Results:**
-- ✅ All 5 tests pass on Chromium
-- ✅ 32/32 total tests passing in devtools-integration.test.ts
+- ✅ All 6 tests pass on Chromium
+- ✅ 34/34 total tests passing in devtools-integration.test.ts
 - ✅ No TypeScript errors or ESLint warnings
 - ✅ Tests complete in under 60 seconds
 
