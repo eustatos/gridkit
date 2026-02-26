@@ -8,6 +8,8 @@ import type {
   SnapshotRestorerConfig,
   RestorationResult,
   RestorationCheckpoint,
+  RestorationConfig,
+  RestorationErrorDetails,
 } from "./types";
 import type {
   TransactionalRestorerConfig,
@@ -27,6 +29,7 @@ export class SnapshotRestorer extends BaseDisposable {
   private store: Store;
   private restorerConfig: SnapshotRestorerConfig;
   private transactionalConfig: TransactionalRestorerConfig;
+  private restorationConfig: RestorationConfig;
   private listeners: Set<(snapshot: Snapshot) => void> = new Set();
   private restoreInProgress: boolean = false;
   private checkpoints: Map<string, RestorationCheckpoint> = new Map();
@@ -36,7 +39,7 @@ export class SnapshotRestorer extends BaseDisposable {
 
   constructor(
     store: Store,
-    config?: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig>,
+    config?: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig> & Partial<RestorationConfig>,
     disposalConfig?: DisposableConfig,
   ) {
     super(disposalConfig);
@@ -44,7 +47,8 @@ export class SnapshotRestorer extends BaseDisposable {
     // Extract only SnapshotRestorerConfig properties, explicitly excluding DisposableConfig
     const restorerConfig = config as Partial<SnapshotRestorerConfig> | undefined;
     const transactionalConfigParam = config as Partial<TransactionalRestorerConfig> | undefined;
-    
+    const restorationConfigParam = config as Partial<RestorationConfig> | undefined;
+
     this.restorerConfig = {
       validateBeforeRestore: true,
       strictMode: false,
@@ -65,6 +69,18 @@ export class SnapshotRestorer extends BaseDisposable {
       maxCheckpoints: transactionalConfigParam?.maxCheckpoints ?? 10,
       checkpointTimeout: transactionalConfigParam?.checkpointTimeout ?? 300000, // 5 minutes
       ...(transactionalConfigParam || {}),
+    };
+    // Extract RestorationConfig properties
+    this.restorationConfig = {
+      validateBeforeRestore: restorationConfigParam?.validateBeforeRestore ?? true,
+      strictMode: restorationConfigParam?.strictMode ?? false,
+      onAtomNotFound: restorationConfigParam?.onAtomNotFound ?? "warn",
+      batchRestore: restorationConfigParam?.batchRestore ?? true,
+      batchSize: restorationConfigParam?.batchSize ?? 10,
+      rollbackOnError: restorationConfigParam?.rollbackOnError ?? true,
+      checkpointTimeout: restorationConfigParam?.checkpointTimeout ?? 5000,
+      maxCheckpoints: restorationConfigParam?.maxCheckpoints ?? 50,
+      ...(restorationConfigParam || {}),
     };
   }
 
@@ -431,16 +447,17 @@ export class SnapshotRestorer extends BaseDisposable {
    * Check if restore is in progress
    */
   isRestoring(): boolean {
-    return this.restoreInProgress;
+    return this.activeRestoration || this.restoreInProgress;
   }
 
   /**
    * Update configuration
    * @param config New configuration
    */
-  configure(config: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig>): void {
+  configure(config: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig> & Partial<RestorationConfig>): void {
     this.restorerConfig = { ...this.restorerConfig, ...config };
     this.transactionalConfig = { ...this.transactionalConfig, ...config };
+    this.restorationConfig = { ...this.restorationConfig, ...config };
   }
 
   /**
@@ -455,6 +472,13 @@ export class SnapshotRestorer extends BaseDisposable {
    */
   getTransactionalConfig(): TransactionalRestorerConfig {
     return { ...this.transactionalConfig };
+  }
+
+  /**
+   * Get restoration configuration
+   */
+  getRestorationConfig(): RestorationConfig {
+    return { ...this.restorationConfig };
   }
 
   /**
@@ -479,6 +503,21 @@ export class SnapshotRestorer extends BaseDisposable {
       }
     }
     return lastCheckpoint;
+  }
+
+  /**
+   * Get checkpoint by ID
+   */
+  getCheckpoint(checkpointId: string): RestorationCheckpoint | undefined {
+    return this.checkpoints.get(checkpointId);
+  }
+
+  /**
+   * Clear all checkpoints
+   */
+  clearCheckpoints(): void {
+    this.checkpoints.clear();
+    this.activeCheckpointId = null;
   }
 
   /**
@@ -531,21 +570,21 @@ export class SnapshotRestorer extends BaseDisposable {
   private cleanupOldCheckpoints(): void {
     const now = Date.now();
     const checkpoints = Array.from(this.checkpoints.entries());
-    
+
     // Sort by timestamp (newest first)
     checkpoints.sort((a, b) => b[1].timestamp - a[1].timestamp);
 
     // Remove old checkpoints
-    for (let i = this.transactionalConfig.maxCheckpoints!; i < checkpoints.length; i++) {
+    for (let i = this.restorationConfig.maxCheckpoints; i < checkpoints.length; i++) {
       const [id, checkpoint] = checkpoints[i];
       // Check if checkpoint has expired
-      if (now - checkpoint.timestamp > this.transactionalConfig.checkpointTimeout!) {
+      if (now - checkpoint.timestamp > this.restorationConfig.checkpointTimeout) {
         this.checkpoints.delete(id);
       }
     }
 
     // Remove checkpoints beyond max
-    while (this.checkpoints.size > this.transactionalConfig.maxCheckpoints!) {
+    while (this.checkpoints.size > this.restorationConfig.maxCheckpoints) {
       const oldestId = checkpoints[checkpoints.length - 1][0];
       this.checkpoints.delete(oldestId);
     }
@@ -561,14 +600,6 @@ export class SnapshotRestorer extends BaseDisposable {
       checkpoint.metadata.committed = true;
       checkpoint.metadata.inProgress = false;
     }
-  }
-
-  /**
-   * Get checkpoint by ID
-   * @param checkpointId Checkpoint ID
-   */
-  private getCheckpoint(checkpointId: string): RestorationCheckpoint | null {
-    return this.checkpoints.get(checkpointId) || null;
   }
 
   /**

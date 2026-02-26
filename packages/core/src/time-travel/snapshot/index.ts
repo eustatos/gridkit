@@ -14,6 +14,8 @@ import { SnapshotValidator } from "./SnapshotValidator";
 import type {
   SnapshotCreatorConfig,
   SnapshotRestorerConfig,
+  TransactionalRestorerConfig,
+  RestorationConfig,
   SnapshotFilter,
 } from "./types";
 
@@ -77,7 +79,7 @@ export function createSnapshotCreator(
  */
 export function createSnapshotRestorer(
   store: Store,
-  config?: Partial<SnapshotRestorerConfig>,
+  config?: Partial<SnapshotRestorerConfig> & Partial<TransactionalRestorerConfig> & Partial<RestorationConfig>,
 ): SnapshotRestorer {
   return new SnapshotRestorer(store, config);
 }

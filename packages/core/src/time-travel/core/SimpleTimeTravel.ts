@@ -25,6 +25,7 @@ import type {
   SnapshotCreatorConfig,
   SnapshotRestorerConfig,
   TransactionalRestorerConfig,
+  RestorationConfig,
 } from "../snapshot/types";
 
 import { AtomTracker } from "../tracking/AtomTracker";
@@ -189,7 +190,7 @@ export class SimpleTimeTravel extends BaseDisposable implements TimeTravelAPI {
         onAtomNotFound: "warn",
         batchRestore: true,
         ...options.restoreConfig,
-      } as SnapshotRestorerConfig & Partial<TransactionalRestorerConfig>,
+      } as SnapshotRestorerConfig & Partial<TransactionalRestorerConfig> & Partial<RestorationConfig>,
       { logDisposal: options.logDisposal },
     );
     this.registerChild(this.snapshotRestorer);

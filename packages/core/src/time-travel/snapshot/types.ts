@@ -426,6 +426,55 @@ export interface RollbackResult {
 }
 
 /**
+ * Restoration error details
+ */
+export interface RestorationErrorDetails {
+  /** Atom name */
+  atomName: string;
+
+  /** Atom ID */
+  atomId: string;
+
+  /** Error message */
+  error: string;
+
+  /** Original value (if available) */
+  originalValue?: unknown;
+
+  /** Attempted value (if available) */
+  attemptedValue?: unknown;
+}
+
+/**
+ * Restoration configuration
+ */
+export interface RestorationConfig {
+  /** Validate before restore */
+  validateBeforeRestore: boolean;
+
+  /** Strict mode - fail on any error */
+  strictMode: boolean;
+
+  /** Behavior when atom not found */
+  onAtomNotFound: "error" | "warn" | "skip" | "throw";
+
+  /** Batch restore enabled */
+  batchRestore: boolean;
+
+  /** Batch size for restoration */
+  batchSize: number;
+
+  /** Rollback on error */
+  rollbackOnError: boolean;
+
+  /** Checkpoint timeout in ms */
+  checkpointTimeout: number;
+
+  /** Maximum number of checkpoints */
+  maxCheckpoints: number;
+}
+
+/**
  * Snapshot filter function
  */
 export type SnapshotFilter = (snapshot: Snapshot) => boolean;
