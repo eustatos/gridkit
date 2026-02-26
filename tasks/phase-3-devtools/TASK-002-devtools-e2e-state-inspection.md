@@ -103,6 +103,14 @@ test('should inspect table metadata (id, rowCount, columnCount)', async ({ page 
 - ✅ Использованы локаторы Playwright (не document.querySelector)
 - ✅ Добавлены assertions с понятными сообщениями об ошибках
 
+## Статус выполнения
+- ✅ **ЗАВЕРШЕНО** (26 февраля 2026 г.)
+- Добавлен новый `test.describe('DevTools Inspection')` с 3 тестами:
+  1. `should inspect table state through DevTools panel` — проверка видимости таблицы, строк и колонок
+  2. `should inspect table data content` — проверка содержимого ячеек первой строки
+  3. `should inspect table metadata (id, rowCount, columnCount)` — проверка статистики таблицы
+- Все тесты проходят на Chromium (14/14 тестов в файле)
+
 ## Связанные файлы
 - `apps/demo/tests/e2e/devtools-integration.test.ts` (существующий)
 - `apps/demo/tests/e2e/table-basics.test.ts` (пример тестов таблицы)
