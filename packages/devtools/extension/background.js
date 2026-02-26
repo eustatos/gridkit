@@ -142,7 +142,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.source === 'gridkit-content') {
     console.log('[GridKit DevTools] Message from content:', message.type);
-    
+
     if (message.type === 'TABLE_REGISTERED' || message.type === 'TABLE_UNREGISTERED') {
       const tabId = sender.tab?.id;
       if (tabId) {
@@ -152,6 +152,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           port.postMessage({
             type: message.type,
             payload: message.payload
+          });
+        }
+      }
+    }
+    
+    // Forward events and updates to panel
+    if (message.type === 'EVENT_LOGGED' || 
+        message.type === 'STATE_UPDATE' || 
+        message.type === 'PERFORMANCE_UPDATE' ||
+        message.type === 'MEMORY_UPDATE') {
+      const tabId = sender.tab?.id;
+      if (tabId) {
+        const port = tabPorts.get(tabId);
+        if (port) {
+          console.log('[GridKit DevTools] Forwarding event to panel:', message.type);
+          port.postMessage({
+            type: message.type,
+            tableId: message.tableId,
+            payload: message.payload,
+            timestamp: message.timestamp
           });
         }
       }
