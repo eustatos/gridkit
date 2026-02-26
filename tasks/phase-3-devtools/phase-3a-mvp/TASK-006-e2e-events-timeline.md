@@ -52,10 +52,11 @@ Verify that:
 - Use `test.beforeEach()` for common setup
 - Use explicit waits (`waitForSelector`, `toBeVisible`)
 - Add test annotations with `test.info().annotations`
+- **All test descriptions and comments in English**
 
 ### Test Quality
 - Follow existing test patterns
-- Test descriptions in Russian
+- **Test descriptions in English**
 - Independent tests (no shared state)
 - Meaningful assertions with messages
 
@@ -65,24 +66,25 @@ Verify that:
 Add to `apps/demo/tests/e2e/devtools-integration.test.ts`:
 ```typescript
 test.describe('DevTools Events Timeline', () => {
-  // 4-5 tests
+  // 4-5 tests with English descriptions
 });
 ```
 
 ### Step 2: Implement Event Capture Test
 ```typescript
-test('должен фиксировать события сортировки', async ({ page }) => {
+test('should capture sorting events in timeline', async ({ page }) => {
   await page.goto('/');
 
-  // Клик по заголовку для сортировки
+  // Click on Name header to trigger sorting
   const nameHeader = page.locator('thead th:has-text("Name")');
   await nameHeader.click();
   await page.waitForTimeout(200);
 
-  // Проверка, что событие отображается в timeline
+  // Verify event timeline is visible
   const eventTimeline = page.locator('.event-timeline');
   await expect(eventTimeline).toBeVisible();
 
+  // Verify sorting event is captured
   const sortEvent = eventTimeline.locator('.event-item:has-text("sorting")');
   await expect(sortEvent).toBeVisible();
 });
@@ -90,22 +92,22 @@ test('должен фиксировать события сортировки', 
 
 ### Step 3: Implement Event Display Test
 ```typescript
-test('должен отображать события в правильном порядке', async ({ page }) => {
+test('should display events in correct chronological order', async ({ page }) => {
   await page.goto('/');
 
-  // Выполняем несколько действий
+  // Perform multiple actions
   const nameHeader = page.locator('thead th:has-text("Name")');
   await nameHeader.click();
   await page.waitForTimeout(100);
   await nameHeader.click();
   await page.waitForTimeout(100);
 
-  // Проверка порядка событий (новейшие сверху)
+  // Verify events are ordered (newest first)
   const events = page.locator('.event-timeline .event-item');
   const firstEvent = events.first();
   await expect(firstEvent).toBeVisible();
 
-  // Проверка, что событий больше одного
+  // Verify at least 2 events exist
   const eventCount = await events.count();
   expect(eventCount).toBeGreaterThanOrEqual(2);
 });
@@ -113,48 +115,48 @@ test('должен отображать события в правильном �
 
 ### Step 4: Implement Event Filter Test
 ```typescript
-test('должен фильтровать события по типу', async ({ page }) => {
+test('should filter events by type', async ({ page }) => {
   await page.goto('/');
 
-  // Выполняем разные действия
+  // Perform different actions
   await page.locator('thead th:has-text("Name")').click();
   await page.waitForTimeout(100);
   await page.locator('tbody tr:first-child').click();
   await page.waitForTimeout(100);
 
-  // Выбираем фильтр
-  const filterSelect = page.locator('.event-filter');
+  // Select filter
+  const filterSelect = page.locator('.filter-select');
   await filterSelect.selectText('sorting');
 
-  // Проверка, что видны только события сортировки
+  // Verify only sorting events are visible
   const visibleEvents = page.locator('.event-item:visible');
   const allEvents = page.locator('.event-item');
-  
+
   const visibleCount = await visibleEvents.count();
   const totalCount = await allEvents.count();
-  
+
   expect(visibleCount).toBeLessThan(totalCount);
 });
 ```
 
 ### Step 5: Implement Event Clear Test
 ```typescript
-test('должен очищать список событий', async ({ page }) => {
+test('should clear all events from timeline', async ({ page }) => {
   await page.goto('/');
 
-  // Создаём события
+  // Create events
   await page.locator('thead th:has-text("Name")').click();
   await page.waitForTimeout(100);
 
-  // Проверяем, что события есть
+  // Verify events exist
   const eventsBefore = page.locator('.event-timeline .event-item');
   await expect(eventsBefore).toHaveCountGreaterThan(0);
 
-  // Очищаем события
-  const clearButton = page.locator('.event-clear-button');
+  // Clear events
+  const clearButton = page.locator('.clear-btn');
   await clearButton.click();
 
-  // Проверяем, что событий нет
+  // Verify events are cleared
   const eventsAfter = page.locator('.event-timeline .event-item');
   await expect(eventsAfter).toHaveCount(0);
 });
@@ -164,7 +166,8 @@ test('должен очищать список событий', async ({ page })
 - [ ] All 5 tests added to `devtools-integration.test.ts`
 - [ ] All tests pass on Chromium
 - [ ] Tests grouped under `test.describe('DevTools Events Timeline')`
-- [ ] Test descriptions in Russian
+- [ ] **All test descriptions in English**
+- [ ] **All comments in English**
 - [ ] No TypeScript errors or ESLint warnings
 - [ ] Tests complete in under 60 seconds
 
@@ -179,7 +182,7 @@ cd apps/demo
 pnpm test:e2e -- devtools-integration.test.ts -g "Events Timeline"
 
 # Run single test
-pnpm test:e2e -- devtools-integration.test.ts -g "должен фиксировать события"
+pnpm test:e2e -- devtools-integration.test.ts -g "should capture sorting"
 ```
 
 ## Notes
@@ -187,3 +190,4 @@ pnpm test:e2e -- devtools-integration.test.ts -g "должен фиксиров�
 - Use `page.waitForTimeout()` for async event processing
 - Events may have slight delay (100-200ms)
 - Add `test.slow()` if tests need more time
+- **All documentation and comments must be in English**
