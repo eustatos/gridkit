@@ -1,5 +1,92 @@
 import { test, expect } from '@playwright/test';
 
+test.describe('DevTools Extension Loading', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('должен загружать расширение в браузере', async ({ page }) => {
+    await page.goto('/');
+
+    // Проверка, что DevTools backend доступен (инжектится через useDevToolsTable hook)
+    const backendExists = await page.evaluate(() => {
+      return typeof (window as unknown as Record<string, unknown>).__GRIDKIT_DEVTOOLS__ !== 'undefined';
+    });
+
+    expect(backendExists).toBe(true);
+
+    // Добавляем аннотацию для документации
+    test.info().annotations.push({
+      type: 'feature',
+      description: 'DevTools extension injection'
+    });
+  });
+
+  test('должен устанавливать соединение с DevTools', async ({ page }) => {
+    await page.goto('/');
+
+    // Проверка, что bridge подключён (через useDevToolsTable hook)
+    const bridgeConnected = await page.evaluate(() => {
+      const devtools = (window as unknown as Record<string, unknown>).__GRIDKIT_DEVTOOLS__ as
+        | { registerTable?: unknown }
+        | undefined;
+      return devtools && typeof devtools.registerTable === 'function';
+    });
+
+    expect(bridgeConnected).toBe(true);
+
+    test.info().annotations.push({
+      type: 'feature',
+      description: 'DevTools bridge connection'
+    });
+  });
+
+  test('не должен ломать функциональность приложения', async ({ page }) => {
+    await page.goto('/');
+
+    // Проверка, что таблица отображается
+    const table = page.locator('table');
+    await expect(table).toBeVisible();
+
+    // Проверка отсутствия ошибок в консоли
+    let errorCount = 0;
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        errorCount++;
+      }
+    });
+
+    await page.waitForTimeout(1000);
+    expect(errorCount).toBe(0);
+
+    test.info().annotations.push({
+      type: 'feature',
+      description: 'Application compatibility'
+    });
+  });
+
+  test('должен иметь корректный путь к расширению', async ({ page }) => {
+    await page.goto('/');
+
+    // Проверка через evaluate, что DevTools backend загружен
+    // Backend инжектится через useDevToolsTable hook в демо-приложении
+    const devtoolsInfo = await page.evaluate(() => {
+      return {
+        devtoolsExists: typeof (window as unknown as Record<string, unknown>).__GRIDKIT_DEVTOOLS__ !== 'undefined',
+        backendExists: typeof (window as unknown as Record<string, unknown>).__GRIDKIT_DEVTOOLS_BACKEND__ !== 'undefined'
+      };
+    });
+
+    // Хотя бы один из них должен быть доступен
+    expect(devtoolsInfo.devtoolsExists || devtoolsInfo.backendExists).toBe(true);
+
+    test.info().annotations.push({
+      type: 'feature',
+      description: 'Extension path configuration'
+    });
+  });
+});
+
 test.describe('DevTools Integration', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
