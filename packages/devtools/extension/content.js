@@ -159,30 +159,58 @@
 
   /**
    * Detect GridKit tables on the page
+   * Note: Backend runs in page context, content script in isolated world
+   * We need to use postMessage to communicate
    */
   function detectGridKitTables() {
     const tables = []
 
-    // Check for global tables registry
-    if (window.__GRIDKIT_TABLES__ instanceof Map) {
-      for (const [id, table] of window.__GRIDKIT_TABLES__.entries()) {
-        if (table && typeof table.getState === 'function') {
-          tables.push({ id, table })
-        }
-      }
-    }
+    // Request tables from backend via postMessage
+    // Backend will respond with TABLES_LIST message
+    window.postMessage({
+      source: 'gridkit-devtools-content',
+      type: 'GET_TABLES_REQUEST'
+    }, '*')
 
-    // Check window for direct table references
-    if (window.gridkitTables instanceof Array) {
-      for (const table of window.gridkitTables) {
-        if (table && typeof table.getState === 'function') {
-          tables.push({ id: table.options?.meta?.tableId || 'unknown', table })
-        }
-      }
-    }
-
-    return tables
+    // Tables will be returned via message handler
+    // For now return cached tables
+    return cachedTableIds || []
   }
+
+  // Cache for table IDs
+  let cachedTableIds = []
+
+  // Listen for tables list from backend
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return
+    if (!event.data || typeof event.data !== 'object') return
+    if (event.data.source !== 'gridkit-devtools-backend') return
+
+    const message = event.data
+
+    if (message.type === 'TABLES_LIST') {
+      console.log('[GridKit DevTools] Content received TABLES_LIST:', message.payload?.tables)
+      // Extract just the IDs, not full table objects
+      cachedTableIds = (message.payload?.tables || []).map(t => t.id)
+      console.log('[GridKit DevTools] Content cached table IDs:', cachedTableIds)
+    }
+
+    if (message.type === 'TABLE_REGISTERED') {
+      const tableId = message.payload?.table?.id
+      if (tableId && !cachedTableIds.includes(tableId)) {
+        cachedTableIds.push(tableId)
+        console.log('[GridKit DevTools] Content cached table:', tableId)
+      }
+    }
+
+    if (message.type === 'TABLE_UNREGISTERED') {
+      const tableId = message.payload?.tableId
+      if (tableId) {
+        cachedTableIds = cachedTableIds.filter(id => id !== tableId)
+        console.log('[GridKit DevTools] Content uncached table:', tableId)
+      }
+    }
+  })
 
   /**
    * Register table with backend
@@ -289,32 +317,65 @@
     console.log('[GridKit DevTools] Content received from background:', message.type)
 
     switch (message.type) {
+      case 'GET_TABLES': {
+        console.log('[GridKit DevTools] Content handling GET_TABLES')
+        // Request fresh data from backend
+        window.postMessage({
+          source: 'gridkit-devtools-content',
+          type: 'GET_TABLES_REQUEST'
+        }, '*')
+        
+        // Wait for backend response
+        const responseHandler = (event) => {
+          if (event.source !== window) return
+          if (event.data?.source !== 'gridkit-devtools-backend') return
+          if (event.data?.type !== 'TABLES_LIST') return
+          
+          window.removeEventListener('message', responseHandler)
+          
+          sendResponse({
+            success: true,
+            data: event.data.payload?.tables || []
+          })
+        }
+        
+        window.addEventListener('message', responseHandler)
+        
+        // Timeout fallback
+        setTimeout(() => {
+          window.removeEventListener('message', responseHandler)
+          sendResponse({
+            success: true,
+            data: []
+          })
+        }, 1000)
+        
+        return true // Keep channel open for async response
+      }
+
+      case 'GET_STATE':
+      case 'GET_EVENTS':
+      case 'GET_PERFORMANCE':
+      case 'COMMAND':
+        sendMessageToBackend(message.payload || message)
+          .then((response) => {
+            sendResponse(response)
+          })
+          .catch((error) => {
+            sendResponse({
+              type: 'ERROR',
+              error: error.message
+            })
+          })
+        return true
+
       case 'BACKEND_READY':
         connectToBackend()
         sendResponse({ type: 'CONTENT_READY' })
         break
 
-      case 'COMMAND':
-        sendMessageToBackend(message.payload)
-          .then((response) => {
-            sendResponse({
-              type: 'RESPONSE',
-              payload: response
-            })
-          })
-          .catch((error) => {
-            sendResponse({
-              type: 'RESPONSE',
-              payload: {
-                success: false,
-                error: error.message
-              }
-            })
-          })
-        return true
-
       default:
-        console.warn('[GridKit DevTools] Unknown message type:', message.type)
+        console.warn('[GridKit DevTools] Content unknown message type:', message.type)
     }
   })
 

@@ -21,7 +21,7 @@ chrome.devtools.panels.create(
 
 // Handle messages from DevTools panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('[GridKit DevTools] Received message:', message);
+  console.log('[GridKit DevTools] devtools.js received message:', message);
 
   if (message.source === 'devtools-panel') {
     switch (message.type) {
@@ -29,6 +29,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case 'GET_STATE':
       case 'GET_EVENTS':
       case 'TIME_TRAVEL':
+      case 'GET_PERFORMANCE':
         sendMessageToContent(message, sendResponse);
         return true;
       default:
@@ -39,30 +40,38 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Helper function to send message to content script
 function sendMessageToContent(message, sendResponse) {
-  // Получаем ID текущей вкладки из DevTools
-  const tabId = chrome.devtools.inspectedWindow.tabId;
-
-  if (!tabId) {
-    sendResponse({ error: 'No tab ID' });
-    return;
-  }
-
-  chrome.tabs.sendMessage(
-    tabId,
-    {
-      ...message,
-      source: 'gridkit-devtools-background',
-    },
-    (response) => {
-      if (chrome.runtime.lastError) {
-        console.error(
-          '[GridKit DevTools] Error:',
-          chrome.runtime.lastError.message
-        );
-        sendResponse({ error: chrome.runtime.lastError.message });
-      } else {
-        sendResponse(response);
+  // Получаем ID текущей вкладки из DevTools через callback
+  chrome.devtools.inspectedWindow.eval(
+    'window.location.href',
+    (result, isException) => {
+      if (isException) {
+        console.error('[GridKit DevTools] Error getting tab info:', isException);
+        sendResponse({ error: 'Failed to get tab ID' });
+        return;
       }
+
+      // Отправляем сообщение в content script текущей вкладки
+      chrome.tabs.sendMessage(
+        chrome.devtools.inspectedWindow.tabId,
+        {
+          ...message,
+          source: 'gridkit-devtools-background',
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.error(
+              '[GridKit DevTools] Error sending to content:',
+              chrome.runtime.lastError.message
+            );
+            sendResponse({ error: chrome.runtime.lastError.message });
+          } else {
+            console.log('[GridKit DevTools] Response from content:', response);
+            sendResponse(response);
+          }
+        }
+      );
     }
   );
 }
+
+console.log('[GridKit DevTools] DevTools script initialized');

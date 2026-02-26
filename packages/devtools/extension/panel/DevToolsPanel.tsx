@@ -88,13 +88,13 @@ export function DevToolsPanel({
   connected
 }: {
   tables: any[]
-  selectedTableId: string | null
+  selectedTableId: string
   onTableSelect: (tableId: string) => void
   connected: boolean
 }) {
   const [activeTab, setActiveTab] = useState<'inspector' | 'events' | 'performance' | 'time-travel' | 'state-diff' | 'memory' | 'plugins'>('inspector')
 
-  const selectedTable = tables.find(t => t.id === selectedTableId)
+  const selectedTable = tables.find(t => t && t.id === selectedTableId)
 
   return (
     <div className="devtools-panel">
@@ -111,14 +111,18 @@ export function DevToolsPanel({
         <div className="table-selector">
           <label>Select Table:</label>
           <select
-            value={selectedTableId || ''}
-            onChange={(e) => onTableSelect(e.target.value)}
+            value={selectedTableId}
+            onChange={(e) => onTableSelect(String(e.target.value))}
           >
-            {tables.map(table => (
-              <option key={table.id} value={table.id}>
-                {table.id} ({table.rowCount} rows, {table.columnCount} columns)
-              </option>
-            ))}
+            {!tables || tables.length === 0 ? (
+              <option value="" disabled>No tables detected</option>
+            ) : (
+              tables.map((table) => (
+                <option key={String(table.id)} value={String(table.id)}>
+                  {String(table.id)} ({String(table.rowCount)} rows, {String(table.columnCount)} columns)
+                </option>
+              ))
+            )}
           </select>
         </div>
 
@@ -177,34 +181,34 @@ export function DevToolsPanel({
 
         {/* Tab Content */}
         <div className="tab-content">
-          {selectedTable ? (
-            <>
-              {activeTab === 'inspector' && (
-                <TableInspector tableId={selectedTable.id} table={selectedTable} />
-              )}
-              {activeTab === 'events' && (
-                <EventTimeline tableId={selectedTable.id} />
-              )}
-              {activeTab === 'performance' && (
-                <PerformanceMonitor tableId={selectedTable.id} />
-              )}
-              {activeTab === 'time-travel' && (
-                <TimeTravelControls tableId={selectedTable.id} />
-              )}
-              {activeTab === 'state-diff' && (
-                <StateDiffViewer tableId={selectedTable.id} />
-              )}
-              {activeTab === 'memory' && (
-                <MemoryProfiler tableId={selectedTable.id} />
-              )}
-              {activeTab === 'plugins' && (
-                <PluginInspector tableId={selectedTable.id} />
-              )}
-            </>
-          ) : (
+          {!selectedTable ? (
             <div className="no-table-selected">
               <p>Select a table to inspect</p>
             </div>
+          ) : (
+            <>
+              {activeTab === 'inspector' && (
+                <TableInspector tableId={String(selectedTable.id)} />
+              )}
+              {activeTab === 'events' && (
+                <EventTimeline tableId={String(selectedTable.id)} />
+              )}
+              {activeTab === 'performance' && (
+                <PerformanceMonitor tableId={String(selectedTable.id)} />
+              )}
+              {activeTab === 'time-travel' && (
+                <TimeTravelControls tableId={String(selectedTable.id)} />
+              )}
+              {activeTab === 'state-diff' && (
+                <StateDiffViewer tableId={String(selectedTable.id)} />
+              )}
+              {activeTab === 'memory' && (
+                <MemoryProfiler tableId={String(selectedTable.id)} />
+              )}
+              {activeTab === 'plugins' && (
+                <PluginInspector tableId={String(selectedTable.id)} />
+              )}
+            </>
           )}
         </div>
       </div>

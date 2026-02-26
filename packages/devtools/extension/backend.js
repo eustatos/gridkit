@@ -41,6 +41,33 @@
         }, '*')
         break
 
+      case 'GET_TABLES_REQUEST':
+        // Send tables list to content script
+        // Only send serializable data (no functions or React components)
+        const tables = Array.from(registeredTables.entries()).map(([id, table]) => {
+          // Get basic table info only
+          return {
+            id,
+            rowCount: table.getRowModel?.().rows?.length || 0,
+            columnCount: table.getAllColumns?.().length || 0,
+            // Get simple state (pagination, sorting, etc.)
+            state: {
+              pagination: table.getState?.()?.pagination || null,
+              sorting: table.getState?.()?.sorting || null,
+              columnVisibility: table.getState?.()?.columnVisibility || null,
+              rowSelection: table.getState?.()?.rowSelection || null
+            }
+            // Don't send options - contains React components
+          }
+        })
+        console.log('[GridKit DevTools] Backend sending TABLES_LIST:', tables.length, 'tables')
+        window.postMessage({
+          source: 'gridkit-devtools-backend',
+          type: 'TABLES_LIST',
+          payload: { tables }
+        }, '*')
+        break
+
       case 'COMMAND':
         // Handle command and send response
         const response = handleCommand(message.payload)

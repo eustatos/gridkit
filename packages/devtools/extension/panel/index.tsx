@@ -19,46 +19,70 @@ interface TableMetadata {
 
 function DevToolsPanelContainer() {
   const [tables, setTables] = useState<TableMetadata[]>([])
-  const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
+  const [selectedTableId, setSelectedTableId] = useState<string>('')
   const [connected, setConnected] = useState(false)
 
   const handleTableRegistered = useCallback((message: any) => {
     console.log('[DevTools Panel] TABLE_REGISTERED:', message.payload)
+    const table = message.payload?.table
+    const tableId = table && typeof table === 'object' ? table.id : table
     setTables(prev => [...prev, message.payload.table])
-    if (!selectedTableId) {
-      setSelectedTableId(message.payload.table.id)
+    if (!selectedTableId && tableId) {
+      setSelectedTableId(String(tableId))
     }
   }, [selectedTableId])
 
   const handleTableUnregistered = useCallback((message: any) => {
     console.log('[DevTools Panel] TABLE_UNREGISTERED:', message.payload)
-    setTables(prev => prev.filter(t => t.id !== message.payload.tableId))
-    if (selectedTableId === message.payload.tableId) {
-      setSelectedTableId(null)
+    const tableId = message.payload?.tableId
+    setTables(prev => prev.filter(t => {
+      const tId = t && typeof t === 'object' ? t.id : t
+      return String(tId) !== String(tableId)
+    }))
+    if (String(selectedTableId) === String(tableId)) {
+      setSelectedTableId('')
     }
   }, [selectedTableId])
 
   // Connect to background script
   useEffect(() => {
     console.log('[DevTools Panel] Connecting to background...')
-    
+
     const port = chrome.runtime.connect({
       name: 'gridkit-devtools-panel'
     })
 
+    console.log('[DevTools Panel] Port created:', port.name)
+
+    // Send tabId to background
+    // For DevTools panels, we need to get tabId from chrome.devtools.inspectedWindow
+    const tabId = chrome.devtools?.inspectedWindow?.tabId
+    console.log('[DevTools Panel] Sending INIT with tabId:', tabId)
+    port.postMessage({
+      type: 'INIT',
+      tabId: tabId
+    })
+
     port.onMessage.addListener((message) => {
-      console.log('[DevTools Panel] Received from background:', message)
-      
+      console.log('[DevTools Panel] Received from background:', message.type, message)
+      console.log('[DevTools Panel] Message payload:', message.payload)
+      console.log('[DevTools Panel] Payload tables:', message.payload?.tables)
+
       if (message.type === TABLES_LIST) {
-        console.log('[DevTools Panel] Tables list:', message.payload.tables)
-        setTables(message.payload.tables)
-        if (message.payload.tables.length > 0 && !selectedTableId) {
-          setSelectedTableId(message.payload.tables[0].id)
+        const tables = message.payload?.tables || []
+        console.log('[DevTools Panel] Tables received:', tables)
+        setTables(tables)
+        if (tables.length > 0 && !selectedTableId) {
+          setSelectedTableId(String(tables[0].id))
         }
       } else if (message.type === TABLE_REGISTERED) {
+        console.log('[DevTools Panel] TABLE_REGISTERED:', message.payload)
         handleTableRegistered(message)
       } else if (message.type === TABLE_UNREGISTERED) {
+        console.log('[DevTools Panel] TABLE_UNREGISTERED:', message.payload)
         handleTableUnregistered(message)
+      } else if (message.type === 'ERROR') {
+        console.error('[DevTools Panel] Error from background:', message.error)
       }
     })
 
@@ -68,11 +92,6 @@ function DevToolsPanelContainer() {
     })
 
     setConnected(true)
-
-    // Request tables list
-    port.postMessage({
-      type: 'GET_TABLES'
-    })
 
     return () => {
       console.log('[DevTools Panel] Disconnecting...')
@@ -86,7 +105,10 @@ function DevToolsPanelContainer() {
     <DevToolsPanelComponent
       tables={tables}
       selectedTableId={selectedTableId}
-      onTableSelect={setSelectedTableId}
+      onTableSelect={(tableId: string) => {
+        console.log('[DevTools Panel] Table selected:', tableId)
+        setSelectedTableId(String(tableId))
+      }}
       connected={connected}
     />
   )
