@@ -3,6 +3,26 @@
 import React, { useState, useEffect } from 'react'
 import { devToolsBridge } from '@gridkit/devtools-bridge/DevToolsBridge'
 
+// SVG Icons
+const PlayIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+    <polygon points="5 3 19 12 5 21 5 3" />
+  </svg>
+)
+
+const PauseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+    <rect x="6" y="4" width="4" height="16" />
+    <rect x="14" y="4" width="4" height="16" />
+  </svg>
+)
+
+const StopIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+    <rect x="4" y="4" width="16" height="16" />
+  </svg>
+)
+
 export function TimeTravelControls({ tableId }: { tableId: string }) {
   const [snapshots, setSnapshots] = useState<any[]>([])
   const [currentSnapshot, setCurrentSnapshot] = useState<number | null>(null)
@@ -39,10 +59,12 @@ export function TimeTravelControls({ tableId }: { tableId: string }) {
         <h2>Time Travel</h2>
         <div className="playback-controls">
           <button onClick={handlePlay} disabled={playing}>
-            {playing ? '⏸ Pause' : '▶ Play'}
+            {playing ? <PauseIcon /> : <PlayIcon />}
+            {playing ? 'Pause' : 'Play'}
           </button>
           <button onClick={() => setPlaying(false)}>
-            ⏹ Stop
+            <StopIcon />
+            Stop
           </button>
         </div>
       </div>
