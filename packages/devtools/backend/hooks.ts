@@ -11,18 +11,18 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
   const registeredRef = useRef(false)
   const attemptRef = useRef(0)
 
+  // Update refs without triggering re-renders
   useEffect(() => {
     tableRef.current = table
     enabledRef.current = enabled
 
-    // Generate or preserve table ID
+    // Generate or preserve table ID only once
     if (table && !tableIdRef.current) {
       tableIdRef.current = (table.options?.meta?.tableId as string) ||
                           `table-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     }
-    
-    console.log('[GridKit DevTools] useDevToolsTable: table updated, ID:', tableIdRef.current)
-  }, [table, enabled])
+    // Run only on mount and when enabled changes
+  }, [enabled])
 
   useEffect(() => {
     if (!enabledRef.current) {
@@ -63,13 +63,13 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
       attemptRef.current = attempts
       const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND__
       const content = (window as any).__GRIDKIT_DEVTOOLS_CONTENT__
-      
+
       console.log(`[GridKit DevTools] useDevToolsTable: Attempt ${attempts}/${maxAttempts}`)
       console.log('[GridKit DevTools] useDevToolsTable: Backend exists:', !!backend)
       console.log('[GridKit DevTools] useDevToolsTable: Backend.registerTable:', typeof backend?.registerTable)
       console.log('[GridKit DevTools] useDevToolsTable: Content exists:', !!content)
       console.log('[GridKit DevTools] useDevToolsTable: Content.registerTable:', typeof content?.registerTable)
-      
+
       if (backend && typeof backend.registerTable === 'function') {
         console.log('[GridKit DevTools] useDevToolsTable: Registering with backend...')
         backend.registerTable(tableId, tableInstance)
@@ -77,7 +77,7 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
         registeredRef.current = true
         return
       }
-      
+
       // Also try via content script
       if (content && typeof content.registerTable === 'function') {
         console.log('[GridKit DevTools] useDevToolsTable: Registering via content script...')
@@ -86,7 +86,7 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
         registeredRef.current = true
         return
       }
-      
+
       if (attempts < maxAttempts) {
         console.log('[GridKit DevTools] useDevToolsTable: Backend not ready, waiting 100ms...')
         setTimeout(() => waitForBackend(attempts + 1, maxAttempts), 100)
@@ -100,7 +100,7 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
 
     waitForBackend()
 
-    // Cleanup
+    // Cleanup - only run on unmount, not on re-render
     return () => {
       console.log('[GridKit DevTools] useDevToolsTable: cleanup for table:', tableId)
       const backend = (window as any).__GRIDKIT_DEVTOOLS_BACKEND__
@@ -113,10 +113,10 @@ export function useDevToolsTable(table: any, enabled: boolean = true): void {
       if (content && typeof content.unregisterTable === 'function') {
         content.unregisterTable(tableId)
       }
-      
+
       registeredRef.current = false
     }
-  }, [table, enabled])
+  }, []) // Empty dependency array - run only on mount
 }
 
 // Hook to auto-detect and register all GridKit tables
