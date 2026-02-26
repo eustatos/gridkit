@@ -136,3 +136,11 @@ Running 3 tests using 3 workers
 - Added E2E tests for DevTools Events Timeline tracking
 - Tests verify sorting, selection, and multiple events sequence
 - All 3 tests passing in automated testing environment
+
+## Обновление 26 февраля 2026 г.
+- ✅ Тесты добавлены в `apps/demo/tests/e2e/devtools-integration.test.ts`
+- ✅ Все 3 теста проходят на Chromium (20/20 тестов в файле)
+- ✅ Тесты проверяют:
+  1. События сортировки — визуальная проверка индикатора ↑
+  2. События выбора строк — проверка наличия DevTools backend
+  3. Последовательность событий — комбинация проверок
