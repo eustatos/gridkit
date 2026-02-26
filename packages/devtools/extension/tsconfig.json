@@ -18,6 +18,6 @@
       "@gridkit/devtools-backend/*": ["../backend/*"]
     }
   },
-  "include": ["extension/**/*"],
+  "include": ["panel/**/*", "*.js", "*.ts", "*.json"],
   "exclude": ["node_modules", "dist"]
 }
