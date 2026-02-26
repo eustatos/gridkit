@@ -45,11 +45,11 @@ const columns: ColumnDef<Person>[] = [
     cell: ({ getValue }) => {
       const status = getValue<'active' | 'inactive'>();
       return (
-        <span className={`px-2 py-1 rounded text-xs font-medium ${
-          status === 'active' 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
-        }`}>
+        <span className={
+          status === 'active'
+            ? 'badge-success'
+            : 'badge-danger'
+        }>
           {status}
         </span>
       );
@@ -104,30 +104,38 @@ export function DemoApp() {
   useDevToolsTable(table, true);
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
       {/* Header */}
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            GridKit DevTools Demo
-          </h1>
-          <div className="flex gap-3">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div>
+            <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              GridKit DevTools Demo
+            </h1>
+            <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Interactive table with DevTools integration
+            </p>
+          </div>
+          
+          {/* Control Buttons */}
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                darkMode 
-                  ? 'bg-blue-700 text-white hover:bg-blue-600' 
-                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              className={`btn ${
+                darkMode
+                  ? 'bg-brand-700 text-white hover:bg-brand-600 focus:ring-brand-500'
+                  : 'bg-brand-100 text-brand-700 hover:bg-brand-200 focus:ring-brand-500'
               }`}
             >
               {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
             </button>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                showNotifications 
-                  ? 'bg-green-600 text-white hover:bg-green-700' 
-                  : 'bg-gray-500 text-white hover:bg-gray-600'
+              className={`btn ${
+                showNotifications
+                  ? 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500'
+                  : 'bg-gray-500 text-white hover:bg-gray-600 focus:ring-gray-500'
               }`}
             >
               {showNotifications ? '🔔 Notifications: ON' : '🔇 Notifications: OFF'}
@@ -135,8 +143,8 @@ export function DemoApp() {
           </div>
         </div>
 
-        {/* Table Container */}
-        <div className={`rounded-xl shadow-lg overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        {/* Table Card */}
+        <div className={`card ${darkMode ? 'card-dark' : ''}`}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
@@ -146,7 +154,7 @@ export function DemoApp() {
                       <th
                         key={header.id}
                         onClick={header.column.getToggleSortingHandler()}
-                        className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-opacity-50 transition-colors"
+                        className="table-header"
                       >
                         <div className="flex items-center gap-2">
                           <span className={darkMode ? 'text-gray-200' : 'text-gray-700'}>
@@ -158,7 +166,7 @@ export function DemoApp() {
                               header.column.getIsSorted() === 'desc' ? 'text-red-500' :
                               'text-gray-400'
                             }`}>
-                              {header.column.getIsSorted() === 'asc' ? '↑' : 
+                              {header.column.getIsSorted() === 'asc' ? '↑' :
                                header.column.getIsSorted() === 'desc' ? '↓' : '↕'}
                             </span>
                           )}
@@ -168,21 +176,22 @@ export function DemoApp() {
                   </tr>
                 ))}
               </thead>
-              <tbody className={darkMode ? 'divide-gray-700' : 'divide-gray-200'}>
+              <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 {table.getRowModel().rows.map(row => (
-                  <tr 
-                    key={row.id} 
+                  <tr
+                    key={row.id}
                     className={`
-                      ${row.getIsSelected() 
-                        ? (darkMode ? 'bg-blue-900/30' : 'bg-blue-50') 
-                        : (darkMode ? 'border-b border-gray-700' : 'border-b border-gray-100')
+                      transition-colors duration-150
+                      ${row.getIsSelected()
+                        ? (darkMode ? 'bg-blue-900/30' : 'bg-blue-50')
+                        : (darkMode ? 'border-b border-gray-700 hover:bg-gray-700/50' : 'border-b border-gray-100 hover:bg-gray-50')
                       }
                     `}
                   >
                     {row.getVisibleCells().map(cell => (
                       <td
                         key={cell.id}
-                        className={`px-6 py-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                        className="table-cell"
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
@@ -194,13 +203,13 @@ export function DemoApp() {
           </div>
 
           {/* Pagination & Statistics */}
-          <div className={`px-6 py-4 flex items-center justify-between ${
+          <div className={`px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
             darkMode ? 'bg-gray-700' : 'bg-gray-50'
           }`}>
             <div className="flex items-center gap-4">
               <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                <strong>Statistics:</strong> {table.getRowModel().rows.length} rows | 
-                {pagination.pageSize} per page | 
+                <strong>Statistics:</strong> {table.getRowModel().rows.length} rows |
+                {pagination.pageSize} per page |
                 Page {pagination.pageIndex + 1}
               </span>
             </div>
@@ -208,28 +217,28 @@ export function DemoApp() {
               <button
                 onClick={() => table.setPageIndex(0)}
                 disabled={pagination.pageIndex === 0}
-                className={`px-3 py-1 rounded ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} disabled:opacity-50`}
+                className={`btn-secondary ${darkMode ? 'bg-gray-600 hover:bg-gray-500' : ''} disabled:opacity-50`}
               >
                 First
               </button>
               <button
                 onClick={() => table.setPageIndex(pagination.pageIndex - 1)}
                 disabled={pagination.pageIndex === 0}
-                className={`px-3 py-1 rounded ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} disabled:opacity-50`}
+                className={`btn-secondary ${darkMode ? 'bg-gray-600 hover:bg-gray-500' : ''} disabled:opacity-50`}
               >
                 Prev
               </button>
               <button
                 onClick={() => table.setPageIndex(pagination.pageIndex + 1)}
                 disabled={pagination.pageIndex >= table.getPageCount() - 1}
-                className={`px-3 py-1 rounded ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} disabled:opacity-50`}
+                className={`btn-secondary ${darkMode ? 'bg-gray-600 hover:bg-gray-500' : ''} disabled:opacity-50`}
               >
                 Next
               </button>
               <button
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={pagination.pageIndex >= table.getPageCount() - 1}
-                className={`px-3 py-1 rounded ${darkMode ? 'bg-gray-600' : 'bg-gray-200'} disabled:opacity-50`}
+                className={`btn-secondary ${darkMode ? 'bg-gray-600 hover:bg-gray-500' : ''} disabled:opacity-50`}
               >
                 Last
               </button>
