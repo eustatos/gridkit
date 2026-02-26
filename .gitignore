@@ -51,6 +51,10 @@ lerna-debug.log*
 apps/*/dist/
 !apps/.gitkeep
 
+# Playwright test artifacts
+apps/demo/playwright-report/
+apps/demo/test-results/
+
 # OS
 .DS_Store
 Thumbs.db

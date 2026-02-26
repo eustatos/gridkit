@@ -1,11 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
+import fs from 'fs';
 
-// Get extension path relative to config file
-const extensionPath = path.resolve(
-  __dirname,
-  '../packages/devtools/extension'
-);
+// Get extension path - prefer dist if built, otherwise use source
+const devtoolsPath = path.resolve(__dirname, '../packages/devtools');
+const distExtensionPath = path.resolve(devtoolsPath, 'dist/extension');
+const sourceExtensionPath = path.resolve(devtoolsPath, 'extension');
+
+// Check if built extension exists
+const extensionPath = fs.existsSync(distExtensionPath) ? distExtensionPath : sourceExtensionPath;
+
+console.log('[Playwright Config] Using extension path:', extensionPath);
 
 export default defineConfig({
   testDir: './tests/e2e',

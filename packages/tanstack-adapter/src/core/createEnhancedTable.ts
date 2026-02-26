@@ -7,6 +7,13 @@ import { useMemo } from 'react'
 import { useReactTable } from '@tanstack/react-table'
 
 /**
+ * Generate a unique table ID
+ */
+function generateTableId(): string {
+  return `gridkit-table-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+}
+
+/**
  * Interceptor for TanStack Table methods
  * Wraps methods to emit events and track performance
  */
@@ -26,8 +33,8 @@ class MethodInterceptor<TData> {
   }
 
   /**
-   * Wrap a method to add event emission and performance tracking
-   */
+ * Wrap a method to add event emission and performance tracking
+ */
   intercept<K extends keyof TanStackTable<TData>>(
     methodName: K,
     options?: {
@@ -71,8 +78,26 @@ class MethodInterceptor<TData> {
  */
 export function createEnhancedTable<TData extends RowData>(
   tanstackTable: TanStackTable<TData>,
-  features?: EnhancedTableFeatures
+  features?: EnhancedTableFeatures,
+  options?: any
 ): EnhancedTable<TData> {
+  // Ensure tableId is set in options
+  const tableId = options?.tableId || options?.debug?.devtools?.tableId || generateTableId()
+  
+  // Add tableId to the options object that will be accessible
+  const enhancedOptions = {
+    ...tanstackTable.options,
+    tableId,
+    debug: {
+      ...tanstackTable.options.debug,
+      devtools: {
+        enabled: true,
+        tableId,
+        ...tanstackTable.options.debug?.devtools,
+      }
+    }
+  }
+
   // Initialize GridKit core components
   let eventBus: any | undefined
   let performanceMonitor: any | undefined
@@ -164,6 +189,9 @@ export function createEnhancedTable<TData extends RowData>(
     unregisterPlugin: pluginManager?.unregister,
     getPlugin: pluginManager?.get,
     pluginManager,
+    
+    // Add options with tableId
+    options: enhancedOptions,
   } as EnhancedTable<TData>
 
   // Wrap TanStack methods to emit events
@@ -189,9 +217,6 @@ export function createEnhancedTable<TData extends RowData>(
 export function createEnhancedTableFromOptions<TData extends RowData>(
   options: any
 ): EnhancedTable<TData> {
-  // Import dynamically to avoid circular dependencies
-  // Note: useReactTable is now imported at the top of the file
-  
   // Extract GridKit features from options
   const { features, ...tanstackOptions } = options
 
@@ -199,7 +224,7 @@ export function createEnhancedTableFromOptions<TData extends RowData>(
   const tanstackTable = useReactTable(tanstackOptions)
 
   // Create enhanced table with GridKit features
-  return createEnhancedTable(tanstackTable, features)
+  return createEnhancedTable(tanstackTable, features, options)
 }
 
 /**
@@ -233,6 +258,6 @@ export function useEnhancedTable<TData extends RowData>(
 
   // Create enhanced table with GridKit features
   return useMemo(() => {
-    return createEnhancedTable(tanstackTable, features)
-  }, [tanstackTable, features])
+    return createEnhancedTable(tanstackTable, features, options)
+  }, [tanstackTable, features, options])
 }

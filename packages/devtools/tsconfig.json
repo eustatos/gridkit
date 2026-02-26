@@ -24,11 +24,14 @@
     "src/**/*",
     "bridge/**/*",
     "backend/**/*",
-    "extension/**/*"
+    "index.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
+    "extension/**/*",
+    "extension-dist/**/*",
+    "src/**/*",
     "**/*.test.ts",
     "**/*.test.tsx"
   ]

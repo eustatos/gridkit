@@ -21,7 +21,7 @@
     "test:integration:watch": "vitest integration/",
     "test:integration:update": "vitest run integration/ -u",
     "test:all": "pnpm run test && pnpm run test:integration",
-    "clean": "rm -rf extension-dist",
+    "clean": "rm -rf dist extension-dist",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
