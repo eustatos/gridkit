@@ -26,12 +26,14 @@
   /**
    * Inject backend script into page context
    * The backend runs in the page context to access React/Redux state
+   * 
+   * Note: We use a Blob URL to avoid CSP restrictions on inline scripts
    */
   function injectBackend() {
     console.log('[GridKit DevTools] Injecting backend script')
 
-    const backendScript = document.createElement('script')
-    backendScript.textContent = `
+    // Backend code as a string
+    const backendCode = `
       (function() {
         console.log('[GridKit DevTools] Backend script injected')
 
@@ -209,8 +211,36 @@
       })()
     `
 
-    document.documentElement.appendChild(backendScript)
-    backendScript.parentNode?.removeChild(backendScript)
+    try {
+      // Create a Blob URL to avoid CSP restrictions
+      const blob = new Blob([backendCode], { type: 'application/javascript' })
+      const scriptUrl = URL.createObjectURL(blob)
+      
+      const script = document.createElement('script')
+      script.src = scriptUrl
+      script.onload = () => {
+        URL.revokeObjectURL(scriptUrl)
+        console.log('[GridKit DevTools] Backend script loaded via Blob URL')
+      }
+      script.onerror = (error) => {
+        console.error('[GridKit DevTools] Failed to load backend script:', error)
+        // Fallback: try inline injection (may be blocked by CSP)
+        script.parentNode?.removeChild(script)
+        const inlineScript = document.createElement('script')
+        inlineScript.textContent = backendCode
+        document.documentElement.appendChild(inlineScript)
+        inlineScript.parentNode?.removeChild(inlineScript)
+      }
+      
+      document.documentElement.appendChild(script)
+    } catch (error) {
+      console.error('[GridKit DevTools] Failed to inject backend via Blob:', error)
+      // Fallback to inline script
+      const inlineScript = document.createElement('script')
+      inlineScript.textContent = backendCode
+      document.documentElement.appendChild(inlineScript)
+      inlineScript.parentNode?.removeChild(inlineScript)
+    }
 
     console.log('[GridKit DevTools] Backend script injected successfully')
   }

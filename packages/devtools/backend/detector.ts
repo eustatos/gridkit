@@ -1,41 +1,33 @@
 // GridKit Table Auto-Detection
 
-import { devToolsBackend } from './DevToolsBackend'
-
 // Detect if a table is a GridKit Enhanced Table
 export function isGridKitTable(table: any): boolean {
   if (!table) return false
 
   // Check for GridKit-specific properties
-  // Note: TanStack Table uses getAllFlatColumns() instead of getAllColumns()
-  // subscribe is optional for DevTools integration
   const hasGetState = typeof table.getState === 'function'
-  // const hasSubscribe = typeof table.subscribe === 'function' // Optional
-  const hasOn = typeof table.on === 'function'
-  const hasOff = typeof table.off === 'function'
   const hasGetRowModel = typeof table.getRowModel === 'function'
   const hasGetColumns = typeof table.getAllColumns === 'function' || typeof table.getAllFlatColumns === 'function'
-  const hasTableId = table.options?.tableId !== undefined
-  
+  const hasTableId = table.options?.tableId !== undefined || table.options?.meta?.tableId !== undefined
+
+  // on/off are optional - they may be stubs or full implementations
+  const hasOn = typeof table.on === 'function'
+  const hasOff = typeof table.off === 'function'
+
   // Log for debugging
   if (!hasGetState) console.log('[GridKit DevTools] Missing getState')
-  // if (!hasSubscribe) console.log('[GridKit DevTools] Missing subscribe')
-  if (!hasOn) console.log('[GridKit DevTools] Missing on')
-  if (!hasOff) console.log('[GridKit DevTools] Missing off')
   if (!hasGetRowModel) console.log('[GridKit DevTools] Missing getRowModel')
   if (!hasGetColumns) console.log('[GridKit DevTools] Missing getAllColumns/getAllFlatColumns')
   if (!hasTableId) console.log('[GridKit DevTools] Missing tableId in options')
-  
+
+  // Core requirements (on/off are optional)
   const isValid = (
     hasGetState &&
-    // hasSubscribe && // Optional
-    hasOn &&
-    hasOff &&
     hasGetRowModel &&
     hasGetColumns &&
     hasTableId
   )
-  
+
   return isValid
 }
 
@@ -94,34 +86,20 @@ function traverseReactRoots(renderer: any, tables: any[]): void {
   // API to traverse the component tree more reliably
 
   // For now, we'll rely on tables being registered in window.__GRIDKIT_TABLES__
-  // or being passed to devToolsBackend.registerTable()
+  // or being passed to backend.registerTable()
 }
 
 // Auto-register all detected tables
+// Note: This function is deprecated - use content script injection instead
 export function autoRegisterTables(): void {
-  const tables = detectGridKitTables()
-
-  tables.forEach((table) => {
-    if (isGridKitTable(table)) {
-      devToolsBackend.registerTable(table)
-    }
-  })
+  console.log('[GridKit DevTools] autoRegisterTables is deprecated - use content script injection')
 }
 
 // Setup auto-detection with polling
+// Note: This function is deprecated - use content script injection instead
 export function setupAutoDetection(pollInterval: number = 1000): () => void {
-  // Register existing tables
-  autoRegisterTables()
-
-  // Poll for new tables
-  const intervalId = setInterval(() => {
-    autoRegisterTables()
-  }, pollInterval)
-
-  // Return cleanup function
-  return () => {
-    clearInterval(intervalId)
-  }
+  console.log('[GridKit DevTools] setupAutoDetection is deprecated - use content script injection')
+  return () => {}
 }
 
 // Listen for table creation events
