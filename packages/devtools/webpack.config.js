@@ -1,6 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin')
 
 // Ensure extension-dist directory exists (for browser extension)
 const extensionDistPath = path.resolve(__dirname, 'extension-dist')
@@ -13,6 +14,7 @@ module.exports = {
   entry: {
     background: './extension/background.js',
     content: './extension/content.js',
+    devtools: './extension/devtools.js',
     'panel/index': './extension/panel/index.tsx'
   },
   output: {
@@ -57,17 +59,18 @@ module.exports = {
     }
   },
   optimization: {
-    minimize: true
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        test: /background\.js$|content\.js$|panel\/index\.js$/,
+        extractComments: false
+      })
+    ]
   },
   devtool: 'source-map',
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        {
-          from: 'extension/devtools.js',
-          to: 'devtools.js',
-          context: path.resolve(__dirname)
-        },
         {
           from: 'extension/*.html',
           to: '[name][ext]',
