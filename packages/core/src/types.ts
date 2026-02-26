@@ -516,6 +516,12 @@ export interface RollbackResult {
 
 // === TIME TRAVEL TYPES ===
 
+import type {
+  TrackerConfig,
+  TTLConfig,
+  CleanupStrategyType,
+} from "./time-travel/tracking/types";
+
 export interface TimeTravelOptions {
   maxHistory?: number;
   autoCapture?: boolean;
@@ -527,6 +533,17 @@ export interface TimeTravelOptions {
   /** Delta snapshots configuration (preferred) */
   deltaSnapshots?: Partial<IncrementalSnapshotConfig>;
   atoms?: any[]; // Add atoms property to TimeTravelOptions
+
+  /** Atom TTL configuration */
+  atomTTL?: number;
+  /** Cleanup strategy type */
+  cleanupStrategy?: CleanupStrategyType;
+  /** GC interval in ms */
+  gcInterval?: number;
+  /** TTL configuration (preferred, overrides individual options) */
+  ttlConfig?: Partial<TTLConfig>;
+  /** Tracking configuration */
+  trackingConfig?: Partial<TrackerConfig>;
 }
 
 export interface SnapshotMetadata {

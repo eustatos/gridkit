@@ -28,7 +28,13 @@ import type {
 } from "../snapshot/types";
 
 import { AtomTracker } from "../tracking/AtomTracker";
-import type { TrackerConfig, TrackingEvent } from "../tracking/types";
+import type {
+  TrackerConfig,
+  TrackingEvent,
+  TTLConfig,
+  CleanupResult,
+  TrackedAtom,
+} from "../tracking/types";
 
 import { atomRegistry } from "../../atom-registry";
 import { Atom, Store } from "../../types";
@@ -136,6 +142,14 @@ export class SimpleTimeTravel extends BaseDisposable implements TimeTravelAPI {
 
     this.useDeltaSnapshots = this.deltaConfig.enabled;
 
+    // Build TTL configuration from options
+    const ttlConfig: Partial<TTLConfig> = {
+      defaultTTL: options.atomTTL || options.ttlConfig?.defaultTTL,
+      cleanupStrategy: options.cleanupStrategy || options.ttlConfig?.cleanupStrategy,
+      gcInterval: options.gcInterval || options.ttlConfig?.gcInterval,
+      ...options.ttlConfig,
+    };
+
     // Initialize components with disposal tracking
     this.atomTracker = new AtomTracker(
       store,
@@ -145,6 +159,7 @@ export class SimpleTimeTravel extends BaseDisposable implements TimeTravelAPI {
         trackComputed: true,
         trackWritable: true,
         trackPrimitive: true,
+        ttl: ttlConfig,
         ...options.trackingConfig,
       } as Partial<TrackerConfig>,
       { logDisposal: options.logDisposal },
@@ -579,6 +594,44 @@ export class SimpleTimeTravel extends BaseDisposable implements TimeTravelAPI {
    */
   getAtomTracker(): AtomTracker {
     return this.atomTracker;
+  }
+
+  /**
+   * Cleanup atoms manually
+   * @param count Optional number of atoms to cleanup
+   * @returns Cleanup result promise
+   */
+  async cleanupAtoms(count?: number): Promise<CleanupResult> {
+    return this.atomTracker.cleanupNow(count);
+  }
+
+  /**
+   * Get atoms eligible for cleanup (stale atoms)
+   * @returns Array of stale tracked atoms
+   */
+  getStaleAtoms(): TrackedAtom[] {
+    return this.atomTracker.getStaleAtoms();
+  }
+
+  /**
+   * Mark specific atom for cleanup by name
+   * @param atomName Atom name to forget
+   * @returns True if atom was found and marked
+   */
+  forgetAtom(atomName: string): boolean {
+    const atom = this.atomTracker.getAtomByName(atomName);
+    if (atom) {
+      this.atomTracker.markForCleanup(atom.id);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Get cleanup statistics
+   */
+  getCleanupStats(): CleanupResult & { totalCleanups: number; totalAtomsRemoved: number } {
+    return this.atomTracker.getCleanupStats() as any;
   }
 
   /**

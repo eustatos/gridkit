@@ -3,6 +3,165 @@
  */
 
 /**
+ * Atom lifecycle status
+ */
+export type AtomStatus = "active" | "idle" | "stale" | "archived" | "deleted";
+
+/**
+ * Cleanup strategy type
+ */
+export type CleanupStrategyType = "lru" | "lfu" | "fifo" | "time-based";
+
+/**
+ * Cleanup action type
+ */
+export type CleanupAction = "archive" | "delete" | "notify";
+
+/**
+ * Atom lifecycle information
+ */
+export interface AtomLifecycle {
+  /** Current status of the atom */
+  status: AtomStatus;
+
+  /** Creation timestamp */
+  createdAt: number;
+
+  /** Last access timestamp */
+  lastAccessed: number;
+
+  /** Last change timestamp */
+  lastChanged: number;
+
+  /** Total access count */
+  accessCount: number;
+
+  /** Computed idle time in ms (now() - lastAccessed) */
+  idleTime: number;
+
+  /** Time-to-live in ms */
+  ttl: number;
+
+  /** Whether atom is eligible for garbage collection */
+  gcEligible: boolean;
+}
+
+/**
+ * TTL configuration for AtomTracker
+ */
+export interface TTLConfig {
+  /** Default TTL in ms (e.g., 5 minutes) */
+  defaultTTL: number;
+
+  /** Maximum TTL in ms (e.g., 1 hour) */
+  maxTTL: number;
+
+  /** Minimum TTL in ms (e.g., 10 seconds) */
+  minTTL: number;
+
+  /** Per-type TTL overrides */
+  typeTTL: {
+    primitive?: number;
+    computed?: number;
+    writable?: number;
+    [key: string]: number | undefined;
+  };
+
+  /** Time before atom considered idle */
+  idleThreshold: number;
+
+  /** Time before atom considered stale */
+  staleThreshold: number;
+
+  /** How often to check for cleanup in ms */
+  gcInterval: number;
+
+  /** How many atoms to cleanup per batch */
+  batchSize: number;
+
+  /** Enable reference counting */
+  enableRefCounting: boolean;
+
+  /** Automatically untrack when ref count is zero */
+  autoUntrackWhenRefZero: boolean;
+
+  /** Cleanup strategy to use */
+  cleanupStrategy: CleanupStrategyType;
+
+  /** Action to perform on cleanup */
+  onCleanup: CleanupAction;
+
+  /** Archive storage configuration */
+  archiveStorage?: {
+    enabled: boolean;
+    maxArchived: number;
+    storagePath?: string;
+  };
+
+  /** Log cleanup operations */
+  logCleanups: boolean;
+
+  /** Enable detailed statistics */
+  detailedStats: boolean;
+}
+
+/**
+ * Cleanup strategy interface
+ */
+export interface CleanupStrategy {
+  /** Strategy name */
+  name: string;
+
+  /** Select candidates for cleanup */
+  selectCandidates(atoms: TrackedAtom[], count: number): TrackedAtom[];
+
+  /** Get priority for an atom (higher = sooner cleanup) */
+  getPriority(atom: TrackedAtom): number;
+}
+
+/**
+ * Cleanup statistics
+ */
+export interface CleanupStats {
+  /** Total number of cleanup operations */
+  totalCleanups: number;
+
+  /** Total atoms removed */
+  totalAtomsRemoved: number;
+
+  /** Total memory freed in bytes */
+  totalMemoryFreed: number;
+
+  /** Timestamp of last cleanup */
+  lastCleanup: number | null;
+
+  /** Average cleanup time in ms */
+  averageCleanupTime?: number;
+
+  /** Atoms count by status */
+  atomsByStatus?: {
+    active: number;
+    idle: number;
+    stale: number;
+    archived: number;
+  };
+}
+
+/**
+ * Cleanup result
+ */
+export interface CleanupResult {
+  /** Number of atoms removed */
+  removed: number;
+
+  /** Memory freed in bytes */
+  freed: number;
+
+  /** Duration in ms */
+  duration: number;
+}
+
+/**
  * Configuration for AtomTracker
  */
 export interface TrackerConfig {
@@ -32,12 +191,15 @@ export interface TrackerConfig {
 
   /** Sample rate for tracking (0-1) */
   sampleRate?: number;
+
+  /** TTL configuration */
+  ttl?: Partial<TTLConfig>;
 }
 
 /**
  * Tracked atom metadata
  */
-export interface TrackedAtom {
+export interface TrackedAtom extends AtomLifecycle {
   /** Atom ID */
   id: symbol;
 
@@ -56,14 +218,17 @@ export interface TrackedAtom {
   /** Last seen timestamp */
   lastSeen: number;
 
-  /** Access count */
-  accessCount: number;
-
   /** Change count */
   changeCount: number;
 
   /** Additional metadata */
   metadata: AtomMetadata;
+
+  /** Number of references/uses */
+  refCount?: number;
+
+  /** Set of subscriber IDs using this atom */
+  subscribers?: Set<string>;
 }
 
 /**
@@ -101,7 +266,10 @@ export interface TrackingEvent {
     | "access"
     | "error"
     | "clear"
-    | "restore";
+    | "restore"
+    | "cleanup"
+    | "beforeCleanup"
+    | "afterCleanup";
 
   /** Event timestamp */
   timestamp: number;
@@ -158,6 +326,9 @@ export interface TrackingStats {
 
   /** Tracker uptime in ms */
   uptime: number;
+
+  /** Cleanup statistics */
+  cleanupStats?: CleanupStats;
 }
 
 /**

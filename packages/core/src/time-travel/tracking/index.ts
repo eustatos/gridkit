@@ -11,11 +11,25 @@ import { ComputedAtomHandler } from "./ComputedAtomHandler";
 import { ComputedDependency } from "./types";
 import { ChangeListener } from "./types";
 import { TrackerConfig } from "./types";
+import {
+  LRUCleanupStrategy,
+  LFUCleanupStrategy,
+  FIFOCleanupStrategy,
+  TimeBasedCleanupStrategy,
+  createCleanupStrategy,
+} from "./CleanupStrategies";
 
 // Re-export main classes
 export { AtomTracker } from "./AtomTracker";
 export { AtomChangeDetector } from "./AtomChangeDetector";
 export { ComputedAtomHandler } from "./ComputedAtomHandler";
+export {
+  LRUCleanupStrategy,
+  LFUCleanupStrategy,
+  FIFOCleanupStrategy,
+  TimeBasedCleanupStrategy,
+  createCleanupStrategy,
+} from "./CleanupStrategies";
 
 // Re-export types
 export type {
@@ -37,6 +51,15 @@ export type {
   AtomSubscription,
   TrackerSnapshot,
   TrackerRestorePoint,
+  // TTL and cleanup types
+  AtomLifecycle,
+  AtomStatus,
+  TTLConfig,
+  CleanupStrategy,
+  CleanupStrategyType,
+  CleanupAction,
+  CleanupStats,
+  CleanupResult,
 } from "./types";
 
 // Re-export constants - TODO: create constants.ts
