@@ -14,6 +14,10 @@ export interface TimeBasedCompressionConfig {
   keepRecentForMs?: number;
   /** Keep every Nth snapshot for older snapshots (default: 5) */
   keepEvery?: number;
+  /** Enable/disable compression (default: true) */
+  enabled?: boolean;
+  /** Minimum number of snapshots to keep (default: 10) */
+  minSnapshots?: number;
 }
 
 /**

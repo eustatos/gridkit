@@ -144,3 +144,47 @@ export interface ExportFormat {
     compressedSize: number;
   };
 }
+
+// Re-export delta types
+export type {
+  ChangeType,
+  DeltaChange,
+  DeltaMetadata,
+  DeltaSnapshot,
+  FullSnapshot,
+  AnySnapshot,
+  DeltaOptions,
+  ApplyDeltaOptions,
+  ReconstructionOptions,
+  ReconstructionPath,
+  DeltaChain,
+  FullSnapshotStrategy,
+  IncrementalSnapshotConfig,
+  DeltaCompressionMetadata,
+  DeltaComputationResult,
+  DeltaApplyResult,
+  DeltaReconstructionResult,
+  DeltaEventType,
+  DeltaEvent,
+  DeltaEventListener,
+  DeltaStats,
+  DeltaAwareHistoryManager,
+  DeltaAwareHistoryManagerConfig,
+  DeltaHistoryStats,
+  DeltaCalculator,
+  DeltaCalculatorConfig,
+  DeltaChainManager,
+  ChainManagerConfig,
+  ChainValidationResult,
+  SnapshotReconstructor,
+  ReconstructionCache,
+  CacheEntry,
+  DeltaCompressionConfig,
+  DeltaCompressionFactoryConfig,
+  DeltaCompressionStrategyType,
+} from "./delta/index";
+
+// Re-export delta compression strategy
+export type {
+  DeltaCompressionStrategy,
+} from "./delta/compression/types";

@@ -32,15 +32,6 @@ import type {
   HistorySearchCriteria,
   SearchResult,
   ExportFormat,
-  RestorationCheckpoint,
-  TransactionalRestorerConfig,
-  TransactionalRestorationResult,
-  RestorationError,
-  TransactionConfig,
-  RestorationOptions,
-  RestorationProgress,
-  CheckpointResult,
-  RollbackResult,
 } from "./types";
 
 export type {
@@ -58,15 +49,6 @@ export type {
   HistorySearchCriteria,
   SearchResult,
   ExportFormat,
-  RestorationCheckpoint,
-  TransactionalRestorerConfig,
-  TransactionalRestorationResult,
-  RestorationError,
-  TransactionConfig,
-  RestorationOptions,
-  RestorationProgress,
-  CheckpointResult,
-  RollbackResult,
 };
 
 // ============================================================================
@@ -153,15 +135,6 @@ import type {
   SnapshotPipelineResult,
   SnapshotTemplate,
   SnapshotFromTemplateResult,
-  RestorationCheckpoint,
-  TransactionalRestorerConfig,
-  TransactionalRestorationResult,
-  RestorationError,
-  TransactionConfig,
-  RestorationOptions,
-  RestorationProgress,
-  CheckpointResult,
-  RollbackResult,
 } from "./snapshot/types";
 
 export type {
@@ -195,15 +168,6 @@ export type {
   SnapshotPipelineResult,
   SnapshotTemplate,
   SnapshotFromTemplateResult,
-  RestorationCheckpoint,
-  TransactionalRestorerConfig,
-  TransactionalRestorationResult,
-  RestorationError,
-  TransactionConfig,
-  RestorationOptions,
-  RestorationProgress,
-  CheckpointResult,
-  RollbackResult,
 };
 
 // ============================================================================

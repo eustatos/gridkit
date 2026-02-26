@@ -25,5 +25,4 @@ export type {
   DeserializationContext,
   SerializationOptions as AdvancedSerializationOptions,
   SerializedValue as AdvancedSerializedValue,
-  SerializationStrategy,
 } from "./advanced";

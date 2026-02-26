@@ -5,6 +5,7 @@ import {
   SerializedValue,
   SerializedArrayBuffer,
   SerializedTypedArray,
+  TypedArray,
 } from "../types";
 
 /**
@@ -30,7 +31,8 @@ export class CollectionsStrategy implements SerializationStrategy {
   }
 
   serialize(value: unknown, context: SerializationContext): SerializedValue {
-    const refId = context.seen.get(value);
+    const objValue = value as object;
+    const refId = context.seen.get(objValue);
 
     // Handle Array
     if (Array.isArray(value)) {
@@ -54,7 +56,7 @@ export class CollectionsStrategy implements SerializationStrategy {
       return {
         __serializedType: "typedarray",
         __refId: refId,
-        __className: value.constructor.name,
+        __className: (value as object).constructor?.name || "TypedArray",
         buffer,
         length: value.length,
         byteOffset: value.byteOffset,
@@ -63,7 +65,8 @@ export class CollectionsStrategy implements SerializationStrategy {
 
     // Handle ArrayBuffer
     if (value instanceof ArrayBuffer || value instanceof SharedArrayBuffer) {
-      const data = this.arrayBufferToBase64(value);
+      const buffer = value instanceof ArrayBuffer ? value : new ArrayBuffer(value.byteLength);
+      const data = this.arrayBufferToBase64(buffer);
       return {
         __serializedType: "arraybuffer",
         __refId: refId,
@@ -73,7 +76,7 @@ export class CollectionsStrategy implements SerializationStrategy {
 
     return {
       __serializedType: "object",
-      __className: value.constructor?.name || "Object",
+      __className: (objValue as object).constructor?.name || "Object",
     };
   }
 
@@ -85,14 +88,14 @@ export class CollectionsStrategy implements SerializationStrategy {
     // This ensures circular references are handled properly
     // For primitives and simple types, return as-is
     if (value === null || value === undefined) {
-      return value as SerializedValue;
+      return value as any;
     }
     if (
       typeof value === "string" ||
       typeof value === "number" ||
       typeof value === "boolean"
     ) {
-      return value as SerializedValue;
+      return value as any;
     }
     
     // For arrays, we need to use JSON to avoid recursion issues

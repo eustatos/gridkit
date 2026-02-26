@@ -14,6 +14,10 @@ export interface SignificanceBasedCompressionConfig {
   minChangeThreshold?: number;
   /** Maximum number of consecutive similar snapshots to keep (default: 3) */
   maxConsecutiveSimilar?: number;
+  /** Enable/disable compression (default: true) */
+  enabled?: boolean;
+  /** Minimum number of snapshots to keep (default: 10) */
+  minSnapshots?: number;
 }
 
 /**

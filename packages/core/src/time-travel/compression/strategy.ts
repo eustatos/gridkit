@@ -80,7 +80,7 @@ export abstract class BaseCompressionStrategy implements CompressionStrategy {
     }
     
     // Always keep at least minSnapshots
-    if (history.length <= this.config.minSnapshots) {
+    if (history.length <= (this.config.minSnapshots ?? 10)) {
       return false;
     }
     

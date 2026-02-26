@@ -11,8 +11,8 @@ describe('atomFamily', () => {
   });
 
   it('should create a family of atoms with parameters', () => {
-    const userAtomFamily = atomFamily((id: number) =>
-      atom(`User ${id}`)
+    const userAtomFamily = atomFamily((_id: number) =>
+      atom(`User ${_id}`)
     );
 
     const user1 = userAtomFamily(1);
@@ -24,7 +24,7 @@ describe('atomFamily', () => {
 
   it('should cache atoms for the same parameter', () => {
     const counterAtomFamily = atomFamily((id: string) =>
-      atom(0)
+      atom(id)
     );
 
     const counter1 = counterAtomFamily('a');
@@ -45,8 +45,8 @@ describe('atomFamily', () => {
   });
 
   it('should handle complex parameters', () => {
-    const todoAtomFamily = atomFamily((userId: number, todoId: number) =>
-      atom({ userId, todoId, title: 'Todo' })
+    const todoAtomFamily = atomFamily((_userId: number, _todoId: number) =>
+      atom({ userId: _userId, todoId: _todoId, title: 'Todo' })
     );
 
     const todo1 = todoAtomFamily(1, 1);
@@ -62,8 +62,8 @@ describe('atomFamily', () => {
   });
 
   it('should allow updating atoms in family', () => {
-    const itemAtomFamily = atomFamily((id: number) =>
-      atom({ id, value: 0 })
+    const itemAtomFamily = atomFamily((_id: number) =>
+      atom({ id: _id, value: 0 })
     );
 
     const item1 = itemAtomFamily(1);
@@ -98,8 +98,8 @@ describe('atomFamily', () => {
 describe('atomWithFamily', () => {
   it('should provide family method on atom', () => {
     const store = createStore();
-    const userAtomFamily = atomWithFamily.family((id: number) =>
-      atom(`User ${id}`)
+    const userAtomFamily = atomWithFamily.family((_id: number) =>
+      atom(`User ${_id}`)
     );
 
     const user = userAtomFamily(123);
@@ -110,7 +110,7 @@ describe('atomWithFamily', () => {
 describe('integration with core', () => {
   it('should work with store isolation', () => {
     const counterFamily = atomFamily((id: string) =>
-      atom(0)
+      atom(id)
     );
 
     const store1 = createStore();

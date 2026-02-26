@@ -53,7 +53,7 @@ export class CircularStrategy implements SerializationStrategy {
 
     // Generate new reference ID
     const refId = `ref_${++context.refCounter}`;
-    context.seen.set(value, refId);
+    context.seen.set(value as object, refId);
     return refId;
   }
 
@@ -64,8 +64,8 @@ export class CircularStrategy implements SerializationStrategy {
     value: unknown,
     context: SerializationContext,
   ): SerializedReference {
-    const refId = context.seen.get(value) || `ref_${++context.refCounter}`;
-    context.seen.set(value, refId);
+    const refId = context.seen.get(value as object) || `ref_${++context.refCounter}`;
+    context.seen.set(value as object, refId);
 
     return {
       __serializedType: "reference",

@@ -183,7 +183,7 @@ describe('localStorageStorage', () => {
   it('should handle undefined localStorage', () => {
     // Temporarily remove localStorage
     const originalLocalStorage = window.localStorage;
-    // @ts-ignore
+    // @ts-expect-error - delete localStorage for testing
     delete window.localStorage;
 
     const testAtom = atom('test', 'test2');
@@ -195,7 +195,7 @@ describe('localStorageStorage', () => {
     // (in our implementation it just returns early)
 
     // Restore
-    // @ts-ignore
+    // @ts-expect-error - restore localStorage
     window.localStorage = originalLocalStorage;
   });
 });
@@ -218,7 +218,7 @@ describe('sessionStorageStorage', () => {
 
   it('should handle undefined sessionStorage', () => {
     const originalSessionStorage = window.sessionStorage;
-    // @ts-ignore
+    // @ts-expect-error - delete sessionStorage for testing
     delete window.sessionStorage;
 
     const storage = sessionStorageStorage;
@@ -227,7 +227,7 @@ describe('sessionStorageStorage', () => {
     storage.setItem('test', 'value');
 
     // Restore
-    // @ts-ignore
+    // @ts-expect-error - restore sessionStorage
     window.sessionStorage = originalSessionStorage;
   });
 });

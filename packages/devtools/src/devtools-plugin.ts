@@ -498,6 +498,7 @@ export class DevToolsPlugin {
    */
   private setupConnectionListener(extension: any, store: EnhancedStore): void {
     // Store reference for later use
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const plugin = this;
     
     // Override connect method to track new connections
@@ -542,9 +543,10 @@ export class DevToolsPlugin {
 
       switch (payload?.type) {
         case "JUMP_TO_ACTION":
-        case "JUMP_TO_STATE":
+        case "JUMP_TO_STATE": {
           this.handleTimeTravelCommand(payload, store);
           break;
+        }
 
         case "START":
           this.isTracking = true;
@@ -567,9 +569,10 @@ export class DevToolsPlugin {
           }
           break;
 
-        case "IMPORT_STATE":
+        case "IMPORT_STATE": {
           this.handleImportState(payload, store);
           break;
+        }
 
         default:
           if (process.env.NODE_ENV !== "production") {
@@ -599,7 +602,7 @@ export class DevToolsPlugin {
 
     try {
       switch (payload.type) {
-        case "JUMP_TO_STATE":
+        case "JUMP_TO_STATE": {
           const index = (payload as any).index;
           if (typeof index === 'number' && index >= 0) {
             console.log(`[DevToolsPlugin] JUMP_TO_STATE: ${index}`);
@@ -621,8 +624,9 @@ export class DevToolsPlugin {
             }
           }
           break;
+        }
 
-        case "JUMP_TO_ACTION":
+        case "JUMP_TO_ACTION": {
           const actionName = (payload as any).action;
           if (typeof actionName === 'string') {
             console.log(`[DevToolsPlugin] JUMP_TO_ACTION: ${actionName}`);
@@ -664,6 +668,7 @@ export class DevToolsPlugin {
             }
           }
           break;
+        }
 
         default:
           if (process.env.NODE_ENV !== "production") {

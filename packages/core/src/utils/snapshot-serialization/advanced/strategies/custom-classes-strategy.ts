@@ -65,7 +65,7 @@ export class CustomClassesStrategy implements SerializationStrategy {
 
   serialize(value: unknown, context: SerializationContext): SerializedValue {
     const obj = value as object;
-    const refId = context.seen.get(value);
+    const refId = context.seen.get(obj);
     const constructorName = obj.constructor?.name || "Object";
 
     // Extract all properties
@@ -183,8 +183,8 @@ export class CustomClassesStrategy implements SerializationStrategy {
     return this.classRegistry.delete(name);
   }
 
-  getClass(name: string): new (...args: unknown[]) => unknown | undefined {
-    return this.classRegistry.get(name);
+  getClass(name: string): (new (...args: unknown[]) => unknown) | undefined {
+    return this.classRegistry.get(name) as (new (...args: unknown[]) => unknown) | undefined;
   }
 
   deserialize?(serialized: SerializedValue, context: { refs: Map<string, unknown> }): unknown {

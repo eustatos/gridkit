@@ -199,8 +199,8 @@ export function roundTripSnapshot<T = unknown>(
 }
 
 export function snapshotsEqual(
-  a: SerializableInput,
-  b: SerializableInput,
+  a: any,
+  b: any,
   options: SerializationOptions = {},
 ): boolean {
   const serializedA = snapshotSerialization(a, options);

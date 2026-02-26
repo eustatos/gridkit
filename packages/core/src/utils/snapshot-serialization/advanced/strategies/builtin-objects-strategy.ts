@@ -31,7 +31,7 @@ export class BuiltInObjectsStrategy implements SerializationStrategy {
   }
 
   serialize(value: unknown, context: SerializationContext): SerializedValue {
-    const refId = context.seen.get(value);
+    const refId = context.seen.get(value as object);
 
     if (value instanceof Date) {
       try {
@@ -124,7 +124,7 @@ export class BuiltInObjectsStrategy implements SerializationStrategy {
     return {
       __serializedType: "object",
       __refId: refId,
-      __className: value.constructor?.name || "Object",
+      __className: (value as object).constructor?.name || "Object",
     };
   }
 
@@ -134,14 +134,14 @@ export class BuiltInObjectsStrategy implements SerializationStrategy {
   ): SerializedValue {
     // Find appropriate strategy
     if (value === null || value === undefined) {
-      return value as SerializedValue;
+      return value as any;
     }
     if (
       typeof value === "string" ||
       typeof value === "number" ||
       typeof value === "boolean"
     ) {
-      return value as SerializedValue;
+      return value as any;
     }
     if (typeof value === "bigint") {
       return {
@@ -152,7 +152,7 @@ export class BuiltInObjectsStrategy implements SerializationStrategy {
     if (typeof value === "symbol") {
       return {
         __serializedType: "symbol",
-        description: value.description,
+        description: value.description as string | undefined,
       };
     }
     return JSON.parse(JSON.stringify(value));

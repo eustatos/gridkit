@@ -5,6 +5,7 @@ import {
   SerializationContext,
   DeserializationContext,
   SerializationOptions,
+  DeserializationOptions,
   SerializedValue,
   SerializedObject,
   SerializedProperty,
@@ -331,7 +332,7 @@ export class AdvancedSerializer {
       return BigInt(serialized.value as string);
     }
     if (serialized.__serializedType === "symbol") {
-      return Symbol(serialized.description);
+      return Symbol((serialized.description as string) || "");
     }
     if (serialized.__serializedType === "date") {
       return new Date(serialized.value as string);
@@ -373,7 +374,7 @@ export class AdvancedSerializer {
       return arr;
     }
     if (serialized.__serializedType === "object") {
-      return this.deserializeObject(serialized, context);
+      return this.deserializeObject(serialized as SerializedObject, context);
     }
 
     // Handle max depth exceeded

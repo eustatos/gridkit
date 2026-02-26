@@ -20,7 +20,7 @@ import { atom, Atom } from "@nexus-state/core";
  * );
  * const todoAtom = todoAtomFamily(1, 2);
  */
-export function atomFamily<T, P extends any[]>(
+export function atomFamily<T, P extends unknown[]>(
   createAtom: (...params: P) => Atom<T>,
 ): (...params: P) => Atom<T> {
   const atomsCache = new Map<string, Atom<T>>();
@@ -44,11 +44,11 @@ export function atomFamily<T, P extends any[]>(
 
 // Extend the atom function to support families
 // Use a wrapper function that accepts any arguments
-const atomWithFamily = ((...args: any[]) => {
-  // Use apply to call atom with the arguments
+const atomWithFamily = ((...args: unknown[]) => {
+  // Use spread operator instead of .apply()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (atom as any).apply(undefined, args);
-}) as any;
+  return (atom as any)(...args);
+}) as unknown as {(...args: unknown[]): Atom<unknown>; family: typeof atomFamily};
 atomWithFamily.family = atomFamily;
 
 // Re-export atom for convenience

@@ -3,6 +3,20 @@
 // Type for constructor functions (classes or functions intended for use with 'new')
 export type Constructor<T = unknown> = new (...args: unknown[]) => T;
 
+// TypedArray type for type checking
+export type TypedArray =
+  | Uint8Array
+  | Uint8ClampedArray
+  | Uint16Array
+  | Uint32Array
+  | Int8Array
+  | Int16Array
+  | Int32Array
+  | Float32Array
+  | Float64Array
+  | BigInt64Array
+  | BigUint64Array;
+
 export type SerializableInput =
   | string
   | number

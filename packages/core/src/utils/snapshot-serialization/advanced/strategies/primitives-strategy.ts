@@ -59,7 +59,7 @@ export class PrimitivesStrategy implements SerializationStrategy {
 
     // Handle primitives (string, number, boolean)
     // These are returned directly as their serialized value
-    return value as AnySerializedValue;
+    return (value as SerializedValue);
   }
 
   deserialize?(serialized: SerializedValue): unknown {
@@ -73,7 +73,7 @@ export class PrimitivesStrategy implements SerializationStrategy {
       return BigInt(serialized.value as string);
     }
     if (serialized.__serializedType === "symbol") {
-      return Symbol(serialized.description);
+      return Symbol((serialized.description as string) || "");
     }
     return serialized;
   }

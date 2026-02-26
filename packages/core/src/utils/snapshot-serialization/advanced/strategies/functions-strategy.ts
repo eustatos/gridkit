@@ -16,12 +16,13 @@ export class FunctionsStrategy implements SerializationStrategy {
 
   serialize(value: unknown, context: SerializationContext): SerializedValue {
     const func = value as Function;
+    const obj = value as object;
 
     // Check options for function handling
     if (context.options.functionHandling === "ignore") {
       return {
         __serializedType: "function",
-        __refId: context.seen.get(value),
+        __refId: context.seen.get(obj),
         name: func.name,
         __omitted: true,
       };
@@ -36,7 +37,7 @@ export class FunctionsStrategy implements SerializationStrategy {
     // Create function info object
     const result: SerializedFunction = {
       __serializedType: "function",
-      __refId: context.seen.get(value),
+      __refId: context.seen.get(obj),
       name: func.name || "anonymous",
       source,
       length: func.length,

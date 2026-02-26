@@ -36,7 +36,7 @@ export function workerAtom<T>(options: WorkerAtomOptions<T>): Atom<T> {
     const { type, value } = event.data;
     
     switch (type) {
-      case 'UPDATE':
+      case 'UPDATE': {
         // Update our local value map
         workerAtomValues.set(internalAtom, value);
         
@@ -50,6 +50,7 @@ export function workerAtom<T>(options: WorkerAtomOptions<T>): Atom<T> {
           }
         }
         break;
+      }
       default:
         console.warn(`Unknown message type: ${type}`);
     }

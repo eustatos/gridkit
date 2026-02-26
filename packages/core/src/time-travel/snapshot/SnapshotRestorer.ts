@@ -2,15 +2,16 @@
  * SnapshotRestorer - Restores state from snapshots
  */
 
-import { Atom, Store } from "../../types";
+import { Atom, Store, RestorationError } from "../../types";
 import type { Snapshot, SnapshotStateEntry } from "../types";
 import type {
   SnapshotRestorerConfig,
   RestorationResult,
   RestorationCheckpoint,
+} from "./types";
+import type {
   TransactionalRestorerConfig,
   TransactionalRestorationResult,
-  RestorationError,
   TransactionConfig,
   RestorationOptions,
   RestorationProgress,
@@ -284,17 +285,7 @@ export class SnapshotRestorer {
     });
   }
 
-  /**
-   * Find atom by ID
-   * @param atomId Atom ID string
-   * @returns Atom or undefined
-   */
-  private findAtomById(atomId: string): Atom<unknown> | null {
-    // Atom IDs in snapshots are stored as strings from symbol.toString()
-    // But symbol.toString() creates a unique symbol, so we can't reconstruct it.
-    // Instead, use the name provided in the entry, which is more reliable.
-    return null;
-  }
+
 
   /**
    * Find atom by name
