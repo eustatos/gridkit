@@ -91,18 +91,28 @@ interface TableMetadata {
   columnCount: number;
 }
 
+interface DevToolsEvent {
+  id: string;
+  type: string;
+  tableId: string;
+  timestamp: number;
+  payload: Record<string, unknown>;
+}
+
 interface DevToolsPanelProps {
   tables: TableMetadata[];
   selectedTableId: string;
   onTableSelect: (tableId: string) => void;
   connected?: boolean;
+  events?: DevToolsEvent[];
 }
 
 export function DevToolsPanel({
   tables,
   selectedTableId,
   onTableSelect,
-  connected: parentConnected
+  connected: parentConnected,
+  events = []
 }: DevToolsPanelProps) {
   const [activeTab, setActiveTab] = useState<'inspector' | 'events' | 'performance' | 'time-travel' | 'state-diff' | 'memory' | 'plugins'>('inspector');
   const connectionStatus = useConnectionStatus();
@@ -184,6 +194,9 @@ export function DevToolsPanel({
             >
               <span className="icon"><EventsIcon /></span>
               Events
+              {events.length > 0 && (
+                <span className="event-badge">{events.length}</span>
+              )}
             </button>
             <button
               className={activeTab === 'performance' ? 'active' : ''}
@@ -237,7 +250,10 @@ export function DevToolsPanel({
                 )}
                 {activeTab === 'events' && (
                   <ErrorBoundary>
-                    <EventTimeline tableId={String(selectedTable.id)} />
+                    <EventTimeline 
+                      tableId={String(selectedTable.id)}
+                      events={events}
+                    />
                   </ErrorBoundary>
                 )}
                 {activeTab === 'performance' && (

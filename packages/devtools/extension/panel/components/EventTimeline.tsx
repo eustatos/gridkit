@@ -3,17 +3,25 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { devToolsBridge } from '@gridkit/devtools-bridge/DevToolsBridge';
 import { EVENT_LOGGED, TABLE_UNREGISTERED } from '@gridkit/devtools-bridge/messages';
-import type { DevToolsEvent, EventTimelineProps, EventType, EventFilter } from '../types/events';
+import type { DevToolsEvent, EventType, EventFilter } from '../types/events';
 import { EventItem } from './EventItem';
 
 const MAX_EVENTS = 100;
 
-export const EventTimeline: React.FC<EventTimelineProps> = ({ tableId }) => {
+interface EventTimelineProps {
+  tableId: string;
+  events?: DevToolsEvent[];
+}
+
+export const EventTimeline: React.FC<EventTimelineProps> = ({ tableId, events: propEvents = [] }) => {
   const [events, setEvents] = useState<DevToolsEvent[]>([]);
   const [filter, setFilter] = useState<EventType>('all');
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [eventCount, setEventCount] = useState<number>(0);
   const eventsEndRef = useRef<HTMLDivElement>(null);
+
+  // Use events from props if provided, otherwise use internal state
+  const displayEvents = propEvents.length > 0 ? propEvents : events;
 
   /**
    * Generate unique event ID
@@ -159,7 +167,7 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ tableId }) => {
   /**
    * Filter events based on current filter
    */
-  const filteredEvents = events.filter((event) => {
+  const filteredEvents = displayEvents.filter((event) => {
     if (filter === 'all') return true;
     const category = getEventCategory(event.type);
     return category === filter;
@@ -170,7 +178,7 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ tableId }) => {
       <div className="timeline-header">
         <h3 className="timeline-title">Event Timeline</h3>
         <div className="timeline-controls">
-          <span className="event-count-badge">{eventCount}</span>
+          <span className="event-count-badge">{displayEvents.length}</span>
           <button
             className="control-btn pause-btn"
             onClick={handleTogglePause}
@@ -194,7 +202,7 @@ export const EventTimeline: React.FC<EventTimelineProps> = ({ tableId }) => {
           value={filter}
           onChange={(e) => handleFilterChange(e.target.value as EventType)}
         >
-          <option value="all">All Events ({events.length})</option>
+          <option value="all">All Events ({displayEvents.length})</option>
           <option value="sorting">Sorting</option>
           <option value="selection">Selection</option>
           <option value="pagination">Pagination</option>

@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { createRoot } from 'react-dom/client'
-import { TABLE_REGISTERED, TABLE_UNREGISTERED, TABLES_LIST } from '@gridkit/devtools-bridge/messages'
-
-import { DevToolsPanel as DevToolsPanelComponent } from './DevToolsPanel'
+import { TABLE_REGISTERED, TABLE_UNREGISTERED, TABLES_LIST, EVENT_LOGGED } from '@gridkit/devtools-bridge/messages'
+import { DevToolsPanel } from './DevToolsPanel'
 
 // Types
 interface TableMetadata {
@@ -17,10 +16,20 @@ interface TableMetadata {
   memory?: any
 }
 
+// Event type for DevTools events
+interface DevToolsEvent {
+  id: string
+  type: string
+  tableId: string
+  timestamp: number
+  payload: Record<string, unknown>
+}
+
 function DevToolsPanelContainer() {
   const [tables, setTables] = useState<TableMetadata[]>([])
   const [selectedTableId, setSelectedTableId] = useState<string>('')
   const [connected, setConnected] = useState(false)
+  const [events, setEvents] = useState<DevToolsEvent[]>([])
 
   const handleTableRegistered = useCallback((message: any) => {
     console.log('[DevTools Panel] TABLE_REGISTERED:', message.payload)
@@ -43,6 +52,32 @@ function DevToolsPanelContainer() {
       setSelectedTableId('')
     }
   }, [selectedTableId])
+
+  const handleEventLogged = useCallback((message: any) => {
+    console.log('[DevTools Panel] EVENT_LOGGED:', message)
+    const event = message.payload?.event
+    const tableId = message.tableId
+    const timestamp = message.payload?.timestamp || Date.now()
+    
+    if (event && tableId) {
+      const newEvent: DevToolsEvent = {
+        id: `event-${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
+        type: event.type || 'unknown',
+        tableId: String(tableId),
+        timestamp,
+        payload: message.payload || {}
+      }
+      
+      setEvents(prev => {
+        const updated = [newEvent, ...prev]
+        // Limit to 100 events
+        if (updated.length > 100) {
+          return updated.slice(0, 100)
+        }
+        return updated
+      })
+    }
+  }, [])
 
   // Connect to background script
   useEffect(() => {
@@ -81,6 +116,9 @@ function DevToolsPanelContainer() {
       } else if (message.type === TABLE_UNREGISTERED) {
         console.log('[DevTools Panel] TABLE_UNREGISTERED:', message.payload)
         handleTableUnregistered(message)
+      } else if (message.type === EVENT_LOGGED) {
+        console.log('[DevTools Panel] EVENT_LOGGED:', message)
+        handleEventLogged(message)
       } else if (message.type === 'ERROR') {
         console.error('[DevTools Panel] Error from background:', message.error)
       }
@@ -97,12 +135,13 @@ function DevToolsPanelContainer() {
       console.log('[DevTools Panel] Disconnecting...')
       port.disconnect()
     }
-  }, [handleTableRegistered, handleTableUnregistered, selectedTableId])
+  }, [handleTableRegistered, handleTableUnregistered, handleEventLogged, selectedTableId])
 
   console.log('[DevTools Panel] Rendering with tables:', tables)
+  console.log('[DevTools Panel] Events count:', events.length)
 
   return (
-    <DevToolsPanelComponent
+    <DevToolsPanel
       tables={tables}
       selectedTableId={selectedTableId}
       onTableSelect={(tableId: string) => {
@@ -110,6 +149,7 @@ function DevToolsPanelContainer() {
         setSelectedTableId(String(tableId))
       }}
       connected={connected}
+      events={events}
     />
   )
 }
