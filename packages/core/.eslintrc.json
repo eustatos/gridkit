@@ -46,18 +46,34 @@
         "format": ["UPPER_CASE", "camelCase", "PascalCase"]
       }
     ],
+
+    "complexity": ["warn", { "max": 10 }],
+    "max-depth": ["warn", { "max": 4 }],
+    "max-params": ["warn", { "max": 4 }],
+    "max-statements": ["warn", { "max": 50 }],
+    "max-lines": [
+      "warn",
+      {
+        "max": 400,
+        "skipComments": true,
+        "skipBlankLines": true
+      }
+    ],
+    "max-lines-per-function": [
+      "warn",
+      {
+        "max": 100,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "no-nested-ternary": "error",
+
     "import/no-default-export": "error",
     "import/order": [
       "error",
       {
-        "groups": [
-          "builtin",
-          "external",
-          "internal",
-          "parent",
-          "sibling",
-          "index"
-        ],
+        "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
         "newlines-between": "always",
         "alphabetize": {
           "order": "asc",
@@ -69,11 +85,7 @@
     "import/no-extraneous-dependencies": [
       "error",
       {
-        "devDependencies": [
-          "**/*.test.ts",
-          "**/*.spec.ts",
-          "**/__tests__/**/*.ts"
-        ]
+        "devDependencies": ["**/*.test.ts", "**/*.spec.ts", "**/__tests__/**/*.ts"]
       }
     ],
     "import/no-unresolved": [
