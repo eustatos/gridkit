@@ -16,6 +16,7 @@ module.exports = {
         'ci', // CI configuration changes
         'build', // Changes that affect the build system
         'revert', // Reverts a previous commit
+        'security', // Security fixes
       ],
     ],
     'subject-case': [0], // Allow any case for subject
