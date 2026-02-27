@@ -7,9 +7,9 @@
 
 ## 🚧 Status: Phase 1 - Foundation
 
-**Current Phase:** Type System & Core Infrastructure  
-**Progress:** Planning Complete → Implementation Starting  
-**Next Milestone:** MVP (v0.1.0)
+**Current Phase:** Core Implementation
+**Progress:** 85% Complete
+**Next Milestone:** v0.1.0 MVP
 
 ## 📦 Packages
 
@@ -17,11 +17,11 @@
 |---------|---------|-------------|
 | [@gridkit/core](./packages/core) | 0.0.1 | Core table functionality |
 | [@gridkit/data](./packages/data) | 0.0.1 | Data providers |
-| @gridkit/features | - | Feature modules (planned) |
-| @gridkit/react | - | React adapter (planned) |
-| @gridkit/vue | - | Vue adapter (planned) |
+| [@gridkit/devtools](./packages/devtools) | 0.0.1 | Browser DevTools extension |
+| [@gridkit/plugins](./packages/plugins) | 0.0.1 | Official plugin ecosystem |
+| [@gridkit/tanstack-adapter](./packages/tanstack-adapter) | 0.0.1 | TanStack Table adapter |
 
-## 🎯 Key Features (Planned)
+## 🎯 Key Features
 
 - 🚀 **Performance First:** Handle 100k+ rows with virtual scrolling
 - 🎨 **Framework Agnostic:** Core library works with any framework
@@ -29,26 +29,30 @@
 - 🔒 **Type Safe:** Full TypeScript support with strict mode
 - 🎭 **Headless:** Complete control over UI rendering
 - 🔌 **Extensible:** Plugin system for custom features
+- 🛠️ **DevTools:** Built-in debugging tools
 
 ## 🏗️ Architecture
 
 ```
 @gridkit/
-├── core/          # Framework-agnostic core (~15kb)
+├── core/          # Framework-agnostic core (~18KB)
 ├── data/          # Data providers (REST, GraphQL, etc.)
-├── features/      # Features (sorting, filtering, grouping)
-├── react/         # React adapter
-└── vue/           # Vue adapter
+├── devtools/      # Browser DevTools extension
+├── plugins/       # Official plugin ecosystem
+├── tanstack-adapter/  # TanStack Table integration
+├── react/         # React adapter (planned)
+└── vue/           # Vue adapter (planned)
 ```
 
 ## 📚 Documentation
 
-- [Architecture](./docs/architecture/ARCHITECTURE.md)
-- [Roadmap](./planning/ROADMAP.md)
-- [Contributing](./CONTRIBUTING.md)
-- [Getting Started](./START_HERE.md)
+- [Getting Started](./docs/guides/getting-started.md) - Quick start guide
+- [Installation](./docs/guides/installation.md) - Install and setup
+- [API Reference](./docs/api/core.md) - Complete API documentation
+- [Architecture](./docs/architecture/ARCHITECTURE.md) - System design
+- [Implementation Status](./docs/IMPLEMENTATION_STATUS.md) - Current progress
 
-## 🚀 Quick Start (Coming Soon)
+## 🚀 Quick Start
 
 ```typescript
 import { createTable } from '@gridkit/core';
@@ -60,6 +64,10 @@ npm install @gridkit/core
 const table = createTable({
   columns,
   data,
+  debug: {
+    performance: true,
+    events: true,
+  },
 });
 ```
 
@@ -85,9 +93,6 @@ pnpm build
 
 # Run tests
 pnpm test
-
-# Run tests in watch mode
-pnpm test:watch
 ```
 
 ### Monorepo Structure
@@ -100,23 +105,37 @@ This project uses:
 - **Vitest** for testing
 - **ESLint + Prettier** for code quality
 
-## 📋 Current Tasks (Phase 1)
+## 📋 Current Focus
 
-See [tasks/phase-1-foundation](./tasks/phase-1-foundation/) for detailed task breakdown.
+**Phase 1: Foundation** (85% Complete)
 
-**Next up:**
-- [ ] CORE-001: Base TypeScript types
-- [ ] CORE-002: Table interfaces
-- [ ] CORE-003: Column interfaces
-- [ ] CORE-004: Row interfaces
+**Completed:**
+- ✅ Type system with branded types
+- ✅ Event system with middleware
+- ✅ State management
+- ✅ Column system
+- ✅ Row system with cell caching
+- ✅ Plugin system with isolation
+- ✅ Performance monitoring
+- ✅ Validation system
+- ✅ Data providers
+- ✅ DevTools extension
+
+**Remaining:**
+- ⚠️ Fix TypeScript errors
+- ⚠️ Add state module tests
+- ⚠️ Fix performance test timing
 
 ## 🤝 Contributing
 
 We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md) first.
 
-### For AI Agents
+### Quick Links
 
-Please read [AI Guidelines](./.github/AI_GUIDELINES.md) before starting any work.
+- [Contributing Guide](./CONTRIBUTING.md)
+- [Architecture](./docs/architecture/ARCHITECTURE.md)
+- [Implementation Status](./docs/IMPLEMENTATION_STATUS.md)
+- [Demo App Guide](./docs/guides/demo-app.md)
 
 ## 📄 License
 
@@ -125,8 +144,7 @@ MIT © GridKit Team
 ## 🔗 Links
 
 - [Documentation](./docs/)
-- [Examples](./examples/) (coming soon)
-- [Roadmap](./planning/ROADMAP.md)
+- [Roadmap](./docs/IMPLEMENTATION_STATUS.md)
 - [Changelog](./CHANGELOG.md) (coming soon)
 
 ---

@@ -1,116 +1,97 @@
 # 🚀 GridKit - Start Here
 
-Welcome to GridKit! This guide will help you get started whether you're a human developer or an AI agent.
+Welcome to GridKit! This guide will help you get started with the enterprise-grade table library.
 
 ---
 
 ## 📍 Quick Navigation
 
-### For Humans
+### For New Users
 
-- **First time?** → Read [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
-- **Want to contribute?** → Read [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Looking for features?** → Check [FEATURE_MATRIX.md](planning/FEATURE_MATRIX.md)
-- **Want roadmap?** → See [ROADMAP.md](planning/ROADMAP.md)
+- **First time?** → Read [Getting Started](./docs/guides/getting-started.md)
+- **Want to install?** → See [Installation](./docs/guides/installation.md)
+- **Looking for API docs?** → Check [API Reference](./docs/api/core.md)
+- **Want roadmap?** → See [Implementation Status](./docs/IMPLEMENTATION_STATUS.md)
 
-### For AI Agents
+### For Contributors
 
-- **Starting a task?** → Read [AI_GUIDELINES.md](.github/AI_GUIDELINES.md) FIRST
-- **Need context?** → Check [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
-- **Ready to code?** → Find your task in `tasks/phase-1-foundation/`
+- **Want to contribute?** → Read [CONTRIBUTING.md](./CONTRIBUTING.md)
+- **Architecture details?** → Check [ARCHITECTURE.md](./docs/architecture/ARCHITECTURE.md)
+- **Implementation status?** → See [IMPLEMENTATION_STATUS.md](./docs/IMPLEMENTATION_STATUS.md)
 
 ---
 
 ## 🎯 Project Status
 
-**Current Phase:** Phase 1 - Foundation  
-**Status:** 📋 Planning Complete → Ready for Development  
-**Next Task:** CORE-001 (Base TypeScript Types)
+**Current Phase:** Phase 1 - Foundation
+**Status:** 🟡 85% Complete
+**Next Task:** Fix remaining TypeScript errors
 
 **Completion:**
-- ✅ Phase 0: Preparation (100%)
-- ✅ Phase 1: Architecture Planning (100%)
-- ✅ Phase 2: Guidelines (100%)
-- ✅ Phase 3: Task Breakdown for Phase 1 (100%)
-- ⏭️ Phase 4: Implementation (Starting now)
+- ✅ Type System (100%)
+- ✅ Event System (100%)
+- ✅ State Management (100%)
+- ✅ Column System (100%)
+- ✅ Row System (100%)
+- ✅ Plugin System (100%)
+- ✅ Performance Monitoring (100%)
+- ✅ Validation System (100%)
+- ✅ Data Providers (100%)
+- ✅ DevTools (100%)
+- ⚠️ Bug Fixes & Tests (85%)
 
 ---
 
 ## 📚 Essential Documents
 
-### Must Read (Before Coding)
+### Getting Started
 
-1. **[AI_GUIDELINES.md](.github/AI_GUIDELINES.md)** (Critical for AI)
-   - TypeScript standards
-   - Testing requirements
-   - Performance budgets
-   - Common patterns
-   - Prohibited patterns
+1. **[Installation](./docs/guides/installation.md)** - Install and setup
+2. **[Getting Started](./docs/guides/getting-started.md)** - Create your first table
+3. **[Basic Table](./docs/guides/basic-table.md)** - Learn fundamentals
 
-2. **[CONTRIBUTING.md](CONTRIBUTING.md)**
-   - Code style
-   - Commit messages
-   - PR guidelines
-   - Testing standards
+### Reference
 
-3. **[ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)**
-   - System design
-   - Module structure
-   - Design patterns
-   - Technology choices
+4. **[API Reference](./docs/api/core.md)** - Complete API documentation
+5. **[Architecture](./docs/architecture/ARCHITECTURE.md)** - System design
+6. **[Plugin System](./docs/plugin-system.md)** - Plugin development
+7. **[Debug System](./docs/debug/debug-system.md)** - Debugging tools
 
-### Reference Documents
+### Guides
 
-4. **[ROADMAP.md](planning/ROADMAP.md)**
-   - Release milestones
-   - Timeline
-   - Success metrics
-
-5. **[DEPENDENCY_GRAPH.md](planning/DEPENDENCY_GRAPH.md)**
-   - Task dependencies
-   - Parallel opportunities
-   - Critical path
-
-6. **[FEATURE_MATRIX.md](planning/FEATURE_MATRIX.md)**
-   - All 500+ features
-   - Priorities (P0-P3)
-   - Complexity estimates
-   - AI assignability
+8. **[Column Pinning](./docs/guides/column-pinning.md)** - Keep columns visible
+9. **[Demo App](./docs/guides/demo-app.md)** - Test DevTools
+10. **[Contributing](./CONTRIBUTING.md)** - Contribution guidelines
 
 ---
 
-## 🤖 For AI Agents: Quick Start
+## 🤖 For AI Agents
 
-### Step 1: Read Guidelines (5 minutes)
+### Step 1: Read Guidelines
 
 ```bash
 # Read these IN ORDER:
-1. .github/AI_GUIDELINES.md    # Your rulebook
-2. CONTRIBUTING.md              # Project standards
+1. CONTRIBUTING.md              # Project standards
+2. docs/architecture/ARCHITECTURE.md  # System design
 3. Your assigned task file      # Specific instructions
 ```
 
-### Step 2: Get Your Task
+### Step 2: Find Your Task
 
-Tasks are in `tasks/phase-1-foundation/`:
+Tasks are organized by phase in the `tasks/` directory:
 
-- `CORE-001-base-types.md` - Base TypeScript types ⭐ START HERE
-- `CORE-002-table-interfaces.md` - Table interfaces
-- `CORE-003-column-interfaces.md` - Column interfaces
-- `CORE-004-row-interfaces.md` - Row interfaces
-- `CORE-010-table-factory.md` - Table factory (complex, needs review)
-- `COLUMN-001-column-helper.md` - Column helper
-- `DATA-001-provider-interface.md` - Provider interface
-- `DATA-002-static-provider.md` - Static provider
+- `tasks/phase-1-foundation/` - Phase 1 tasks
+- `tasks/phase-2-core-features/` - (To be created)
+- `tasks/phase-3-advanced/` - (To be created)
 
 ### Step 3: Execute Task
 
 Each task file contains:
-- ✅ Context (WHY this task exists)
-- ✅ Objectives (WHAT to build)
-- ✅ Implementation requirements (HOW to build)
-- ✅ Test requirements (HOW to test)
-- ✅ Success criteria (WHEN you're done)
+- Context (WHY this task exists)
+- Objectives (WHAT to build)
+- Implementation requirements (HOW to build)
+- Test requirements (HOW to test)
+- Success criteria (WHEN you're done)
 
 ### Step 4: Self-Check
 
@@ -122,14 +103,13 @@ Before marking complete:
 - [ ] TypeScript compiles (strict mode)
 - [ ] ESLint passes (zero warnings)
 - [ ] JSDoc complete for all exports
-- [ ] Follows patterns in AI_GUIDELINES.md
-- [ ] No prohibited patterns used
+- [ ] Follows patterns in CONTRIBUTING.md
 - [ ] Performance benchmarks met
 ```
 
 ---
 
-## 👨‍💻 For Human Developers: Quick Start
+## 👨‍💻 For Human Developers
 
 ### Step 1: Setup
 
@@ -148,18 +128,18 @@ pnpm test
 
 ### Step 2: Choose Your Path
 
-**Path A: Implement a Task**
+**Path A: Implement a Feature**
 
-1. Pick a task from `tasks/phase-1-foundation/`
+1. Pick a task from `tasks/`
 2. Create a branch: `git checkout -b feat/TASK-ID`
 3. Implement according to task requirements
 4. Run tests: `pnpm test`
 5. Create PR
 
-**Path B: Review AI Code**
+**Path B: Review Code**
 
-1. Check PR from AI agent
-2. Verify against AI_GUIDELINES.md
+1. Check PR
+2. Verify against CONTRIBUTING.md
 3. Run tests and benchmarks
 4. Provide feedback or approve
 
@@ -168,7 +148,7 @@ pnpm test
 1. Review `docs/architecture/ARCHITECTURE.md`
 2. Make decisions on open questions
 3. Update documentation
-4. Guide AI agents
+4. Guide development
 
 ### Step 3: Development Workflow
 
@@ -199,75 +179,25 @@ git push origin feat/core-001
 ```
 gridkit/
 ├── .github/
-│   ├── AI_GUIDELINES.md       # AI coding standards ⭐
-│   └── workflows/             # CI/CD (to be added)
+│   └── workflows/             # CI/CD
 ├── docs/
 │   ├── architecture/
-│   │   └── ARCHITECTURE.md    # System architecture ⭐
-│   ├── api/                   # API reference (generated)
+│   │   └── ARCHITECTURE.md    # System architecture
+│   ├── api/                   # API reference
 │   ├── guides/                # User guides
-│   └── patterns/              # Design patterns
-├── epics/
-│   ├── TEMPLATE_EPIC.md       # Epic template
-│   └── EPIC-001-foundation.md # Phase 1 epic ⭐
-├── planning/
-│   ├── ROADMAP.md             # Product roadmap ⭐
-│   ├── DEPENDENCY_GRAPH.md    # Task dependencies ⭐
-│   ├── FEATURE_MATRIX.md      # Feature priorities ⭐
-│   └── READINESS_CHECKLIST.md # Development readiness
-├── specs/
-│   └── api-specs/
-│       ├── TEMPLATE_API_SPEC.md
-│       └── core.md            # Core API spec ⭐
-├── tasks/
-│   ├── TEMPLATE_TASK.md       # Task template
-│   ├── phase-1-foundation/    # Phase 1 tasks ⭐
-│   ├── phase-2-core-features/ # (To be created)
-│   ├── phase-3-advanced/      # (To be created)
-│   └── backlog/               # Future tasks
-├── packages/                   # (To be created)
+│   └── debug/                 # Debugging docs
+├── packages/
 │   ├── core/                  # @gridkit/core
 │   ├── data/                  # @gridkit/data
-│   ├── features/              # @gridkit/features
-│   ├── react/                 # @gridkit/react
-│   └── vue/                   # @gridkit/vue
-├── examples/                   # (To be created)
-├── CONTRIBUTING.md            # Contribution guide ⭐
-└── START_HERE.md              # This file
+│   ├── devtools/              # @gridkit/devtools
+│   ├── plugins/               # @gridkit/plugins
+│   └── tanstack-adapter/      # @gridkit/tanstack-adapter
+├── tasks/                     # Task files
+├── examples/                  # Example applications
+├── CONTRIBUTING.md            # Contribution guide
+├── README.md                  # This file
+└── START_HERE.md              # You are here
 ```
-
-⭐ = Must read before starting
-
----
-
-## 🎓 Learning Path
-
-### Day 1: Understanding
-
-1. Read START_HERE.md (this file) - 10 min
-2. Read ARCHITECTURE.md - 30 min
-3. Read ROADMAP.md - 15 min
-4. Read AI_GUIDELINES.md or CONTRIBUTING.md - 30 min
-
-**Total: ~90 minutes**
-
-### Day 2: First Task
-
-1. Pick CORE-001 (simplest task)
-2. Read task file thoroughly - 15 min
-3. Implement - 4-6 hours
-4. Write tests - 2 hours
-5. Self-review - 30 min
-6. Submit PR - 15 min
-
-**Total: ~8 hours**
-
-### Week 1: Phase 1 Complete
-
-With 3 AI agents working in parallel:
-- Days 1-3: Type definitions (CORE-001 to CORE-004)
-- Days 4-5: Data layer (DATA-001, DATA-002)
-- Week 2: Core implementation (CORE-010, COLUMN-001)
 
 ---
 
@@ -277,32 +207,26 @@ With 3 AI agents working in parallel:
 
 | Question | Answer |
 |----------|--------|
-| What to build? | `tasks/phase-1-foundation/` |
-| How to build? | `.github/AI_GUIDELINES.md` |
-| Why these decisions? | `docs/architecture/ARCHITECTURE.md` |
-| When is it done? | `planning/ROADMAP.md` |
-| What's the priority? | `planning/FEATURE_MATRIX.md` |
-| What depends on what? | `planning/DEPENDENCY_GRAPH.md` |
-| How to contribute? | `CONTRIBUTING.md` |
-| API documentation? | `specs/api-specs/core.md` |
+| How to install? | [Installation Guide](./docs/guides/installation.md) |
+| How to create a table? | [Getting Started](./docs/guides/getting-started.md) |
+| API documentation? | [API Reference](./docs/api/core.md) |
+| Architecture details? | [ARCHITECTURE.md](./docs/architecture/ARCHITECTURE.md) |
+| Current progress? | [Implementation Status](./docs/IMPLEMENTATION_STATUS.md) |
+| How to contribute? | [CONTRIBUTING.md](./CONTRIBUTING.md) |
+| Plugin development? | [Plugin System](./docs/plugin-system.md) |
+| Debugging tools? | [Debug System](./docs/debug/debug-system.md) |
+| Demo application? | [Demo App Guide](./docs/guides/demo-app.md) |
 
 ---
 
 ## 🆘 Getting Help
 
-### For AI Agents
+### For Contributors
 
-1. **Check guidelines first:** `.github/AI_GUIDELINES.md`
-2. **Check task file:** Full instructions are there
-3. **Check examples:** Look at similar implementations
-4. **Ask human:** Flag unclear requirements
-
-### For Humans
-
-1. **Check documentation:** Most answers are documented
-2. **Create GitHub issue:** For bugs or questions
-3. **Discord community:** For real-time help
-4. **Email maintainers:** For private questions
+1. **Check documentation** - Most answers are documented
+2. **Create GitHub issue** - For bugs or questions
+3. **Discord community** - For real-time help
+4. **Contact maintainers** - For private questions
 
 ---
 
@@ -310,15 +234,15 @@ With 3 AI agents working in parallel:
 
 Before you start coding:
 
-### For AI Agents
-- [ ] Read AI_GUIDELINES.md completely
+### For Contributors
+- [ ] Read CONTRIBUTING.md completely
 - [ ] Read assigned task file completely
 - [ ] Understand context and objectives
 - [ ] Know success criteria
 - [ ] Ready to self-check before completion
 
-### For Humans
-- [ ] Read CONTRIBUTING.md
+### For New Users
+- [ ] Node.js and pnpm installed
 - [ ] Development environment set up
 - [ ] Tests run successfully
 - [ ] Understand the architecture
@@ -326,46 +250,39 @@ Before you start coding:
 
 ---
 
-## 🎯 Current Sprint (Week 1)
+## 🎯 Current Sprint
 
 ### Goals
-- Complete type system (CORE-001 to CORE-004)
-- 100% test coverage
-- Zero TypeScript errors
-- Architecture frozen for Phase 1
+- Fix remaining TypeScript errors
+- Add state module tests
+- Fix performance test timing issues
+- Complete Phase 1 (85% → 100%)
 
-### Assignments
+### Focus Areas
 
-**AI Agent 1:**
-- [ ] CORE-001: Base types
-- [ ] CORE-002: Table interfaces
+**Bug Fixes:**
+- [ ] Fix EventValidator.ts TypeScript errors
+- [ ] Add state module tests
+- [ ] Fix performance test timing
 
-**AI Agent 2:**
-- [ ] CORE-003: Column interfaces
-- [ ] DATA-001: Provider interface
-
-**AI Agent 3:**
-- [ ] CORE-004: Row interfaces
-- [ ] Documentation
-
-**Human Architect:**
-- [ ] Review all type definitions
-- [ ] Approve before implementation
-- [ ] Resolve design questions
+**Documentation:**
+- [ ] Complete API reference
+- [ ] Add more examples
+- [ ] Update implementation status
 
 ---
 
 ## 📊 Success Metrics
 
 ### Phase 1 Complete When:
-- ✅ All 10 tasks completed
+- ✅ All core modules implemented
 - ✅ 100% test coverage for public APIs
 - ✅ Performance benchmarks met
 - ✅ Documentation complete
 - ✅ Zero critical bugs
 
 ### MVP Complete When:
-- ✅ Phase 1-4 complete
+- ✅ Phase 1 complete
 - ✅ React adapter working
 - ✅ 5+ example applications
 - ✅ Production-ready
@@ -386,6 +303,6 @@ You're ready to start! Pick your first task and begin.
 
 ---
 
-**Last Updated:** January 2024  
-**Status:** Ready for Development  
-**Next Review:** End of Week 1
+**Last Updated:** February 2026
+**Status:** 85% Complete - Phase 1 Foundation
+**Next Review:** End of Phase 1

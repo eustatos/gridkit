@@ -1,19 +1,20 @@
-# Plugin System
+# Plugin API Reference
 
-The GridKit Plugin System provides a foundation for extending grid functionality through modular, type-safe plugins.
+The Plugin API provides a powerful extension system for GridKit tables with lifecycle management, dependency resolution, and plugin isolation.
 
-## Overview
+## Installation
 
-The plugin system includes:
+Plugins are included in the core package. Official plugins are available separately:
 
-- **PluginManager**: Centralized plugin management
-- **Type-safe Registry**: Compile-time plugin discovery
-- **Event Integration**: Plugin-scoped event buses
-- **Lifecycle Management**: Initialize/destroy with dependency resolution
-- **Isolation**: Error boundaries and resource quotas
-- **Communication**: Cross-plugin messaging
+```bash
+# Core package (includes plugin system)
+npm install @gridkit/core
 
-## Quick Start
+# Official plugins
+npm install @gridkit/plugins
+```
+
+## Quick Example
 
 ```typescript
 import { createTable, PluginManager } from '@gridkit/core';
@@ -39,27 +40,29 @@ const table = createTable({
 
 ---
 
-## Core Concepts
+## Plugin Interface
 
-### Plugin Interface
+All plugins must implement the `Plugin` interface.
 
-All plugins must implement the `Plugin` interface:
+### Plugin Definition
 
 ```typescript
 interface Plugin<TConfig = Record<string, unknown>> {
+  // Metadata
   readonly metadata: PluginMetadata;
-
+  
+  // Lifecycle
   initialize(config: TConfig, context: PluginContext): Promise<void> | void;
   destroy(): Promise<void> | void;
   update?(config: Partial<TConfig>): void;
+  
+  // Optional capabilities
   getCapabilities?(): PluginCapability[];
   getDependencies?(): string[];
 }
 ```
 
-### Plugin Metadata
-
-Each plugin must provide metadata:
+### PluginMetadata
 
 ```typescript
 interface PluginMetadata {
@@ -79,9 +82,7 @@ interface PluginMetadata {
 }
 ```
 
-### Plugin Context
-
-Plugins receive a context with core services:
+### PluginContext
 
 ```typescript
 interface PluginContext {
@@ -103,11 +104,82 @@ interface PluginContext {
 }
 ```
 
+### Example Plugin
+
+```typescript
+import type { Plugin, PluginMetadata, PluginContext } from '@gridkit/core';
+
+interface LoggingPluginConfig {
+  level: 'debug' | 'info' | 'warn' | 'error';
+  destination: 'console' | 'file' | 'remote';
+  remoteUrl?: string;
+}
+
+class LoggingPlugin implements Plugin<LoggingPluginConfig> {
+  readonly metadata: PluginMetadata = {
+    id: 'logging-plugin',
+    name: 'Logging Plugin',
+    version: '1.0.0',
+    description: 'Logs table events to configured destination',
+    author: 'GridKit Team',
+    license: 'MIT',
+  };
+
+  private config!: LoggingPluginConfig;
+  private context!: PluginContext;
+  private unsubscribe: (() => void) | null = null;
+
+  async initialize(config: LoggingPluginConfig, context: PluginContext): Promise<void> {
+    this.config = config;
+    this.context = context;
+
+    // Subscribe to events
+    this.unsubscribe = context.eventBus.on('*', (event) => {
+      this.log(event.type, event.payload);
+    });
+
+    this.context.logger.info('Logging plugin initialized');
+  }
+
+  private log(eventType: string, payload: unknown): void {
+    const message = `[${eventType}] ${JSON.stringify(payload)}`;
+    
+    switch (this.config.level) {
+      case 'debug':
+        console.debug(message);
+        break;
+      case 'info':
+        console.info(message);
+        break;
+      case 'warn':
+        console.warn(message);
+        break;
+      case 'error':
+        console.error(message);
+        break;
+    }
+  }
+
+  async destroy(): Promise<void> {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+    this.context.logger.info('Logging plugin destroyed');
+  }
+
+  update(config: Partial<LoggingPluginConfig>): void {
+    this.config = { ...this.config, ...config };
+    this.context.logger.info('Logging plugin config updated');
+  }
+}
+```
+
 ---
 
-## Plugin Manager
+## PluginManager
 
-The `PluginManager` is the central component for plugin management.
+Central management for plugin lifecycle.
 
 ### Creating a PluginManager
 
@@ -116,97 +188,183 @@ import { PluginManager } from '@gridkit/core';
 
 const pluginManager = new PluginManager({
   debug: true,
-  timeout: 30000, // 30 second timeout
+  timeout: 30000, // 30 second timeout for plugin operations
 });
 ```
 
-### Registration
+### Methods
 
-Register plugins with the manager:
+#### register()
+
+Register a plugin with the manager.
 
 ```typescript
-pluginManager.register(myPlugin);
+register<TConfig>(plugin: Plugin<TConfig>): void;
 ```
 
-The manager validates dependencies and prevents duplicate registrations.
-
-### Lifecycle Management
-
-#### Initialize Plugins
-
+**Example:**
 ```typescript
-await pluginManager.initializePlugin('my-plugin', config);
+const plugin = new LoggingPlugin();
+pluginManager.register(plugin);
 ```
 
-#### Update Configuration
+#### initializePlugin()
+
+Initialize a registered plugin.
 
 ```typescript
-pluginManager.updatePlugin('my-plugin', newConfig);
+initializePlugin<TConfig>(
+  pluginId: string,
+  config: TConfig
+): Promise<void>;
 ```
 
-#### Destroy Plugins
-
+**Example:**
 ```typescript
-await pluginManager.destroyPlugin('my-plugin');
+await pluginManager.initializePlugin('logging-plugin', {
+  level: 'info',
+  destination: 'console',
+});
 ```
 
-#### Get Plugin Status
+#### destroyPlugin()
+
+Destroy an initialized plugin.
 
 ```typescript
-const status = pluginManager.isInitialized('my-plugin');
-const plugins = pluginManager.listPlugins();
+destroyPlugin(pluginId: string): Promise<void>;
+```
+
+**Example:**
+```typescript
+await pluginManager.destroyPlugin('logging-plugin');
+```
+
+#### updatePlugin()
+
+Update plugin configuration.
+
+```typescript
+updatePlugin<TConfig>(
+  pluginId: string,
+  config: Partial<TConfig>
+): void;
+```
+
+**Example:**
+```typescript
+pluginManager.updatePlugin('logging-plugin', {
+  level: 'debug',
+});
+```
+
+#### getPlugin()
+
+Get a plugin by ID.
+
+```typescript
+getPlugin<T extends Plugin>(pluginId: string): T | undefined;
+```
+
+#### getPlugins()
+
+Get all registered plugins.
+
+```typescript
+getPlugins(): Plugin[];
+```
+
+#### isInitialized()
+
+Check if a plugin is initialized.
+
+```typescript
+isInitialized(pluginId: string): boolean;
+```
+
+#### listPlugins()
+
+List all plugins with their status.
+
+```typescript
+listPlugins(): PluginStatus[];
+```
+
+**Returns:**
+```typescript
+interface PluginStatus {
+  id: string;
+  name: string;
+  version: string;
+  status: 'registered' | 'initialized' | 'error' | 'destroyed';
+  error?: Error;
+}
 ```
 
 ---
 
-## Plugin Lifecycle
+## Plugin Isolation
 
-### 1. Registration
+Plugins run in isolated contexts to prevent interference.
 
-Plugin is registered but not yet initialized.
+### Event Isolation
+
+Each plugin gets its own event bus scope.
 
 ```typescript
 class MyPlugin implements Plugin {
-  readonly metadata: PluginMetadata = {
-    id: 'my-plugin',
-    name: 'My Plugin',
-    version: '1.0.0',
-  };
+  async initialize(config: unknown, context: PluginContext): Promise<void> {
+    // Events are scoped to this plugin
+    context.eventBus.on('row:select', (event) => {
+      // Only receives events this plugin subscribed to
+    });
+
+    // Emit plugin-scoped events
+    context.eventBus.emit('my-plugin:ready', { pluginId: context.metadata.id });
+  }
+}
+```
+
+### Error Isolation
+
+Plugin errors don't crash the table.
+
+```typescript
+// Plugin errors are caught and logged
+class FaultyPlugin implements Plugin {
+  async initialize(): Promise<void> {
+    throw new Error('Plugin initialization failed');
+  }
 }
 
-pluginManager.register(new MyPlugin());
-// Status: 'registered'
+// Table continues working, plugin status is 'error'
+await pluginManager.initializePlugin('faulty-plugin', {});
+// Status: { id: 'faulty-plugin', status: 'error', error: Error(...) }
 ```
 
-### 2. Initialization
+### Resource Quotas
 
-Plugin is initialized with configuration.
+Limit plugin resource usage.
 
 ```typescript
-await pluginManager.initializePlugin('my-plugin', {
-  enabled: true,
-  apiUrl: 'https://api.example.com',
+import { QuotaManager } from '@gridkit/core';
+
+const quotaManager = new QuotaManager({
+  maxMemory: 100 * 1024 * 1024, // 100MB
+  maxCpuTime: 5000, // 5 seconds
+  maxEventListeners: 100,
 });
-// Status: 'initialized'
-```
 
-### 3. Update
-
-Plugin configuration is updated.
-
-```typescript
-pluginManager.updatePlugin('my-plugin', {
-  enabled: false,
-});
-```
-
-### 4. Destruction
-
-Plugin is destroyed and cleaned up.
-
-```typescript
-await pluginManager.destroyPlugin('my-plugin');
-// Status: 'destroyed'
+class MyPlugin implements Plugin {
+  async initialize(config: unknown, context: PluginContext): Promise<void> {
+    // Check quota before heavy operation
+    const quota = quotaManager.getQuota(context.metadata.id);
+    
+    if (quota.memoryRemaining < 10 * 1024 * 1024) {
+      throw new Error('Memory quota exceeded');
+    }
+  }
+}
 ```
 
 ---
@@ -227,10 +385,31 @@ class DependentPlugin implements Plugin {
   };
 
   async initialize(config: unknown, context: PluginContext): Promise<void> {
+    // Access dependent plugins
     const loggingPlugin = context.getPlugin('logging-plugin');
-    // Use dependent plugin
+    const analyticsPlugin = context.getPlugin('analytics-plugin');
+    
+    // Use their capabilities
+    if (loggingPlugin) {
+      // Interact with logging plugin
+    }
   }
 }
+```
+
+### Dependency Resolution
+
+Plugins are initialized in dependency order.
+
+```typescript
+// Register in any order
+pluginManager.register(loggingPlugin);
+pluginManager.register(analyticsPlugin);
+pluginManager.register(dependentPlugin);
+
+// Initialize - dependencies resolved automatically
+await pluginManager.initializePlugin('dependent-plugin', {});
+// Initializes in order: logging -> analytics -> dependent
 ```
 
 ### Optional Dependencies
@@ -241,99 +420,16 @@ class OptionalPlugin implements Plugin {
     id: 'optional-plugin',
     name: 'Optional Plugin',
     version: '1.0.0',
-    dependencies: ['logging-plugin?'], // Optional
+    dependencies: ['logging-plugin?'], // Optional dependency
   };
 
   async initialize(config: unknown, context: PluginContext): Promise<void> {
     const loggingPlugin = context.getPlugin('logging-plugin');
     
     if (loggingPlugin) {
-      // Use if available
+      // Use logging if available
     } else {
-      // Fallback
-    }
-  }
-}
-```
-
-### Dependency Resolution
-
-Plugins are initialized in dependency order (topological sort).
-
-```typescript
-// Register in any order
-pluginManager.register(loggingPlugin);
-pluginManager.register(analyticsPlugin);
-pluginManager.register(dependentPlugin);
-
-// Initialize - dependencies resolved automatically
-await pluginManager.initializePlugin('dependent-plugin', {});
-// Order: logging -> analytics -> dependent
-```
-
----
-
-## Plugin Isolation
-
-### Event Isolation
-
-Each plugin gets its own event bus scope.
-
-```typescript
-class MyPlugin implements Plugin {
-  async initialize(config: unknown, context: PluginContext): Promise<void> {
-    // Events are scoped to this plugin
-    context.eventBus.on('row:select', (event) => {
-      // Only receives events this plugin subscribed to
-    });
-
-    // Emit plugin-scoped events
-    context.eventBus.emit('my-plugin:ready', { 
-      pluginId: context.metadata.id 
-    });
-  }
-}
-```
-
-### Error Isolation
-
-Plugin errors don't crash the table.
-
-```typescript
-class FaultyPlugin implements Plugin {
-  async initialize(): Promise<void> {
-    throw new Error('Plugin initialization failed');
-  }
-}
-
-// Table continues working, plugin status is 'error'
-try {
-  await pluginManager.initializePlugin('faulty-plugin', {});
-} catch (error) {
-  console.error('Plugin failed:', error);
-  // Status: { id: 'faulty-plugin', status: 'error', error }
-}
-```
-
-### Resource Quotas
-
-Limit plugin resource usage.
-
-```typescript
-import { QuotaManager } from '@gridkit/core';
-
-const quotaManager = new QuotaManager({
-  maxMemory: 100 * 1024 * 1024, // 100MB
-  maxCpuTime: 5000, // 5 seconds
-  maxEventListeners: 100,
-});
-
-class MyPlugin implements Plugin {
-  async initialize(config: unknown, context: PluginContext): Promise<void> {
-    const quota = quotaManager.getQuota(context.metadata.id);
-    
-    if (quota.memoryRemaining < 10 * 1024 * 1024) {
-      throw new Error('Memory quota exceeded');
+      // Fallback behavior
     }
   }
 }
@@ -342,6 +438,8 @@ class MyPlugin implements Plugin {
 ---
 
 ## Plugin Communication
+
+Plugins can communicate through various mechanisms.
 
 ### Cross-Plugin Bridge
 
@@ -352,6 +450,7 @@ class SenderPlugin implements Plugin {
   async initialize(config: unknown, context: PluginContext): Promise<void> {
     const bridge = new CrossPluginBridge(context);
     
+    // Send message to another plugin
     bridge.send('receiver-plugin', {
       type: 'DATA_UPDATE',
       payload: { data: 'new data' },
@@ -363,6 +462,7 @@ class ReceiverPlugin implements Plugin {
   async initialize(config: unknown, context: PluginContext): Promise<void> {
     const bridge = new CrossPluginBridge(context);
     
+    // Listen for messages
     bridge.on('DATA_UPDATE', (message) => {
       console.log('Received:', message.payload);
     });
@@ -375,12 +475,14 @@ class ReceiverPlugin implements Plugin {
 ```typescript
 class SharedStatePlugin implements Plugin {
   async initialize(config: unknown, context: PluginContext): Promise<void> {
+    // Register shared utility
     context.registerUtility('shared-cache', new Map());
   }
 }
 
 class ConsumerPlugin implements Plugin {
   async initialize(config: unknown, context: PluginContext): Promise<void> {
+    // Access shared utility
     const cache = context.getUtility<Map>('shared-cache');
     
     if (cache) {
@@ -388,6 +490,18 @@ class ConsumerPlugin implements Plugin {
     }
   }
 }
+```
+
+### Events
+
+```typescript
+// Plugin A emits
+context.eventBus.emit('plugin-a:data-ready', { data });
+
+// Plugin B listens
+context.eventBus.on('plugin-a:data-ready', (event) => {
+  console.log('Received data:', event.payload);
+});
 ```
 
 ---
@@ -412,6 +526,10 @@ class ExportPlugin implements Plugin {
           // Implementation
           return excelBlob;
         },
+        exportToPDF(options?: ExportOptions): Blob {
+          // Implementation
+          return pdfBlob;
+        },
       },
     });
   }
@@ -419,6 +537,7 @@ class ExportPlugin implements Plugin {
 
 // Usage
 const csv = table.exportToCSV();
+const excel = table.exportToExcel({ includeFormatting: true });
 ```
 
 ### Column Extensions
@@ -429,7 +548,7 @@ class FormatPlugin implements Plugin {
     context.extendColumn({
       id: 'format',
       properties: {
-        format?: 'currency' | 'percentage' | 'date';
+        format?: 'currency' | 'percentage' | 'date' | 'number';
         formatOptions?: Record<string, unknown>;
       },
       methods: {
@@ -441,6 +560,13 @@ class FormatPlugin implements Plugin {
     });
   }
 }
+
+// Usage in column definition
+const column: ColumnDef<User> = {
+  accessorKey: 'salary',
+  format: 'currency',
+  formatOptions: { currency: 'USD', decimals: 2 },
+};
 ```
 
 ### Row Extensions
@@ -459,6 +585,10 @@ class ValidationPlugin implements Plugin {
           // Implementation
           return errors;
         },
+        isValid(): boolean {
+          // Implementation
+          return errors.length === 0;
+        },
       },
     });
   }
@@ -467,6 +597,9 @@ class ValidationPlugin implements Plugin {
 // Usage
 const row = table.getRowModel().rows[0];
 const result = await row.validate();
+if (!result.valid) {
+  console.log(row.getErrors());
+}
 ```
 
 ---
@@ -474,8 +607,6 @@ const result = await row.validate();
 ## Official Plugins
 
 ### Audit Log Plugin
-
-GDPR/HIPAA/SOX compliant audit logging.
 
 ```typescript
 import { auditLogPlugin } from '@gridkit/plugins';
@@ -494,8 +625,6 @@ table.use(auditLogPlugin({
 
 ### Analytics Plugin
 
-Track user interactions.
-
 ```typescript
 import { analyticsPlugin } from '@gridkit/plugins';
 
@@ -507,12 +636,14 @@ table.use(analyticsPlugin({
     'row:select': 'Table Row Selected',
     'filter:apply': 'Table Filter Applied',
   },
+  userProperties: {
+    userId: () => getCurrentUserId(),
+    role: () => getUserRole(),
+  },
 }));
 ```
 
 ### Export Plugin
-
-Export to multiple formats.
 
 ```typescript
 import { exportPlugin } from '@gridkit/plugins';
@@ -521,25 +652,28 @@ table.use(exportPlugin({
   formats: ['csv', 'xlsx', 'pdf', 'json'],
   filename: 'table-export',
   includeFilteredOnly: true,
+  includeFormatting: true,
 }));
 
 // Usage
 table.exportToCSV();
-table.exportToExcel({ includeFormatting: true });
+table.exportToExcel({ includeCharts: true });
+table.exportToPDF({ orientation: 'landscape' });
 ```
 
 ---
 
-## Creating Custom Plugins
+## Examples
 
-### Basic Plugin
+### Creating a Custom Plugin
 
 ```typescript
 import type { Plugin, PluginMetadata, PluginContext } from '@gridkit/core';
 
 interface ToastPluginConfig {
-  position: 'top-right' | 'bottom-left';
+  position: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
   duration: number;
+  theme: 'light' | 'dark';
 }
 
 class ToastPlugin implements Plugin<ToastPluginConfig> {
@@ -555,19 +689,21 @@ class ToastPlugin implements Plugin<ToastPluginConfig> {
   async initialize(config: ToastPluginConfig, context: PluginContext): Promise<void> {
     this.config = config;
 
+    // Show toast for row selection
     context.eventBus.on('row:select', (event) => {
       this.showToast(
-        `Row ${event.payload.rowId} selected`,
+        `Row ${event.payload.rowId} ${event.payload.selected ? 'selected' : 'deselected'}`,
         'info'
       );
     });
 
+    // Show toast for errors
     context.eventBus.on('data:error', (event) => {
       this.showToast(`Error: ${event.payload.error.message}`, 'error');
     });
   }
 
-  private showToast(message: string, type: 'info' | 'error'): void {
+  private showToast(message: string, type: 'info' | 'error' | 'success'): void {
     // Implementation using your toast library
     console.log(`[${type}] ${message}`);
   }
@@ -586,6 +722,7 @@ const table = createTable({
       new ToastPlugin({
         position: 'top-right',
         duration: 3000,
+        theme: 'dark',
       }),
     ],
   },
@@ -603,6 +740,7 @@ class SettingsPlugin implements Plugin {
   };
 
   async initialize(config: unknown, context: PluginContext): Promise<void> {
+    // Register settings panel component
     context.extendTable({
       id: 'settings',
       methods: {
@@ -611,6 +749,9 @@ class SettingsPlugin implements Plugin {
         },
         saveSettings(settings: TableSettings): void {
           // Save settings
+        },
+        getSettings(): TableSettings {
+          // Get current settings
         },
       },
     });
@@ -642,7 +783,7 @@ class RobustPlugin implements Plugin {
       // Initialization
     } catch (error) {
       context.logger.error('Initialization failed:', error);
-      throw error;
+      throw error; // Re-throw to prevent registration
     }
   }
 }
@@ -665,9 +806,11 @@ class CleanupPlugin implements Plugin {
   }
 
   async destroy(): Promise<void> {
+    // Clean up all subscriptions
     this.subscriptions.forEach(unsubscribe => unsubscribe());
     this.subscriptions = [];
 
+    // Clear intervals
     if (this.intervalId) {
       window.clearInterval(this.intervalId);
       this.intervalId = null;
@@ -695,14 +838,13 @@ class TypedPlugin implements Plugin<PluginConfig> {
 }
 ```
 
-### 5. Document Your Plugin
+### 5. Document Plugin API
 
 ```typescript
 /**
  * Audit Log Plugin
  * 
  * Records all table operations for compliance and debugging.
- * Supports GDPR, HIPAA, and SOX compliance.
  * 
  * @example
  * ```typescript
@@ -719,7 +861,7 @@ class AuditLogPlugin implements Plugin { /* ... */ }
 
 ## Troubleshooting
 
-### Plugin Not Initializing
+### Plugin not initializing
 
 **Check:**
 - Plugin is registered before initialization
@@ -734,7 +876,7 @@ try {
 }
 ```
 
-### Plugin Conflicts
+### Plugin conflicts
 
 **Check:**
 - No duplicate plugin IDs
@@ -742,12 +884,13 @@ try {
 - No circular dependencies
 
 ```typescript
+// Check for conflicts
 const plugins = pluginManager.listPlugins();
 const ids = plugins.map(p => p.id);
 const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
 ```
 
-### Memory Leaks
+### Memory leaks
 
 **Check:**
 - All subscriptions cleaned up in destroy()
@@ -773,7 +916,7 @@ class LeakyPlugin implements Plugin {
 
 ## See Also
 
-- [Core API](api/core.md) - Table creation and management
-- [Events API](api/events.md) - Event system
-- [Plugin API](api/plugin.md) - Complete plugin API reference
-- [Architecture](architecture/ARCHITECTURE.md) - System architecture
+- [Core API](core.md) - Table creation and management
+- [Events API](events.md) - Event system
+- [Plugin System](../plugin-system.md) - Plugin concepts
+- [Plugin Development Guide](../guides/plugin-development.md) - How to create plugins
