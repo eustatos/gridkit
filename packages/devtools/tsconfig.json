@@ -20,18 +20,12 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "bridge/**/*",
-    "backend/**/*",
-    "index.ts"
-  ],
-    "exclude": [
+  "include": ["src/**/*", "bridge/**/*", "backend/**/*", "extension/panel/**/*", "index.ts"],
+  "exclude": [
     "node_modules",
     "dist",
     "extension-dist",
-    "extension/**/*",
-    "src/**/*",
+    "extension/panel/node_modules",
     "**/*.test.ts",
     "**/*.test.tsx"
   ]

@@ -1,15 +1,15 @@
 // DevTools Communication Protocol
 
 export interface DevToolsMessage {
-  source?: 'devtools' | 'backend' | 'content'
-  type: string
-  payload?: any
-  tableId?: string
-  timestamp?: number
+  source?: 'devtools' | 'backend' | 'content';
+  type: string;
+  payload?: unknown;
+  tableId?: string;
+  timestamp?: number;
 }
 
 export interface DevToolsCommand extends DevToolsMessage {
-  source?: 'devtools'
+  source?: 'devtools';
   type:
     | 'GET_TABLES'
     | 'GET_STATE'
@@ -20,11 +20,11 @@ export interface DevToolsCommand extends DevToolsMessage {
     | 'GET_MEMORY'
     | 'GET_PLUGINS'
     | 'GET_SNAPSHOTS'
-    | 'SET_FILTER'
+    | 'SET_FILTER';
 }
 
 export interface DevToolsResponse extends DevToolsMessage {
-  source?: 'backend'
+  source?: 'backend';
   type:
     | 'TABLES_LIST'
     | 'STATE_UPDATE'
@@ -46,29 +46,29 @@ export interface DevToolsResponse extends DevToolsMessage {
     | 'GET_MEMORY'
     | 'GET_PLUGINS'
     | 'GET_SNAPSHOTS'
-    | 'SET_FILTER'
+    | 'SET_FILTER';
 }
 
 export interface DevToolsProtocol {
-  sendCommand(command: DevToolsCommand): Promise<any>
-  onResponse(handler: (response: DevToolsResponse) => void): () => void
-  disconnect(): void
+  sendCommand(command: DevToolsCommand): Promise<unknown>;
+  onResponse(handler: (response: DevToolsResponse) => void): () => void;
+  disconnect(): void;
 }
 
 export interface TableMetadata {
-  id: string
-  rowCount: number
-  columnCount: number
-  state: any
-  performance?: any
-  memory?: any
-  options?: any
+  id: string;
+  rowCount: number;
+  columnCount: number;
+  state: Record<string, unknown>;
+  performance?: Record<string, unknown>;
+  memory?: Record<string, unknown>;
+  options?: Record<string, unknown>;
 }
 
 export interface EventFilter {
-  type?: string
-  since?: number
-  tableId?: string
+  type?: string;
+  since?: number;
+  tableId?: string;
 }
 
 export interface PerformanceMetrics {
@@ -84,19 +84,19 @@ export interface PerformanceMetrics {
 }
 
 export interface MemorySnapshot {
-  timestamp: number
-  heapSize: number
-  trackedObjects: number
-  leakedObjects: any[]
+  timestamp: number;
+  heapSize: number;
+  trackedObjects: number;
+  leakedObjects: Array<Record<string, unknown>>;
 }
 
 export interface TableSnapshot {
-  timestamp: number
-  state: any
-  eventId: string
+  timestamp: number;
+  state: Record<string, unknown>;
+  eventId: string;
 }
 
 // Extension types - allow additional properties for commands
 export interface ExtensionCommand extends DevToolsCommand {
-  [key: string]: any
+  [key: string]: unknown;
 }

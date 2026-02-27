@@ -1,13 +1,12 @@
 // Metric Card Component
 
 import React, { useMemo } from 'react';
-import type { PerformanceStatus, TrendIndicator } from '../types/performance';
+import type { TrendIndicator } from '../types/performance';
 
 interface MetricCardProps {
   label: string;
   value: string | number | null;
   unit?: string;
-  status?: PerformanceStatus;
   trend?: TrendIndicator;
   warning?: boolean;
   critical?: boolean;
@@ -17,12 +16,11 @@ export function MetricCard({
   label,
   value,
   unit,
-  status = 'good',
   trend,
   warning = false,
   critical = false,
-}: MetricCardProps) {
-  const statusColor = useMemo(() => {
+}: MetricCardProps): React.JSX.Element {
+  const statusClass = useMemo(() => {
     if (critical) return 'bg-red-100 border-red-500 text-red-800';
     if (warning) return 'bg-yellow-100 border-yellow-500 text-yellow-800';
     return 'bg-green-100 border-green-500 text-green-800';
@@ -49,7 +47,7 @@ export function MetricCard({
   }, [value]);
 
   return (
-    <div className={`metric-card ${statusColor}`}>
+    <div className={`metric-card ${statusClass}`}>
       <div className="metric-label">{label}</div>
       <div className="metric-value">
         {formattedValue}

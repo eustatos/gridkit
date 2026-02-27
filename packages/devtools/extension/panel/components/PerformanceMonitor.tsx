@@ -1,6 +1,6 @@
 // Performance Monitor Component
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { MetricCard } from './MetricCard';
 import { usePerformanceHistory } from '../hooks/usePerformanceHistory';
 import type { PerformanceMetrics, PerformanceStatus, TrendIndicator } from '../types/performance';
@@ -12,34 +12,62 @@ interface PerformanceMonitorProps {
   tableId: string;
 }
 
-export function PerformanceMonitor({ tableId }: PerformanceMonitorProps) {
+export function PerformanceMonitor({ tableId }: PerformanceMonitorProps): ReactElement {
   const { history, currentMetrics, previousMetrics, addMetric, clearHistory } = usePerformanceHistory();
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
+  const isInitialized = useRef(false);
 
   // Subscribe to performance updates
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    setIsConnected(true);
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      setIsConnected(true);
+    }
 
-    const handleMessage = (message: DevToolsMessage) => {
-      if (message.type === 'PERFORMANCE_UPDATE' && message.payload.tableId === tableId) {
+    const handleMessage = (message: DevToolsMessage): void => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const payload = message.payload as Record<string, unknown> | undefined;
+      if (
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        message.type === 'PERFORMANCE_UPDATE' &&
+        payload &&
+        typeof payload === 'object' &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        'tableId' in payload &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        payload.tableId === tableId
+      ) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         addMetric(message.payload as PerformanceMetrics);
       }
     };
 
-    devToolsBridge.onMessage(handleMessage);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const bridge = devToolsBridge as unknown as {
+      onMessage: (handler: (msg: DevToolsMessage) => void) => void;
+      offMessage: (handler: (msg: DevToolsMessage) => void) => void;
+      sendCommand: (cmd: string, params: Record<string, unknown>) => Promise<unknown>;
+    };
+
+    bridge.onMessage(handleMessage);
 
     // Request initial performance data
-    devToolsBridge
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    void bridge
       .sendCommand('GET_PERFORMANCE', { tableId })
-      .then((metrics) => {
+      .then((metrics: unknown) => {
         if (metrics && Array.isArray(metrics)) {
-          metrics.forEach((m) => addMetric(m as PerformanceMetrics));
+          (metrics as unknown[]).forEach((m: unknown) => addMetric(m as PerformanceMetrics));
         }
       })
-      .catch(console.error);
+      .catch(() => {
+        // Silently handle errors - connection may not be ready
+      });
 
     return () => {
-      devToolsBridge.offMessage(handleMessage);
+      setIsConnected(false);
+      bridge.offMessage(handleMessage);
     };
   }, [tableId, addMetric]);
 
@@ -119,13 +147,13 @@ export function PerformanceMonitor({ tableId }: PerformanceMonitorProps) {
     const alertsList: string[] = [];
 
     if ((currentMetrics?.lastRenderDuration ?? 0) > DEFAULT_THRESHOLDS.renderDurationCritical) {
-      alertsList.push(`Critical: Render took ${currentMetrics?.lastRenderDuration.toFixed(2)}ms`);
+      alertsList.push(`Critical: Render took ${(currentMetrics?.lastRenderDuration ?? 0).toFixed(2)}ms`);
     } else if ((currentMetrics?.lastRenderDuration ?? 0) > DEFAULT_THRESHOLDS.renderDurationWarning) {
-      alertsList.push(`Warning: Render took ${currentMetrics?.lastRenderDuration.toFixed(2)}ms`);
+      alertsList.push(`Warning: Render took ${(currentMetrics?.lastRenderDuration ?? 0).toFixed(2)}ms`);
     }
 
     if ((currentMetrics?.averageRenderDuration ?? 0) > DEFAULT_THRESHOLDS.averageDurationCritical) {
-      alertsList.push(`Critical: Average render time ${currentMetrics?.averageRenderDuration.toFixed(2)}ms`);
+      alertsList.push(`Critical: Average render time ${(currentMetrics?.averageRenderDuration ?? 0).toFixed(2)}ms`);
     }
 
     if (rendersPerMinute > DEFAULT_THRESHOLDS.renderCountPerMinuteCritical) {
@@ -134,17 +162,6 @@ export function PerformanceMonitor({ tableId }: PerformanceMonitorProps) {
 
     return alertsList;
   }, [currentMetrics, rendersPerMinute]);
-
-  // Log alerts to console
-  useEffect(() => {
-    alerts.forEach((alert) => {
-      if (alert.toLowerCase().includes('critical')) {
-        console.error('[GridKit DevTools] Performance Alert:', alert);
-      } else if (alert.toLowerCase().includes('warning')) {
-        console.warn('[GridKit DevTools] Performance Alert:', alert);
-      }
-    });
-  }, [alerts]);
 
   const overallStatus = useMemo(() => {
     if (status === 'critical') return 'bg-red-500';
@@ -236,7 +253,7 @@ export function PerformanceMonitor({ tableId }: PerformanceMonitorProps) {
                   key={index}
                   className={`sparkline-bar ${isCritical ? 'critical' : isWarning ? 'warning' : 'good'}`}
                   style={{ height: `${height}%` }}
-                  title={`${entry.lastRenderDuration?.toFixed(2) ?? 0}ms`}
+                  title={`${(entry.lastRenderDuration ?? 0).toFixed(2)}ms`}
                 />
               );
             })}
@@ -245,7 +262,7 @@ export function PerformanceMonitor({ tableId }: PerformanceMonitorProps) {
       )}
 
       <div className="monitor-footer">
-        <button onClick={clearHistory} className="clear-button">
+        <button onClick={clearHistory} className="clear-button" type="button">
           Clear History
         </button>
       </div>

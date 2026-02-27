@@ -1,0 +1,66 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module",
+    "tsconfigRootDir": ".",
+    "project": ["./tsconfig.json"]
+  },
+  "plugins": ["@typescript-eslint", "import", "react"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "prettier"
+  ],
+  "settings": {
+    "import/resolver": {
+      "typescript": false,
+      "node": true
+    },
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/explicit-function-return-type": [
+      "warn",
+      {
+        "allowExpressions": true,
+        "allowTypedFunctionExpressions": true
+      }
+    ],
+    "@typescript-eslint/no-unsafe-assignment": "warn",
+    "@typescript-eslint/no-unsafe-member-access": "warn",
+    "@typescript-eslint/no-unsafe-call": "warn",
+    "@typescript-eslint/no-unsafe-return": "warn",
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "react-hooks/set-state-in-effect": "off",
+    "no-console": "off",
+    "import/no-unresolved": "off",
+    "import/namespace": "off",
+    "import/default": "off",
+    "import/no-named-as-default": "off",
+    "import/no-named-as-default-member": "off"
+  },
+  "ignorePatterns": [
+    "dist",
+    "extension-dist",
+    "build",
+    "coverage",
+    "node_modules",
+    "*.config.js",
+    "*.config.ts",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
+}

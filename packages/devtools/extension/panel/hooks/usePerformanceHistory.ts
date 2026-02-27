@@ -1,6 +1,6 @@
 // Performance History Hook
 
-import { useCallback, useEffect, useReducer } from 'react';
+import { useCallback, useReducer } from 'react';
 import type { PerformanceMetrics, PerformanceHistory } from '../types/performance';
 import { MAX_HISTORY_SIZE } from '../types/performance';
 
@@ -30,7 +30,16 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export function usePerformanceHistory() {
+interface UsePerformanceHistoryReturn {
+  history: PerformanceHistory;
+  currentMetrics: PerformanceMetrics | null;
+  previousMetrics: PerformanceMetrics | null;
+  addMetric: (metric: PerformanceMetrics) => void;
+  clearHistory: () => void;
+  setHistory: (metrics: PerformanceMetrics[]) => void;
+}
+
+export function usePerformanceHistory(): UsePerformanceHistoryReturn {
   const [state, dispatch] = useReducer(reducer, { entries: [] });
 
   const addMetric = useCallback((metric: PerformanceMetrics) => {

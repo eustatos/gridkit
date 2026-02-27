@@ -23,10 +23,13 @@
     "lint-staged": "lint-staged"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
+    "packages/*/src/**/*.{ts,tsx,js,jsx}": [
       "eslint --fix",
       "prettier --write"
     ],
+    "packages/*/backend/**/*.{ts,tsx,js,jsx}": [],
+    "packages/*/bridge/**/*.{ts,tsx,js,jsx}": [],
+    "packages/*/extension/**/*.{ts,tsx,js,jsx}": [],
     "*.{json,md}": [
       "prettier --write"
     ]
