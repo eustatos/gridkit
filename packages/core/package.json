@@ -1,148 +1,148 @@
 {
-    "name": "@gridkit/core",
-    "version": "0.0.1",
-    "description": "Core table functionality for GridKit",
-    "type": "module",
-    "main": "./dist/index.js",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
-        },
-        "./types": {
-            "types": "./dist/types/index.d.ts",
-            "import": "./dist/types/index.js"
-        },
-        "./plugin": {
-            "types": "./dist/plugin/index.d.ts",
-            "import": "./dist/plugin/index.js",
-            "require": "./dist/plugin/index.cjs"
-        },
-        "./plugin/*": {
-            "types": "./dist/plugin/*/index.d.ts",
-            "import": "./dist/plugin/*/index.js",
-            "require": "./dist/plugin/*/index.cjs"
-        },
-        "./events": {
-            "types": "./dist/events/index.d.ts",
-            "import": "./dist/events/index.js",
-            "require": "./dist/events/index.cjs"
-        },
-        "./events/*": {
-            "types": "./dist/events/*/index.d.ts",
-            "import": "./dist/events/*/index.js",
-            "require": "./dist/events/*/index.cjs"
-        },
-        "./performance": {
-            "types": "./dist/performance/index.d.ts",
-            "import": "./dist/performance/index.js",
-            "require": "./dist/performance/index.cjs"
-        },
-        "./performance/*": {
-            "types": "./dist/performance/*/index.d.ts",
-            "import": "./dist/performance/*/index.js",
-            "require": "./dist/performance/*/index.cjs"
-        },
-        "./performance/alerts": {
-            "types": "./dist/performance/alerts/index.d.ts",
-            "import": "./dist/performance/alerts/index.js",
-            "require": "./dist/performance/alerts/index.cjs"
-        },
-        "./performance/alerts/*": {
-            "types": "./dist/performance/alerts/*/index.d.ts",
-            "import": "./dist/performance/alerts/*/index.js",
-            "require": "./dist/performance/alerts/*/index.cjs"
-        },
-        "./validation": {
-            "types": "./dist/validation/index.d.ts",
-            "import": "./dist/validation/index.js",
-            "require": "./dist/validation/index.cjs"
-        },
-        "./validation/*": {
-            "types": "./dist/validation/*/index.d.ts",
-            "import": "./dist/validation/*/index.js",
-            "require": "./dist/validation/*/index.cjs"
-        },
-        "./column": {
-            "types": "./dist/column/index.d.ts",
-            "import": "./dist/column/index.js",
-            "require": "./dist/column/index.cjs"
-        },
-        "./column/*": {
-            "types": "./dist/column/*/index.d.ts",
-            "import": "./dist/column/*/index.js",
-            "require": "./dist/column/*/index.cjs"
-        },
-        "./row": {
-            "types": "./dist/row/index.d.ts",
-            "import": "./dist/row/index.js",
-            "require": "./dist/row/index.cjs"
-        },
-        "./row/*": {
-            "types": "./dist/row/*/index.d.ts",
-            "import": "./dist/row/*/index.js",
-            "require": "./dist/row/*/index.cjs"
-        },
-        "./table": {
-            "types": "./dist/table/index.d.ts",
-            "import": "./dist/table/index.js",
-            "require": "./dist/table/index.cjs"
-        },
-        "./table/*": {
-            "types": "./dist/table/*/index.d.ts",
-            "import": "./dist/table/*/index.js",
-            "require": "./dist/table/*/index.cjs"
-        },
-        "./debug": {
-            "types": "./dist/debug/index.d.ts",
-            "import": "./dist/debug/index.js",
-            "require": "./dist/debug/index.cjs"
-        },
-        "./debug/*": {
-            "types": "./dist/debug/*/index.d.ts",
-            "import": "./dist/debug/*/index.js",
-            "require": "./dist/debug/*/index.cjs"
-        }
+  "name": "@gridkit/core",
+  "version": "0.0.1",
+  "description": "Core table functionality for GridKit",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
-    "files": [
-        "dist",
-        "README.md",
-        "LICENSE"
-    ],
-    "scripts": {
-        "build": "tsup && tsc --emitDeclarationOnly --outDir dist",
-        "dev": "tsup --watch",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "test:coverage": "vitest run --coverage",
-        "lint": "eslint .",
-        "lint:fix": "eslint . --fix",
-        "type-check": "tsc --noEmit",
-        "clean": "rm -rf dist .turbo node_modules"
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
     },
-    "keywords": [
-        "table",
-        "grid",
-        "datagrid",
-        "typescript",
-        "framework-agnostic"
-    ],
-    "author": "GridKit Team",
-    "license": "MIT",
-    "devDependencies": {
-        "@types/node": "^20.11.5",
-        "tsup": "^8.0.1",
-        "typescript": "^5.3.3",
-        "vitest": "^1.2.1"
+    "./plugin": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js",
+      "require": "./dist/plugin/index.cjs"
     },
-    "publishConfig": {
-        "access": "public"
+    "./plugin/*": {
+      "types": "./dist/plugin/*/index.d.ts",
+      "import": "./dist/plugin/*/index.js",
+      "require": "./dist/plugin/*/index.cjs"
     },
-    "dependencies": {
-        "yaml": "^2.3.4",
-        "zod": "^3.22.4"
+    "./events": {
+      "types": "./dist/events/index.d.ts",
+      "import": "./dist/events/index.js",
+      "require": "./dist/events/index.cjs"
+    },
+    "./events/*": {
+      "types": "./dist/events/*/index.d.ts",
+      "import": "./dist/events/*/index.js",
+      "require": "./dist/events/*/index.cjs"
+    },
+    "./performance": {
+      "types": "./dist/performance/index.d.ts",
+      "import": "./dist/performance/index.js",
+      "require": "./dist/performance/index.cjs"
+    },
+    "./performance/*": {
+      "types": "./dist/performance/*/index.d.ts",
+      "import": "./dist/performance/*/index.js",
+      "require": "./dist/performance/*/index.cjs"
+    },
+    "./performance/alerts": {
+      "types": "./dist/performance/alerts/index.d.ts",
+      "import": "./dist/performance/alerts/index.js",
+      "require": "./dist/performance/alerts/index.cjs"
+    },
+    "./performance/alerts/*": {
+      "types": "./dist/performance/alerts/*/index.d.ts",
+      "import": "./dist/performance/alerts/*/index.js",
+      "require": "./dist/performance/alerts/*/index.cjs"
+    },
+    "./validation": {
+      "types": "./dist/validation/index.d.ts",
+      "import": "./dist/validation/index.js",
+      "require": "./dist/validation/index.cjs"
+    },
+    "./validation/*": {
+      "types": "./dist/validation/*/index.d.ts",
+      "import": "./dist/validation/*/index.js",
+      "require": "./dist/validation/*/index.cjs"
+    },
+    "./column": {
+      "types": "./dist/column/index.d.ts",
+      "import": "./dist/column/index.js",
+      "require": "./dist/column/index.cjs"
+    },
+    "./column/*": {
+      "types": "./dist/column/*/index.d.ts",
+      "import": "./dist/column/*/index.js",
+      "require": "./dist/column/*/index.cjs"
+    },
+    "./row": {
+      "types": "./dist/row/index.d.ts",
+      "import": "./dist/row/index.js",
+      "require": "./dist/row/index.cjs"
+    },
+    "./row/*": {
+      "types": "./dist/row/*/index.d.ts",
+      "import": "./dist/row/*/index.js",
+      "require": "./dist/row/*/index.cjs"
+    },
+    "./table": {
+      "types": "./dist/table/index.d.ts",
+      "import": "./dist/table/index.js",
+      "require": "./dist/table/index.cjs"
+    },
+    "./table/*": {
+      "types": "./dist/table/*/index.d.ts",
+      "import": "./dist/table/*/index.js",
+      "require": "./dist/table/*/index.cjs"
+    },
+    "./debug": {
+      "types": "./dist/debug/index.d.ts",
+      "import": "./dist/debug/index.js",
+      "require": "./dist/debug/index.cjs"
+    },
+    "./debug/*": {
+      "types": "./dist/debug/*/index.d.ts",
+      "import": "./dist/debug/*/index.js",
+      "require": "./dist/debug/*/index.cjs"
     }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup && tsc --emitDeclarationOnly --outDir dist",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist .turbo node_modules"
+  },
+  "keywords": [
+    "table",
+    "grid",
+    "datagrid",
+    "typescript",
+    "framework-agnostic"
+  ],
+  "author": "GridKit Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "yaml": "^2.3.4",
+    "zod": "^3.22.4"
+  }
 }

@@ -9,7 +9,7 @@
     "dist",
     "extension-dist"
   ],
-    "scripts": {
+  "scripts": {
     "build": "tsup",
     "build:extension": "webpack --config webpack.config.js",
     "build:all": "pnpm run build && pnpm run build:extension",
@@ -22,10 +22,10 @@
     "test:integration:watch": "vitest integration/",
     "test:integration:update": "vitest run integration/ -u",
     "test:all": "pnpm run test && pnpm run test:integration",
-    "clean": "rm -rf dist extension-dist",
+    "clean": "rimraf dist extension-dist",
     "type-check": "tsc --noEmit"
   },
-    "dependencies": {},
+  "dependencies": {},
   "devDependencies": {
     "@babel/plugin-syntax-jsx": "^7.28.6",
     "@babel/plugin-transform-modules-commonjs": "^7.28.6",

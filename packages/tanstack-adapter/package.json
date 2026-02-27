@@ -47,7 +47,7 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
-    "clean": "rm -rf dist .turbo node_modules"
+    "clean": "rimraf dist .turbo node_modules"
   },
   "peerDependencies": {
     "@gridkit/core": "workspace:*",
