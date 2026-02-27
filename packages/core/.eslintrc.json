@@ -44,9 +44,15 @@
         "selector": "variable",
         "modifiers": ["const", "global"],
         "format": ["UPPER_CASE", "camelCase", "PascalCase"]
+      },
+      {
+        "selector": "class",
+        "format": ["PascalCase"],
+        "prefix": ["Manager", "Helper", "Util", "Service"],
+        "leadingUnderscore": "forbid",
+        "message": "Classes with 'Manager', 'Helper', 'Util', or 'Service' in name may violate SRP - review responsibilities"
       }
     ],
-
     "complexity": ["warn", { "max": 10 }],
     "max-depth": ["warn", { "max": 4 }],
     "max-params": ["warn", { "max": 4 }],
@@ -67,8 +73,10 @@
         "skipComments": true
       }
     ],
+    "max-lines-per-class": ["warn", { "max": 300 }],
     "no-nested-ternary": "error",
-
+    "@typescript-eslint/no-require-imports": "warn",
+    "import/max-dependencies": ["warn", { "max": 20 }],
     "import/no-default-export": "error",
     "import/order": [
       "error",
