@@ -23,11 +23,13 @@ export function PerformanceMonitor({ tableId }: PerformanceMonitorProps): ReactE
     if (!isInitialized.current) {
       isInitialized.current = true;
       setIsConnected(true);
+      console.log('[PerformanceMonitor] Initialized for table:', tableId);
     }
 
     const handleMessage = (message: DevToolsMessage): void => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const payload = message.payload as Record<string, unknown> | undefined;
+      console.log('[PerformanceMonitor] Received message:', message.type, payload);
       if (
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         message.type === 'PERFORMANCE_UPDATE' &&
@@ -38,6 +40,7 @@ export function PerformanceMonitor({ tableId }: PerformanceMonitorProps): ReactE
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         payload.tableId === tableId
       ) {
+        console.log('[PerformanceMonitor] Adding metric:', payload);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         addMetric(message.payload as PerformanceMetrics);
       }
@@ -51,23 +54,26 @@ export function PerformanceMonitor({ tableId }: PerformanceMonitorProps): ReactE
     };
 
     bridge.onMessage(handleMessage);
+    console.log('[PerformanceMonitor] Subscribed to messages');
 
     // Request initial performance data
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     void bridge
       .sendCommand('GET_PERFORMANCE', { tableId })
       .then((metrics: unknown) => {
+        console.log('[PerformanceMonitor] GET_PERFORMANCE response:', metrics);
         if (metrics && Array.isArray(metrics)) {
           (metrics as unknown[]).forEach((m: unknown) => addMetric(m as PerformanceMetrics));
         }
       })
-      .catch(() => {
-        // Silently handle errors - connection may not be ready
+      .catch((err: unknown) => {
+        console.log('[PerformanceMonitor] GET_PERFORMANCE error:', err);
       });
 
     return () => {
       setIsConnected(false);
       bridge.offMessage(handleMessage);
+      console.log('[PerformanceMonitor] Cleanup');
     };
   }, [tableId, addMetric]);
 
