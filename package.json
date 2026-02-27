@@ -31,17 +31,32 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.0",
+    "@commitlint/cli": "^20.4.2",
+    "@commitlint/config-conventional": "^20.4.2",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "commander": "^11.0.0",
     "eslint": "^8.57.1",
     "fs-extra": "^11.0.0",
+    "husky": "^9.1.7",
     "immer": "^10.0.0",
+    "lint-staged": "^16.2.7",
     "prettier": "^3.0.0",
     "turbo": "^1.10.0",
     "typescript": "^5.0.0",
     "vitepress": "^1.6.4",
     "vitest": "^0.34.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.{js,jsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }
