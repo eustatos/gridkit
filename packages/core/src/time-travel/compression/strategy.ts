@@ -74,16 +74,16 @@ export abstract class BaseCompressionStrategy implements CompressionStrategy {
   /**
    * Check if compression should be applied
    */
-  shouldCompress(history: Snapshot[], currentIndex: number): boolean {
+  shouldCompress(history: Snapshot[], _currentIndex: number): boolean {
     if (!this.config.enabled) {
       return false;
     }
-    
+
     // Always keep at least minSnapshots
     if (history.length <= (this.config.minSnapshots ?? 10)) {
       return false;
     }
-    
+
     return true;
   }
   

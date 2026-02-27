@@ -4,7 +4,6 @@
  */
 
 import type {
-  DeltaCompressionConfig,
   DeltaCompressionFactoryConfig,
   DeltaCompressionStrategyType,
 } from "./types";

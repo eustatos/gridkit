@@ -150,9 +150,9 @@ export interface Store {
 
 /**
  * Base interface for all atom types
- * @template Value The type of value the atom holds
+ * @template _Value The type of value the atom holds
  */
-export interface BaseAtom<Value> {
+export interface BaseAtom<_Value> {
   /** Unique identifier for the atom */
   readonly id: symbol;
   /** Type of the atom for runtime type checking */
@@ -569,7 +569,6 @@ export interface Snapshot {
 import type {
   SnapshotComparison,
   ComparisonOptions,
-  ComparisonFormat,
   VisualizationFormat,
   ExportFormat,
 } from "./time-travel/comparison/types";

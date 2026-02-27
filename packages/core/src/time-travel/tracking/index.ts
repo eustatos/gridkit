@@ -8,9 +8,7 @@
 import { AtomChangeDetector } from "./AtomChangeDetector";
 import { AtomTracker } from "./AtomTracker";
 import { ComputedAtomHandler } from "./ComputedAtomHandler";
-import { ComputedDependency } from "./types";
-import { ChangeListener } from "./types";
-import { TrackerConfig } from "./types";
+import type { ComputedDependency, ChangeListener, TrackerConfig } from "./types";
 import {
   LRUCleanupStrategy,
   LFUCleanupStrategy,

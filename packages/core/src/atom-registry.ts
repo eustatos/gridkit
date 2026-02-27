@@ -1,7 +1,7 @@
 // packages/core/atom-registry.ts
 /**
  * Global registry for atoms to support DevTools integration and time travel
- * 
+ *
  * Requirements:
  * - Global Registry Singleton
  * - Thread-safe for SSR environments
@@ -10,7 +10,7 @@
  * - Store-aware registry for DevTools integration
  */
 
-import type { Store, StoreRegistry, Atom } from './types';
+import type { Store, StoreRegistry } from './types';
 
 type AtomType = 'primitive' | 'computed' | 'writable';
 
@@ -178,16 +178,16 @@ export class AtomRegistry {
   /**
    * Attach a store to the registry with specified mode
    * @param store The store to attach
-   * @param mode Registry mode - 'global' or 'isolated'
+   * @param _mode Registry mode - 'global' or 'isolated'
    */
-  attachStore(store: Store, mode: "global" | "isolated" = "global"): void {
+  attachStore(store: Store, _mode: "global" | "isolated" = "global"): void {
     if (!this.stores.has(store)) {
       this.stores.set(store, {
         store,
         atoms: new Set()
       });
     }
-    
+
     // For global mode, register the store but keep global registry behavior
     // For isolated mode, atoms will be tracked per store
   }

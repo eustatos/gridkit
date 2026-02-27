@@ -209,7 +209,7 @@ export class SnapshotReconstructor {
   getReconstructionPath(
     fromIndex: number,
     toIndex: number,
-    historyLength: number,
+    _historyLength: number,
   ): ReconstructionPath {
     // Optimize path - go directly or through intermediate points
     const directDeltas = Math.abs(toIndex - fromIndex);

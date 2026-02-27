@@ -2,7 +2,7 @@
  * Types for snapshot comparison functionality
  */
 
-import type { Snapshot, SnapshotStateEntry } from "../types";
+import type { SnapshotStateEntry } from "../types";
 
 /**
  * Comparison options for snapshot comparison

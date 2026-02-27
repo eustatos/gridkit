@@ -102,7 +102,6 @@ export abstract class BaseDisposable implements Disposable {
   protected disposeCallbacks: Set<() => void> = new Set();
   protected children: Set<Disposable> = new Set();
   protected config: DisposableConfig;
-  private disposalPromise: Promise<void> | null = null;
 
   constructor(config?: DisposableConfig) {
     this.config = {

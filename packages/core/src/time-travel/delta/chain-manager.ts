@@ -5,13 +5,10 @@
 
 import type {
   DeltaSnapshot,
-  FullSnapshot,
   DeltaChain,
   ChainManagerConfig,
   DeltaStats,
 } from "./types";
-
-import { DEFAULT_INCREMENTAL_SNAPSHOT_CONFIG } from "./types";
 
 /**
  * Default chain manager configuration

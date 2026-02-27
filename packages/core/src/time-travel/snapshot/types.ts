@@ -2,7 +2,7 @@
  * Snapshot module types
  */
 
-import type { Snapshot, SnapshotStateEntry, SnapshotMetadata } from "../types";
+import type { Snapshot, SnapshotMetadata } from "../types";
 
 /**
  * Configuration for SnapshotCreator

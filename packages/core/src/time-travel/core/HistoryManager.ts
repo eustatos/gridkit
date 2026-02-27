@@ -17,7 +17,7 @@ export class HistoryManager extends BaseDisposable {
 
   // Compression support
   private compressionStrategy: CompressionStrategy | null = null;
-  private compressionConfig: CompressionStrategyConfig | null = null;
+  protected compressionConfig: CompressionStrategyConfig | null = null;
 
   // Memory tracking before/after compression
   private originalHistorySize: number = 0;

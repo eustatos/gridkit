@@ -3,8 +3,6 @@ import {
   SerializationStrategy,
   SerializationContext,
   SerializedValue,
-  SerializedObject,
-  ClassMetadata,
   ExtractedProperty,
 } from "../types";
 
@@ -84,7 +82,6 @@ export class CustomClassesStrategy implements SerializationStrategy {
     context: SerializationContext,
   ): Record<string, ExtractedProperty> {
     const properties: Record<string, ExtractedProperty> = {};
-    const seenKeys = new Set<string | symbol>();
 
     // Get all property keys (including symbols and non-enumerable if configured)
     let keys: (string | symbol)[] = [];

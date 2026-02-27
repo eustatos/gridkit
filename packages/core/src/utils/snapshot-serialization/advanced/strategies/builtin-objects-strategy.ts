@@ -3,14 +3,6 @@ import {
   SerializationStrategy,
   SerializationContext,
   SerializedValue,
-  SerializedDate,
-  SerializedRegExp,
-  SerializedError,
-  SerializedMap,
-  SerializedSet,
-  SerializedWeakMap,
-  SerializedWeakSet,
-  SerializedPromise,
 } from "../types";
 
 /**
@@ -130,7 +122,7 @@ export class BuiltInObjectsStrategy implements SerializationStrategy {
 
   private serializeWithContext(
     value: unknown,
-    context: SerializationContext,
+    _context: SerializationContext,
   ): SerializedValue {
     // Find appropriate strategy
     if (value === null || value === undefined) {

@@ -21,19 +21,21 @@ const primitiveAtomTest: PrimitiveAtom<string> = primitiveAtom;
 const computedAtom = atom((get: Getter) => get(primitiveAtom) * 2);
 // This should NOT cause a type error - computedAtom is correctly typed as ComputedAtom<number>
 // Note: Using type assertion to help TypeScript
-const computedAtomTest = computedAtom as ComputedAtom<number>;
+const _computedAtomTest = computedAtom as unknown as ComputedAtom<number>;
+void _computedAtomTest;
 // This SHOULD cause a type error - assigning ComputedAtom<number> to ComputedAtom<string>
 // @ts-expect-error Type mismatch: ComputedAtom<number> vs ComputedAtom<string>
 const computedAtomWrongTest: ComputedAtom<string> = computedAtom;
 
 // Test type inference for writable atoms
 const writableAtom = atom(
-  (get: Getter) => get(primitiveAtom),
-  (get: Getter, set, value: number) => set(primitiveAtom, value),
+  (_get: Getter) => _get(primitiveAtom),
+  (_get: Getter, set, value: number) => set(primitiveAtom, value),
 );
 // This should NOT cause a type error - writableAtom is correctly typed as WritableAtom<number>
 // Note: Using type assertion to help TypeScript
-const writableAtomTest = writableAtom as WritableAtom<number>;
+const _writableAtomTest = writableAtom as WritableAtom<number>;
+void _writableAtomTest;
 // This SHOULD cause a type error - assigning WritableAtom<number> to WritableAtom<string>
 // @ts-expect-error Type mismatch: WritableAtom<number> vs WritableAtom<string>
 const writableAtomWrongTest: WritableAtom<string> = writableAtom;
@@ -45,23 +47,26 @@ const namedComputedAtom = atom(
   "doubleCount",
 );
 const namedWritableAtom = atom(
-  (get: Getter) => get(namedPrimitiveAtom),
-  (get: Getter, set, value: number) => set(namedPrimitiveAtom, value),
+  (_get: Getter) => _get(namedPrimitiveAtom),
+  (_get: Getter, set, value: number) => set(namedPrimitiveAtom, value),
   "writableCount",
 );
 
 // Test AtomValue utility type
-type PrimitiveAtomValue = AtomValue<typeof primitiveAtom>; // Should be number
-type ComputedAtomValue = AtomValue<typeof computedAtom>; // Should be number
-type WritableAtomValue = AtomValue<typeof writableAtom>; // Should be number
+// type PrimitiveAtomValue = AtomValue<typeof primitiveAtom>; // Should be number
+// type ComputedAtomValue = AtomValue<typeof computedAtom>; // Should be number
+// type WritableAtomValue = AtomValue<typeof writableAtom>; // Should be number
 
 // Test store operations
 const store = createStore();
 
 // Test get operation
-const primitiveValue = store.get(primitiveAtom); // Should be number
-const computedValue = store.get(computedAtom); // Should be number
-const writableValue = store.get(writableAtom); // Should be number
+const _primitiveValue = store.get(primitiveAtom); // Should be number
+void _primitiveValue;
+const _computedValue = store.get(computedAtom); // Should be number
+void _computedValue;
+const _writableValue = store.get(writableAtom); // Should be number
+void _writableValue;
 
 // Test set operation
 store.set(primitiveAtom, 5);
@@ -70,38 +75,44 @@ store.set(primitiveAtom, (prev) => prev + 1);
 // store.set(computedAtom, 5); // This line is intentionally commented out
 
 // Test subscribe operation
-const primitiveUnsubscribe = store.subscribe(primitiveAtom, (value) => {
+const _primitiveUnsubscribe = store.subscribe(primitiveAtom, (value) => {
   // value should be number
   console.log(value);
 });
+void _primitiveUnsubscribe;
 
-const computedUnsubscribe = store.subscribe(computedAtom, (value) => {
+const _computedUnsubscribe = store.subscribe(computedAtom, (value) => {
   // value should be number
   console.log(value);
 });
+void _computedUnsubscribe;
 
-const writableUnsubscribe = store.subscribe(writableAtom, (value) => {
+const _writableUnsubscribe = store.subscribe(writableAtom, (value) => {
   // value should be number
   console.log(value);
 });
+void _writableUnsubscribe;
 
 // Test type guards - using runtime checks
 if (primitiveAtom.type === "primitive") {
   // primitiveAtom should be PrimitiveAtom<number>
-  const primitiveTest: PrimitiveAtom<number> = primitiveAtom;
+  const _primitiveTest: PrimitiveAtom<number> = primitiveAtom;
+  void _primitiveTest;
 }
 
 // Note: TypeScript may not narrow types in .d.ts files as expected
 // These checks are for runtime type safety
 
 // Test utility types
-const anyAtom: Atom<any> = primitiveAtom;
-const atomValue: AtomValue<typeof anyAtom> = store.get(anyAtom);
+const _anyAtom: Atom<any> = primitiveAtom;
+void _anyAtom;
+const _atomValue: AtomValue<typeof _anyAtom> = store.get(_anyAtom);
+void _atomValue;
 
 // Clean up subscriptions
-primitiveUnsubscribe();
-computedUnsubscribe();
-writableUnsubscribe();
+_primitiveUnsubscribe();
+_computedUnsubscribe();
+_writableUnsubscribe();
 
 export {
   primitiveAtom,

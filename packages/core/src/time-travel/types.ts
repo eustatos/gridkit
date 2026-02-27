@@ -2,7 +2,7 @@
  * Public types for SimpleTimeTravel
  */
 
-import type { Store, Snapshot, SnapshotMetadata, SnapshotStateEntry } from "../types";
+import type { Store, Snapshot, SnapshotStateEntry } from "../types";
 
 // Re-export core types that are used by SimpleTimeTravel
 export type {

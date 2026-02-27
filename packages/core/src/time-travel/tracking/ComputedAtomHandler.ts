@@ -6,7 +6,6 @@ import type {
   ComputedAtomConfig,
   ComputedDependency,
   ComputedCache,
-  ComputedInvalidationStrategy,
   TrackedAtom,
 } from "./types";
 import { AtomTracker } from "./AtomTracker";

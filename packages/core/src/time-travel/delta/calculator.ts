@@ -5,16 +5,13 @@
 
 import type {
   DeltaSnapshot,
-  FullSnapshot,
   DeltaChange,
   DeltaOptions,
   ApplyDeltaOptions,
-  DeltaComputationResult,
-  DeltaApplyResult,
 } from "./types";
 
 import { snapshotsEqual } from "../../utils/snapshot-serialization/utils";
-import type { Snapshot, SnapshotStateEntry } from "../types";
+import type { Snapshot } from "../types";
 
 /**
  * Configuration for DeltaCalculator
@@ -188,7 +185,9 @@ export class DeltaCalculatorImpl implements DeltaCalculator {
       },
     };
 
-    const computationTime = Date.now() - startTime;
+    // Computation time tracking (currently unused, reserved for metrics)
+    const _computationTime = Date.now() - startTime;
+    void _computationTime;
 
     return delta;
   }
@@ -245,7 +244,9 @@ export class DeltaCalculatorImpl implements DeltaCalculator {
       atomCount: Object.keys(newSnapshot.state).length,
     };
 
-    const applicationTime = Date.now() - startTime;
+    // Application time tracking (currently unused, reserved for metrics)
+    const _applicationTime = Date.now() - startTime;
+    void _applicationTime;
 
     return newSnapshot;
   }

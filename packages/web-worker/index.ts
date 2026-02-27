@@ -24,22 +24,22 @@ const workerAtomValues = new Map<Atom<any>, any>();
  */
 export function workerAtom<T>(options: WorkerAtomOptions<T>): Atom<T> {
   const { worker, initialValue } = options;
-  
+
   // Create a regular atom to hold the value
   const internalAtom = atom(initialValue);
-  
+
   // Store the initial value
   workerAtomValues.set(internalAtom, initialValue);
-  
+
   // Listen for messages from the worker
-  worker.onmessage = (event) => {
+  worker.onmessage = (event: MessageEvent) => {
     const { type, value } = event.data;
-    
+
     switch (type) {
       case 'UPDATE': {
         // Update our local value map
         workerAtomValues.set(internalAtom, value);
-        
+
         // Update the atom's value in all stores that contain it
         const stores = atomRegistry.getAllStoresForAtom(internalAtom.id);
         for (const store of stores) {
@@ -55,12 +55,12 @@ export function workerAtom<T>(options: WorkerAtomOptions<T>): Atom<T> {
         console.warn(`Unknown message type: ${type}`);
     }
   };
-  
+
   // Handle errors from the worker
-  worker.onerror = (error) => {
+  worker.onerror = (error: ErrorEvent) => {
     console.error('Web Worker error:', error.error);
   };
-  
+
   return internalAtom;
 }
 

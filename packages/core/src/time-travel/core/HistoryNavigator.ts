@@ -1,6 +1,4 @@
 import { SnapshotRestorer } from "../snapshot";
-import { HistoryManager } from "./HistoryManager";
-import { DeltaAwareHistoryManager } from "../delta/delta-history-manager";
 import type { Snapshot } from "../types";
 
 // Interface that both HistoryManager and DeltaAwareHistoryManager implement

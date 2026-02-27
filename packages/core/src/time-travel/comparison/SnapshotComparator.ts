@@ -7,7 +7,6 @@ import type {
   AtomComparison,
   ComparisonSummary,
   ComparisonStats,
-  ComparisonMetadata,
   ComparisonOptions,
   CachedComparison,
 } from "./types";

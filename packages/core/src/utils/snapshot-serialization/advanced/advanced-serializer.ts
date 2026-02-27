@@ -9,7 +9,6 @@ import {
   SerializedValue,
   SerializedObject,
   SerializedProperty,
-  AnySerializedValue,
   DEFAULT_SERIALIZATION_OPTIONS,
   StrategyRegistry,
   createDefaultRegistry,
@@ -27,17 +26,19 @@ import { CustomClassesStrategy } from "./strategies/custom-classes-strategy";
  */
 export class AdvancedSerializer {
   private strategies: SerializationStrategy[] = [];
-  private registry: StrategyRegistry;
-  private refCounter: number = 0;
-  private refMap: WeakMap<object, string> = new WeakMap();
+  private _registry: StrategyRegistry;
+  private _refCounter: number = 0;
+  private _refMap: WeakMap<object, string> = new WeakMap();
+  private options: SerializationOptions;
 
   constructor(options: Partial<SerializationOptions> = {}) {
-    this.registry = createDefaultRegistry();
+    this._registry = createDefaultRegistry();
+    void this._registry;
+    void this._refCounter;
+    void this._refMap;
     this.options = { ...DEFAULT_SERIALIZATION_OPTIONS, ...options };
     this.registerDefaultStrategies();
   }
-
-  private options: SerializationOptions;
 
   /**
    * Register default serialization strategies
@@ -54,7 +55,7 @@ export class AdvancedSerializer {
   /**
    * Register a custom strategy
    */
-  registerStrategy(strategy: SerializationStrategy, priority: number = 0): void {
+  registerStrategy(strategy: SerializationStrategy, _priority: number = 0): void {
     this.strategies.push(strategy);
     // Re-sort strategies by priority (higher first)
     this.strategies.sort((a, b) => {

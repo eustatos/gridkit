@@ -1,15 +1,13 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "declaration": true,
-    "declarationMap": true
+    "lib": ["ES2020", "DOM"]
   },
   "include": ["src/**/*.ts"],
   "exclude": [
     "src/**/*.test.ts",
-    "src/**/*.test-d.ts",
     "src/**/*.spec.ts",
     "node_modules",
     "dist"

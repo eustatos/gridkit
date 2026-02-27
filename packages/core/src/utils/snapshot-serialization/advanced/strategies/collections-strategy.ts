@@ -3,8 +3,6 @@ import {
   SerializationStrategy,
   SerializationContext,
   SerializedValue,
-  SerializedArrayBuffer,
-  SerializedTypedArray,
   TypedArray,
 } from "../types";
 
@@ -82,7 +80,7 @@ export class CollectionsStrategy implements SerializationStrategy {
 
   private serializeValue(
     value: unknown,
-    context: SerializationContext,
+    _context: SerializationContext,
   ): SerializedValue {
     // For complex objects, delegate to main serializer's object handling
     // This ensures circular references are handled properly

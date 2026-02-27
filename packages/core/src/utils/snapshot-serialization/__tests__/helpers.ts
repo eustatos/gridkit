@@ -4,8 +4,8 @@
  * Provides common assertion logic and test data generators
  */
 
-import { expect } from "vitest";
-import type { SerializedValue } from "../types";
+import { expect as _expect } from "vitest";
+import type { SerializedValue as _SerializedValue } from "../types";
 
 /**
  * Deep equality check that handles special objects (Date, RegExp, Map, Set, etc.)

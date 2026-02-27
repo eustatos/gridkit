@@ -73,7 +73,7 @@ export class FunctionsStrategy implements SerializationStrategy {
           // Extract function body and params
           const match = source.match(/function\s*(\w*)\s*\(([^)]*)\)\s*{([\s\S]*)}$/);
           if (match) {
-            const [, name, params, body] = match;
+            const [, _name, params, body] = match;
             return new Function(params, body);
           }
         }

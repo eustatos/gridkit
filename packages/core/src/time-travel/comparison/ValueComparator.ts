@@ -22,24 +22,24 @@ export class ValueComparator {
    * Check if two values are equal
    * @param a - First value
    * @param b - Second value
-   * @param currentDepth - Current recursion depth
+   * @param _currentDepth - Current recursion depth
    * @returns True if values are equal
    */
-  areEqual(a: any, b: any, currentDepth: number = 0): boolean {
+  areEqual(a: any, b: any, _currentDepth: number = 0): boolean {
     // Reset seen maps and depth for top-level calls
-    if (currentDepth === 0) {
+    if (_currentDepth === 0) {
       this.seenA = new WeakMap();
       this.seenB = new WeakMap();
       this.depth = 0;
       this.maxDepthReached = 0;
     }
 
-    if (currentDepth > this.options.maxDepth) {
+    if (_currentDepth > this.options.maxDepth) {
       return true; // Assume equal beyond max depth
     }
 
-    this.depth = currentDepth;
-    this.maxDepthReached = Math.max(this.maxDepthReached, currentDepth);
+    this.depth = _currentDepth;
+    this.maxDepthReached = Math.max(this.maxDepthReached, _currentDepth);
 
     // Handle primitives with Object.is for NaN handling
     if (Object.is(a, b)) return true;
@@ -78,12 +78,12 @@ export class ValueComparator {
     // Handle specific types
     if (a instanceof Date) return this.areDatesEqual(a, b);
     if (a instanceof RegExp) return this.areRegExpsEqual(a, b);
-    if (a instanceof Map) return this.areMapsEqual(a, b, currentDepth + 1);
-    if (a instanceof Set) return this.areSetsEqual(a, b, currentDepth + 1);
-    if (Array.isArray(a)) return this.areArraysEqual(a, b, currentDepth + 1);
+    if (a instanceof Map) return this.areMapsEqual(a, b, this.depth + 1);
+    if (a instanceof Set) return this.areSetsEqual(a, b, this.depth + 1);
+    if (Array.isArray(a)) return this.areArraysEqual(a, b, this.depth + 1);
 
     // Handle objects
-    return this.areObjectsEqual(a, b, currentDepth + 1);
+    return this.areObjectsEqual(a, b, this.depth + 1);
   }
 
   /**
@@ -104,8 +104,8 @@ export class ValueComparator {
   /**
    * Internal diff computation
    */
-  private computeDiff(a: any, b: any, path: string[], depth: number): ValueDiff {
-    if (depth > this.options.maxDepth) {
+  private computeDiff(a: any, b: any, path: string[], _depth: number): ValueDiff {
+    if (_depth > this.options.maxDepth) {
       return {
         type: "object",
         equal: true,
@@ -113,8 +113,8 @@ export class ValueComparator {
       };
     }
 
-    this.depth = depth;
-    this.maxDepthReached = Math.max(this.maxDepthReached, depth);
+    this.depth = _depth;
+    this.maxDepthReached = Math.max(this.maxDepthReached, _depth);
 
     // Handle primitives
     if (Object.is(a, b)) {
@@ -216,15 +216,15 @@ export class ValueComparator {
     }
 
     if (a instanceof Map) {
-      return this.diffMaps(a, b, path, depth);
+      return this.diffMaps(a, b, path, this.depth);
     }
 
     if (a instanceof Set) {
-      return this.diffSets(a, b, path, depth);
+      return this.diffSets(a, b, path, this.depth);
     }
 
     if (Array.isArray(a)) {
-      return this.diffArrays(a, b, path, depth);
+      return this.diffArrays(a, b, path, this.depth);
     }
 
     if (typeof a === "function") {
@@ -238,7 +238,7 @@ export class ValueComparator {
     }
 
     // Handle objects
-    return this.diffObjects(a, b, path, depth);
+    return this.diffObjects(a, b, path, this.depth);
   }
 
   /**
@@ -272,7 +272,7 @@ export class ValueComparator {
   /**
    * Compare two sets
    */
-  private areSetsEqual(a: Set<any>, b: Set<any>, depth: number): boolean {
+  private areSetsEqual(a: Set<any>, b: Set<any>, _depth: number): boolean {
     if (a.size !== b.size) return false;
 
     for (const value of a.values()) {
@@ -319,7 +319,7 @@ export class ValueComparator {
   /**
    * Generate diff for maps
    */
-  private diffMaps(a: Map<any, any>, b: Map<any, any>, path: string[], depth: number): ValueDiff {
+  private diffMaps(a: Map<any, any>, b: Map<any, any>, path: string[], _depth: number): ValueDiff {
     const changes: Record<string, ValueDiff> = {};
     let equal = true;
 
@@ -336,8 +336,8 @@ export class ValueComparator {
         equal = false;
       } else {
         const bValue = b.get(key);
-        if (!this.areEqual(value, bValue, depth + 1)) {
-          changes[keyStr] = this.computeDiff(value, bValue, [...path, keyStr], depth + 1);
+        if (!this.areEqual(value, bValue, this.depth + 1)) {
+          changes[keyStr] = this.computeDiff(value, bValue, [...path, keyStr], this.depth + 1);
           if (!changes[keyStr].equal) equal = false;
         }
       }
@@ -367,7 +367,7 @@ export class ValueComparator {
   /**
    * Generate diff for sets
    */
-  private diffSets(a: Set<any>, b: Set<any>, path: string[], depth: number): ValueDiff {
+  private diffSets(a: Set<any>, b: Set<any>, _path: string[], _depth: number): ValueDiff {
     const added: number[] = [];
     const removed: number[] = [];
     let equal = true;
@@ -409,7 +409,7 @@ export class ValueComparator {
   /**
    * Generate diff for arrays
    */
-  private diffArrays(a: any[], b: any[], path: string[], depth: number): ValueDiff {
+  private diffArrays(a: any[], b: any[], path: string[], _depth: number): ValueDiff {
     const added: number[] = [];
     const removed: number[] = [];
     const moved: number[] = [];
@@ -433,13 +433,13 @@ export class ValueComparator {
         const bValue = b[i];
 
         // Check if value moved
-        const movedIndex = b.findIndex((v, idx) => idx !== i && this.areEqual(v, aValue, depth + 1));
+        const movedIndex = b.findIndex((v, idx) => idx !== i && this.areEqual(v, aValue, this.depth + 1));
         if (movedIndex !== -1 && !a.includes(bValue)) {
           moved.push(i);
           equal = false;
-        } else if (!this.areEqual(aValue, bValue, depth + 1)) {
+        } else if (!this.areEqual(aValue, bValue, this.depth + 1)) {
           // Modified
-          const diff = this.computeDiff(aValue, bValue, [...path, String(i)], depth + 1);
+          const diff = this.computeDiff(aValue, bValue, [...path, String(i)], this.depth + 1);
           if (!diff.equal) {
             modified.push({ index: i, diff });
             equal = false;
@@ -465,7 +465,7 @@ export class ValueComparator {
   /**
    * Generate diff for objects
    */
-  private diffObjects(a: object, b: object, path: string[], depth: number): ValueDiff {
+  private diffObjects(a: object, b: object, path: string[], _depth: number): ValueDiff {
     const changes: Record<string, ValueDiff> = {};
     let equal = true;
 
@@ -496,8 +496,8 @@ export class ValueComparator {
         const valueA = (a as any)[key];
         const valueB = (b as any)[key];
 
-        if (!this.areEqual(valueA, valueB, depth + 1)) {
-          changes[key] = this.computeDiff(valueA, valueB, [...path, key], depth + 1);
+        if (!this.areEqual(valueA, valueB, this.depth + 1)) {
+          changes[key] = this.computeDiff(valueA, valueB, [...path, key], this.depth + 1);
           if (!changes[key].equal) equal = false;
         }
       }

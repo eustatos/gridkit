@@ -7,7 +7,6 @@ import type {
   ComparisonFormat,
   VisualizationFormat,
   ExportFormat,
-  AtomComparison,
 } from "./types";
 
 /**

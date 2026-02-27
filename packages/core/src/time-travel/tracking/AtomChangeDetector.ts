@@ -286,10 +286,10 @@ export class AtomChangeDetector {
 
   /**
    * Get change history for atom
-   * @param atom Atom
-   * @param limit Max number of changes
+   * @param _atom Atom
+   * @param _limit Max number of changes
    */
-  getChangeHistory(atom: any, limit: number = 10): ChangeEvent[] {
+  getChangeHistory(_atom: any, _limit: number = 10): ChangeEvent[] {
     // This would need a history store - simplified version
     return [];
   }

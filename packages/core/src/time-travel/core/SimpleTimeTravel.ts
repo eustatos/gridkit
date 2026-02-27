@@ -58,7 +58,6 @@ import type {
   DeltaSnapshot,
   IncrementalSnapshotConfig,
   DeltaCompressionFactoryConfig,
-  DeltaCompressionStrategyType,
 } from "../delta/types";
 
 // Import disposal infrastructure
@@ -377,14 +376,16 @@ export class SimpleTimeTravel extends BaseDisposable implements TimeTravelAPI {
 
   /**
    * Capture current state without checking tracked atoms (for initial/clear capture)
+   * Reserved for future use
+   * @internal
    */
-  private captureAllState(action?: string): Snapshot | undefined {
+  private __captureAllState(_action?: string): Snapshot | undefined {
     if (this.isTimeTraveling) {
       return undefined;
     }
 
-    const snapshot = this.snapshotCreator.create(action);
-    
+    const snapshot = this.snapshotCreator.create();
+
     if (snapshot) {
       this.historyManager.add(snapshot);
     }

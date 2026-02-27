@@ -3,12 +3,12 @@
  * Manages both full and delta snapshots in the history
  */
 
-import type { Snapshot, AnySnapshot, DeltaSnapshot, FullSnapshot } from "../types";
+import type { Snapshot, AnySnapshot, DeltaSnapshot } from "../types";
 import { HistoryManager } from "../core/HistoryManager";
 import type { HistoryEvent } from "../core/types";
 
 import { DeltaCalculatorImpl } from "./calculator";
-import { DeltaChainManager, DEFAULT_CHAIN_MANAGER_CONFIG } from "./chain-manager";
+import { DeltaChainManager } from "./chain-manager";
 import { DEFAULT_INCREMENTAL_SNAPSHOT_CONFIG, type DeltaAwareHistoryManagerConfig, type DeltaHistoryStats } from "./types";
 
 /**
@@ -106,7 +106,7 @@ export class DeltaAwareHistoryManager {
    */
   getAll(): Snapshot[] {
     const all = this.historyManager.getAll();
-    return all.map((snapshot, index) => {
+    return all.map((snapshot, _index) => {
       if (this.isDeltaSnapshot(snapshot)) {
         return this.reconstructFullSnapshot(snapshot) || snapshot;
       }

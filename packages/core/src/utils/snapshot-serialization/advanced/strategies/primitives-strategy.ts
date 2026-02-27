@@ -3,11 +3,6 @@ import {
   SerializationStrategy,
   SerializationContext,
   SerializedValue,
-  SerializedNull,
-  SerializedUndefined,
-  SerializedBigInt,
-  SerializedSymbol,
-  AnySerializedValue,
 } from "../types";
 
 /**
@@ -26,7 +21,7 @@ export class PrimitivesStrategy implements SerializationStrategy {
     );
   }
 
-  serialize(value: unknown, context: SerializationContext): SerializedValue {
+  serialize(value: unknown, _context: SerializationContext): SerializedValue {
     // Handle null
     if (value === null) {
       return {

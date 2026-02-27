@@ -1,17 +1,16 @@
 // Implementation of createStore function
 
-import type { 
-  Atom, 
-  Store, 
-  Subscriber, 
-  Getter, 
-  Setter, 
-  Plugin, 
-  ActionMetadata, 
-  PrimitiveAtom, 
+import type {
+  Atom,
+  Store,
+  Subscriber,
+  Getter,
+  Setter,
+  Plugin,
+  ActionMetadata,
+  PrimitiveAtom,
   ComputedAtom,
   WritableAtom,
-  BaseAtom
 } from './types';
 import { isPrimitiveAtom, isComputedAtom, isWritableAtom } from './types';
 import { serializeState as serializeStoreState } from './utils/serialization';
@@ -399,12 +398,13 @@ export function createStore(plugins: Plugin[] = []): Store {
     return [...appliedPlugins];
   };
 
-  // Enable DevTools integration
-  const enableDevTools = (options: StoreEnhancementOptions = {}) => {
-    isDevToolsEnabled = options.enableDevTools ?? true;
-    isStackTraceEnabled = options.enableStackTrace ?? false;
+  // Enable DevTools integration (currently no-op, reserved for future use)
+  const _enableDevTools = (_options: StoreEnhancementOptions = {}) => {
+    isDevToolsEnabled = true;
+    isStackTraceEnabled = false;
     // Set other options as needed
   };
+  void _enableDevTools;
 
   const store: Store = {
     get,

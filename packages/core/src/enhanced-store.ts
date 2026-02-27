@@ -1,7 +1,6 @@
 // enhanced-store/index.ts
 
 import type {
-  Store,
   Plugin,
   EnhancedStore as EnhancedStoreType,
   StoreEnhancementOptions as StoreEnhancementOptionsType,

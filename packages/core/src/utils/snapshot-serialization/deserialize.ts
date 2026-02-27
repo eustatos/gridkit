@@ -3,7 +3,6 @@ import {
   SerializedValue,
   DeserializationContext,
   DeserializationOptions,
-  Constructor,
 } from "./types";
 import {
   DEFAULT_DESERIALIZE_OPTIONS,

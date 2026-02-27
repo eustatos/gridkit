@@ -9,12 +9,10 @@ import type {
   RestorationResult,
   RestorationCheckpoint,
   RestorationConfig,
-  RestorationErrorDetails,
 } from "./types";
 import type {
   TransactionalRestorerConfig,
   TransactionalRestorationResult,
-  TransactionConfig,
   RestorationOptions,
   RestorationProgress,
   CheckpointResult,
@@ -249,7 +247,7 @@ export class SnapshotRestorer extends BaseDisposable {
       // If still not found, try to find any atom with the same name (for unnamed atoms)
       if (entry.name) {
         const allAtoms = atomRegistry.getAll();
-        for (const [id, storedAtom] of allAtoms) {
+        for (const [_id, storedAtom] of allAtoms) {
           const storedName = storedAtom.name || storedAtom.id?.description || "atom";
           if (storedName === entry.name) {
             atom = storedAtom as Atom<unknown>;
@@ -684,10 +682,10 @@ export class SnapshotRestorer extends BaseDisposable {
       // First, find all atoms that will be restored
       for (const [key, entry] of Object.entries(snapshot.state)) {
         let atom = this.findAtomByName(entry.name || key);
-        
+
         if (!atom && entry.name) {
           const allAtoms = atomRegistry.getAll();
-          for (const [id, storedAtom] of allAtoms) {
+          for (const [_id, storedAtom] of allAtoms) {
             const storedName = storedAtom.name || storedAtom.id?.description || "atom";
             if (storedName === entry.name) {
               atom = storedAtom as Atom<unknown>;
@@ -757,14 +755,14 @@ export class SnapshotRestorer extends BaseDisposable {
 
   /**
    * Apply changes with transaction support
-   * @param snapshot Snapshot to restore
+   * @param _snapshot Snapshot to restore
    * @param atomsToRestore List of atoms to restore
    * @param checkpointId Checkpoint ID
    * @param options Restoration options
    * @returns Restoration result with transaction details
    */
   private async applyChangesWithTransaction(
-    snapshot: Snapshot,
+    _snapshot: Snapshot,
     atomsToRestore: Array<{ key: string; entry: SnapshotStateEntry; atom: Atom<unknown> }>,
     checkpointId: string,
     options?: RestorationOptions,
@@ -852,13 +850,13 @@ export class SnapshotRestorer extends BaseDisposable {
   /**
    * Restore a batch of atoms
    * @param atomsToRestore List of atoms to restore
-   * @param checkpointId Checkpoint ID
+   * @param _checkpointId Checkpoint ID
    * @param onProgress Progress callback
    * @returns Batch restoration result
    */
   private async restoreBatchAtoms(
     atomsToRestore: Array<{ key: string; entry: SnapshotStateEntry; atom: Atom<unknown> }>,
-    checkpointId: string,
+    _checkpointId: string,
     onProgress?: (progress: RestorationProgress) => void,
   ): Promise<{
     restoredCount: number;
@@ -947,7 +945,8 @@ export class SnapshotRestorer extends BaseDisposable {
       };
     }
 
-    const startTime = Date.now();
+    const _startTime = Date.now();
+    void _startTime;
     const failedAtoms: Array<{
       name: string;
       atomId: symbol;

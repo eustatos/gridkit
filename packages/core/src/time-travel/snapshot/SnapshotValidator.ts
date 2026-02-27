@@ -2,7 +2,7 @@
  * SnapshotValidator - Validates snapshots and their contents
  */
 
-import type { Snapshot, SnapshotStateEntry } from "../types";
+import type { Snapshot } from "../types";
 import type { ValidationResult, ValidationRule } from "./types";
 
 export class SnapshotValidator {

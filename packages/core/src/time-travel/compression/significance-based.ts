@@ -79,19 +79,19 @@ export function compareSnapshots(a: Snapshot, b: Snapshot): SnapshotComparisonRe
  */
 export class SignificanceBasedCompression extends BaseCompressionStrategy {
   name = "significance";
-  
+
   private minChangeThreshold: number;
   private maxConsecutiveSimilar: number;
-  private lastKeptSnapshot: Snapshot | null = null;
-  private consecutiveSimilarCount: number = 0;
-  
+  protected lastKeptSnapshot: Snapshot | null = null;
+  protected consecutiveSimilarCount: number = 0;
+
   constructor(config: SignificanceBasedCompressionConfig = {}) {
     super({
       minSnapshots: 10,
       enabled: true,
       ...config,
     });
-    
+
     this.minChangeThreshold = config.minChangeThreshold ?? 0.3;
     this.maxConsecutiveSimilar = config.maxConsecutiveSimilar ?? 3;
   }

@@ -59,6 +59,7 @@ export { atom } from "./atom";
  * const name = atomRegistry.getName(atom);
  */
 export { atomRegistry } from "./atom-registry";
+export type { AtomRegistry } from "./atom-registry";
 
 /**
  * Creates a store to hold atoms.

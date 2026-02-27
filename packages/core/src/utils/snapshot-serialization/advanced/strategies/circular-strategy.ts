@@ -11,13 +11,13 @@ import {
  * This strategy is checked last and handles cases where objects have been seen before
  */
 export class CircularStrategy implements SerializationStrategy {
-  canHandle(value: unknown): boolean {
+  canHandle(_value: unknown): boolean {
     // This strategy doesn't directly handle values
     // It's used by the main serializer to detect circular references
     return false;
   }
 
-  serialize(value: unknown, context: SerializationContext): SerializedValue {
+  serialize(_value: unknown, _context: SerializationContext): SerializedValue {
     // This strategy is not meant to serialize directly
     // It's used internally by the AdvancedSerializer
     return {

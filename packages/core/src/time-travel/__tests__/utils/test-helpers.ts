@@ -3,7 +3,7 @@
  * Provides type-safe utilities for creating test data and mocking
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe as _describe, it as _it, expect as _expect, beforeEach as _beforeEach, afterEach as _afterEach, vi } from "vitest";
 import type { Store, Atom, Snapshot, SnapshotStateEntry } from "../../../types";
 
 /**
@@ -36,8 +36,8 @@ export class TestHelper {
         atoms.set(atom.id, value);
       },
       subscribe: <T>(
-        atom: Atom<T>,
-        subscriber: (value: T) => void,
+        _atom: Atom<T>,
+        _subscriber: (value: T) => void,
       ): (() => void) => {
         // No-op for tests
         return () => {};

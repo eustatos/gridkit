@@ -8,7 +8,6 @@ import type {
   TrackedAtom,
   TrackingEvent,
   TrackingStats,
-  AtomMetadata,
   TrackerSnapshot,
   TrackerRestorePoint,
   TTLConfig,
