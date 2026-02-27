@@ -168,4 +168,7 @@ docs/.vitepress/dist/
 docs/.vitepress/cache/
 
 # Changesets
-.changeset/pre.json
+.changeset/pre.json"packages/*/src/*.d.ts"  
+"packages/*/src/*.js"  
+"packages/*/src/**/*.d.ts.map"  
+"packages/*/src/**/*.js.map"  
