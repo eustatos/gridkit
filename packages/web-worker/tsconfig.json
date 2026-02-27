@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": ".",
-    "lib": ["ES2020", "WebWorker"]
+    "lib": ["ES2020", "WebWorker"],
+    "moduleResolution": "node"
   },
   "include": ["*.ts", "src/**/*.ts"],
   "exclude": ["node_modules", "dist", "*.test.ts", "src/**/*.test.ts"]
