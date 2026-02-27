@@ -133,6 +133,7 @@ function createTableInstance<TData extends RowData>(
     // State Management
     getState: () => stateStore.getState(),
     setState: (updater) => {
+      const startTime = performance.now();
       const stop = performanceMonitor?.start('stateUpdate', {
         tableId: instance.id,
         operation: typeof updater === 'function' ? 'function' : 'direct',
@@ -142,7 +143,8 @@ function createTableInstance<TData extends RowData>(
         const prev = stateStore.getState();
         const newState = stateStore.setState(updater);
         const updatedState = stateStore.getState();
-        
+        const duration = performance.now() - startTime;
+
         // Emit state update event
         eventBus.emit('state:update', {
           tableId: instance.id,
@@ -150,12 +152,25 @@ function createTableInstance<TData extends RowData>(
           newState: updatedState,
         });
 
+        // Emit performance event
+        const metrics = performanceMonitor?.getMetrics();
+        eventBus.emit('performance:measured', {
+          timestamp: Date.now(),
+          tableId: instance.id,
+          renderCount: metrics?.renderCount ?? 1,
+          lastRenderDuration: duration,
+          averageRenderDuration: metrics?.averageRenderDuration ?? duration,
+          totalRenderTime: metrics?.totalTime ?? duration,
+          reRenderReason: 'setState',
+        } as any);
+
         // Emit specific events for changed properties
         if (!shallowEqual(prev.sorting, updatedState.sorting)) {
           eventBus.emit('sorting:change', {
             tableId: instance.id,
             timestamp: Date.now(),
             sorting: updatedState.sorting,
+            duration,
           });
         }
 
@@ -164,6 +179,7 @@ function createTableInstance<TData extends RowData>(
             tableId: instance.id,
             timestamp: Date.now(),
             filtering: updatedState.filtering,
+            duration,
           });
         }
 
@@ -172,6 +188,7 @@ function createTableInstance<TData extends RowData>(
             tableId: instance.id,
             timestamp: Date.now(),
             pagination: updatedState.pagination,
+            duration,
           });
         }
 
@@ -180,6 +197,7 @@ function createTableInstance<TData extends RowData>(
             tableId: instance.id,
             timestamp: Date.now(),
             columnVisibility: updatedState.columnVisibility,
+            duration,
           });
         }
 
@@ -188,6 +206,7 @@ function createTableInstance<TData extends RowData>(
             tableId: instance.id,
             timestamp: Date.now(),
             columnOrder: updatedState.columnOrder,
+            duration,
           });
         }
 
@@ -196,6 +215,7 @@ function createTableInstance<TData extends RowData>(
             tableId: instance.id,
             timestamp: Date.now(),
             columnPinning: updatedState.columnPinning,
+            duration,
           });
         }
 
@@ -204,6 +224,7 @@ function createTableInstance<TData extends RowData>(
             tableId: instance.id,
             timestamp: Date.now(),
             rowSelection: updatedState.rowSelection,
+            duration,
           });
         }
 
@@ -212,6 +233,7 @@ function createTableInstance<TData extends RowData>(
             tableId: instance.id,
             timestamp: Date.now(),
             expanded: updatedState.expanded,
+            duration,
           });
         }
       } finally {
@@ -222,6 +244,7 @@ function createTableInstance<TData extends RowData>(
 
     // Data Access
     getRowModel: (): RowModel<TData> => {
+      const startTime = performance.now();
       const stop = performanceMonitor?.start('rowModelBuild', {
         tableId: instance.id,
         rowCount: stateStore.getState().data.length,
@@ -234,6 +257,21 @@ function createTableInstance<TData extends RowData>(
           columnRegistry,
           table: instance,
         });
+        
+        const duration = performance.now() - startTime;
+        
+        // Emit performance event for row model build
+        const metrics = performanceMonitor?.getMetrics();
+        eventBus.emit('performance:measured', {
+          timestamp: Date.now(),
+          tableId: instance.id,
+          renderCount: metrics?.renderCount ?? 1,
+          lastRenderDuration: duration,
+          averageRenderDuration: metrics?.averageRenderDuration ?? duration,
+          totalRenderTime: metrics?.totalTime ?? duration,
+          reRenderReason: 'buildRowModel',
+        } as any);
+        
         return model as unknown as RowModel<TData>;
       } finally {
         stop?.();

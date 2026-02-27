@@ -29,6 +29,22 @@ export function useGridEnhancedTable<TData extends RowData>(
     return createEnhancedTable(tanstackTable, features)
   }, [tanstackTable, features])
 
+  // Forward performance events to DevTools
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const devToolsBackend = (window as any).__GRIDKIT_DEVTOOLS__
+    if (!devToolsBackend) return
+
+    const unsubscribe = enhancedTable.on?.('performance:measured', (metrics: any) => {
+      devToolsBackend.sendPerformanceUpdate?.(enhancedTable.id, metrics)
+    })
+
+    return () => {
+      unsubscribe?.()
+    }
+  }, [enhancedTable])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {

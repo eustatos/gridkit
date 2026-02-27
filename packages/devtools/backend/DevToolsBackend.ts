@@ -80,6 +80,18 @@ export class DevToolsBackend {
     return this.tables.get(tableId)
   }
 
+  // Send performance update (for direct calls from adapters)
+  sendPerformanceUpdate(tableId: string, metrics: any): void {
+    this.bridge.send({
+      type: 'PERFORMANCE_UPDATE',
+      tableId,
+      payload: {
+        metrics,
+        timestamp: Date.now()
+      }
+    })
+  }
+
   // Command handlers
   private setupMessageHandlers(): void {
     // GET_TABLES
