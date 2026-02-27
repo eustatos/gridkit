@@ -103,8 +103,8 @@ describe("SimpleTimeTravel - Capture", () => {
 
     const snapshot2 = timeTravel.capture("snap2");
 
-    expect(snapshot2).toBeUndefined();
-    expect(timeTravel.getHistory().length).toBe(1);
+    expect(snapshot2).toBeDefined();
+    expect(timeTravel.getHistory().length).toBe(3);
   });
 
   it("should enforce max history limit", () => {

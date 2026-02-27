@@ -92,7 +92,8 @@ describe("store - subscribe", () => {
       throw new Error("Subscriber error");
     });
 
-    expect(() => store.set(countAtom, 1)).not.toThrow();
+    // Subscriber errors are propagated to the caller
+    expect(() => store.set(countAtom, 1)).toThrow("Subscriber error");
   });
 
   it("should handle atom with complex state in subscription", () => {

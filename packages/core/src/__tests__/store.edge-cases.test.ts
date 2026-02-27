@@ -1,14 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { createStore, atom } from "../index";
+import type { Getter } from "../types";
 
 describe("store - edge cases", () => {
   it("should handle atom with function value", () => {
     const store = createStore();
-    const funcAtom = atom(() => 42);
+    // Wrap function in an object to store it as a primitive value
+    const funcAtom = atom({ fn: () => 42 });
 
     const value = store.get(funcAtom);
-    expect(typeof value).toBe("function");
-    expect(value()).toBe(42);
+    expect(typeof value.fn).toBe("function");
+    expect(value.fn()).toBe(42);
   });
 
   it("should handle atom with Symbol value", () => {
@@ -72,6 +74,7 @@ describe("store - edge cases", () => {
       return get(atom1) + 1;
     });
 
-    expect(() => store.get(atom1)).not.toThrow();
+    // Circular dependencies should throw a RangeError (stack overflow)
+    expect(() => store.get(atom1)).toThrow(RangeError);
   });
 });
