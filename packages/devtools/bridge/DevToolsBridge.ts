@@ -65,61 +65,69 @@ export class DevToolsBridge implements DevToolsProtocol {
   }
 
   private async handleCommand(message: DevToolsMessage): Promise<void> {
-    if (!message.payload || message.payload.type === undefined) return
+    const payload = message.payload as Record<string, unknown> | undefined;
+    if (!payload || typeof payload.type !== 'string') return;
 
-    const handler = this.commandHandlers.get(message.payload.type)
-    if (!handler) return
+    const handler = this.commandHandlers.get(payload.type);
+    if (!handler) return;
 
     try {
-      const result = await handler(message.payload)
+      const result = await handler(payload);
       this.send({
         type: RESPONSE,
         payload: {
           success: true,
           data: result,
-          commandType: message.payload.type,
+          commandType: payload.type,
           timestamp: Date.now()
-        }
-      })
+        } as Record<string, unknown>
+      });
     } catch (error) {
       this.send({
         type: RESPONSE,
         payload: {
           success: false,
           error: error instanceof Error ? error.message : String(error),
-          commandType: message.payload.type,
+          commandType: payload.type,
           timestamp: Date.now()
-        }
-      })
+        } as Record<string, unknown>
+      });
     }
   }
 
   private handleResponse(message: DevToolsMessage): void {
-    if (!message.payload || message.payload.type !== RESPONSE) return
+    const payload = message.payload as Record<string, unknown> | undefined;
+    if (!payload || payload.type !== RESPONSE) return;
 
-    const response = message.payload as any
-    if (!response.success) {
-      console.error('DevTools command failed:', response.error)
-      return
+    const response = payload;
+    const success = (response as Record<string, unknown>).success as boolean | undefined;
+    
+    if (!success) {
+      const error = (response as Record<string, unknown>).error as string | undefined;
+      console.error('DevTools command failed:', error);
+      return;
     }
 
     this.responseHandlers.forEach((handler) => {
       try {
+        const commandType = (response as Record<string, unknown>).commandType as string | undefined;
+        const data = (response as Record<string, unknown>).data as unknown;
+        
         handler({
           source: 'backend',
-          type: response.commandType || 'UNKNOWN',
-          payload: response.data,
+          type: (commandType || 'UNKNOWN') as DevToolsResponse['type'],
+          payload: data,
           tableId: message.tableId,
           timestamp: message.timestamp || Date.now()
-        })
+        });
       } catch (error) {
-        console.error('Error in response handler:', error)
+        console.error('Error in response handler:', error);
       }
-    })
+    });
   }
 
   send(message: Omit<DevToolsMessage, 'source' | 'timestamp'>): void {
-    if (!this.connected || typeof window === 'undefined') return
+    if (!this.connected || typeof window === 'undefined') return;
 
     window.postMessage(
       {
@@ -128,34 +136,36 @@ export class DevToolsBridge implements DevToolsProtocol {
         timestamp: Date.now()
       },
       '*'
-    )
+    );
   }
 
-  sendCommand(command: DevToolsCommand): Promise<any> {
+  sendCommand(command: DevToolsCommand): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('DevTools command timeout'))
-      }, 5000)
+        reject(new Error('DevTools command timeout'));
+      }, 5000);
 
       const responseHandler = (response: DevToolsResponse) => {
         if (response.type === command.type) {
-          clearTimeout(timeout)
-          this.responseHandlers.delete(responseHandler)
-          if (response.payload?.success) {
-            resolve(response.payload.data)
+          clearTimeout(timeout);
+          this.responseHandlers.delete(responseHandler);
+          const payload = response.payload as Record<string, unknown> | undefined;
+          if (payload?.success) {
+            resolve(payload.data);
           } else {
-            reject(new Error(response.payload?.error || 'Command failed'))
+            const error = payload?.error as string | undefined;
+            reject(new Error(error || 'Command failed'));
           }
         }
-      }
+      };
 
-      this.responseHandlers.add(responseHandler)
+      this.responseHandlers.add(responseHandler);
 
       this.send({
         type: COMMAND,
         payload: command
-      })
-    })
+      });
+    });
   }
 
   onCommand<T = any>(type: string, handler: CommandHandler<T>): () => void {
