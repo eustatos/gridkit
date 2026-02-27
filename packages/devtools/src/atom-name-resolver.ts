@@ -36,7 +36,7 @@ export class AtomNameResolver {
   constructor(options: AtomNameFormatOptions = {}) {
     this.options = {
       showAtomNames: options.showAtomNames ?? true,
-      formatter: options.formatter ?? ((atom, defaultName) => defaultName),
+      formatter: options.formatter ?? ((_atom, defaultName) => defaultName),
       includeId: options.includeId ?? false,
       includeType: options.includeType ?? false,
       maxLength: options.maxLength ?? 50,

@@ -99,7 +99,7 @@ export class DevToolsPlugin {
       showAtomNames: config.showAtomNames ?? true,
       atomNameFormatter:
         config.atomNameFormatter ??
-        ((atom: BasicAtom, defaultName: string) => defaultName),
+        ((_atom: BasicAtom, defaultName: string) => defaultName),
       actionNamingStrategy,
       actionNamingPattern,
       actionNamingFunction,

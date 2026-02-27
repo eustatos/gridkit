@@ -272,29 +272,29 @@ export class MessageHandler {
    * Handle time travel commands
    */
   private handleTimeTravel(
-    payload: { type: string; [key: string]: unknown },
-    store: EnhancedStore,
+    _payload: { type: string; [key: string]: unknown },
+    _store: EnhancedStore,
   ): MessageHandlerResult {
     if (!this.options.enableTimeTravel || !this.commandHandler) {
       return {
         success: false,
-        type: payload.type,
+        type: _payload.type,
         error: "Time travel is not enabled",
       };
     }
 
     // Convert to Command format expected by CommandHandler
     const command = {
-      type: payload.type,
-      payload,
+      type: _payload.type,
+      payload: _payload,
     };
 
     const success = this.commandHandler.handleCommand(command);
 
     return {
       success,
-      type: payload.type,
-      data: { command: payload.type },
+      type: _payload.type,
+      data: { command: _payload.type },
     };
   }
 
@@ -302,8 +302,8 @@ export class MessageHandler {
    * Handle reset command
    */
   private handleReset(
-    payload: { type: string; [key: string]: unknown },
-    store: EnhancedStore,
+    _payload: { type: string; [key: string]: unknown },
+    _store: EnhancedStore,
   ): MessageHandlerResult {
     // Reset to initial state would require storing the initial state
     if (this.options.debug) {
@@ -409,10 +409,10 @@ export class MessageHandler {
   /**
    * Handle ACTION messages
    */
-  private handleAction(message: DevToolsMessage, store: EnhancedStore): MessageHandlerResult {
+  private handleAction(_message: DevToolsMessage, _store: EnhancedStore): MessageHandlerResult {
     // ACTION messages are typically sent from DevTools to dispatch actions
     // This would require integration with the store's action system
-    
+
     if (this.options.debug) {
       console.warn("ACTION messages are not fully supported");
     }
@@ -427,7 +427,7 @@ export class MessageHandler {
   /**
    * Handle START messages
    */
-  private handleStart(message: DevToolsMessage, store: EnhancedStore): MessageHandlerResult {
+  private handleStart(_message: DevToolsMessage, _store: EnhancedStore): MessageHandlerResult {
     this.isTracking = true;
     return {
       success: true,
@@ -439,7 +439,7 @@ export class MessageHandler {
   /**
    * Handle STOP messages
    */
-  private handleStop(message: DevToolsMessage, store: EnhancedStore): MessageHandlerResult {
+  private handleStop(_message: DevToolsMessage, _store: EnhancedStore): MessageHandlerResult {
     this.isTracking = false;
     return {
       success: true,
@@ -453,7 +453,7 @@ export class MessageHandler {
    */
   private handleCustom(message: DevToolsMessage, store: EnhancedStore): MessageHandlerResult {
     const handler = this.options.customHandlers[message.type];
-    
+
     try {
       handler(message, store);
       return {

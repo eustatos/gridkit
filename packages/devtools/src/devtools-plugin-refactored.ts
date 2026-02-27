@@ -134,7 +134,7 @@ export class DevToolsPluginRefactored {
       showAtomNames: config.showAtomNames ?? true,
       atomNameFormatter:
         config.atomNameFormatter ??
-        ((atom: BasicAtom, defaultName: string) => defaultName),
+        ((_atom: BasicAtom, defaultName: string) => defaultName),
       actionNamingStrategy,
       actionNamingPattern,
       actionNamingFunction,

@@ -202,7 +202,7 @@ export class DevToolsPlugin {
       showAtomNames: config.showAtomNames ?? true,
       atomNameFormatter:
         config.atomNameFormatter ??
-        ((atom: BasicAtom, defaultName: string) => defaultName),
+        ((_atom: BasicAtom, defaultName: string) => defaultName),
       actionNamingStrategy,
       actionNamingPattern,
       actionNamingFunction,
@@ -926,7 +926,7 @@ export class DevToolsPlugin {
       if (stateChanged && this.config.actionSanitizer(action, stateToSend)) {
         console.log('[DevTools] Sending action:', action);
         console.log('[DevTools] State type:', typeof stateToSend);
-        console.log('[DevTools] State keys:', Object.keys(stateToSend));
+        console.log('[DevTools] State keys:', typeof stateToSend === 'object' && stateToSend !== null ? Object.keys(stateToSend) : 'N/A');
         console.log('[DevTools] State:', stateToSend);
         
         // Broadcast to all connections

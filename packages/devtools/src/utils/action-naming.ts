@@ -19,13 +19,12 @@ export interface ActionMetadata {
 /**
  * Default action naming function
  * @param atomName - Name of the atom being updated
- * @param metadata - Action metadata
+ * @param _metadata - Action metadata
  * @returns Formatted action name
  */
 export function defaultActionNaming(
   atomName: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  metadata: ActionMetadata,
+  _metadata: ActionMetadata,
 ): string {
   return `ATOM_UPDATE/${atomName}`;
 }
