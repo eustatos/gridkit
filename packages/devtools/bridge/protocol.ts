@@ -72,11 +72,15 @@ export interface EventFilter {
 }
 
 export interface PerformanceMetrics {
-  timestamp: number
-  renderTime: number
-  memoryUsage: number
-  eventCount: number
-  components: any[]
+  timestamp: number;
+  tableId: string;
+  renderCount: number;
+  lastRenderDuration: number | null;
+  averageRenderDuration: number | null;
+  totalRenderTime: number;
+  reRenderReason: string | null;
+  memoryUsage?: number;
+  eventCount?: number;
 }
 
 export interface MemorySnapshot {
