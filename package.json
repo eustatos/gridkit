@@ -7,6 +7,8 @@
     "dev": "turbo run dev --parallel",
     "test": "turbo run test",
     "lint": "turbo run lint",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "lint:ci": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 0",
     "format": "prettier --write .",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",

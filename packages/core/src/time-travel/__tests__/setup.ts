@@ -54,8 +54,12 @@ interface CustomMatchers<R = unknown> {
  * Extend Vitest expect with custom matchers
  */
 declare module "vitest" {
-  interface Assertion<T = any> extends CustomMatchers<T> {}
-  interface AsymmetricMatchersContaining extends CustomMatchers {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface Assertion<T = any> extends CustomMatchers<T> {
+  }
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface AsymmetricMatchersContaining extends CustomMatchers {
+  }
 }
 
 // Register custom matchers

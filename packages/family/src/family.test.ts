@@ -1,5 +1,5 @@
 // Tests for @nexus-state/family
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { atom, createStore } from '@nexus-state/core';
 import { atomFamily, atomWithFamily } from '../index';
 

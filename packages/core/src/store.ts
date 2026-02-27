@@ -329,9 +329,9 @@ export function createStore(plugins: Plugin[] = []): Store {
   };
 
   // Add method to get state of all atoms (for devtools)
-  // eslint-disable-line @typescript-eslint/no-explicit-any
+   
   const getState = (): Record<string, any> => {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
+     
     const state: Record<string, any> = {};
     atomStates.forEach((atomState, atom) => {
       // Use atom name from registry if available, otherwise fall back to toString
